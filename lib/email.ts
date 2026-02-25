@@ -1,0 +1,273 @@
+import nodemailer from 'nodemailer';
+
+// SMTP configuration - set these env vars on the server
+// SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+});
+
+const FROM = process.env.SMTP_FROM || 'HomeLedger <noreply@homeledger.co.uk>';
+const BASE_URL = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+
+function baseTemplate(content: string, preheader: string = '') {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeLedger</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>` : ''}
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e293b,#334155);padding:24px 32px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:linear-gradient(135deg,#f59e0b,#d97706);width:36px;height:36px;border-radius:8px;text-align:center;vertical-align:middle;">
+                    <span style="color:#1e293b;font-size:20px;font-weight:bold;">£</span>
+                  </td>
+                  <td style="padding-left:12px;">
+                    <span style="color:#ffffff;font-size:20px;font-weight:bold;">HomeLedger</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding:32px;">
+              ${content}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 32px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
+                HomeLedger — Your finances, simplified<br>
+                <a href="${BASE_URL}" style="color:#64748b;text-decoration:none;">${BASE_URL.replace('https://', '')}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buttonHtml(text: string, url: string, color: string = '#1e293b') {
+  return `
+    <table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      <tr>
+        <td style="background-color:${color};border-radius:8px;padding:12px 28px;">
+          <a href="${url}" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">${text}</a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+// ─── Email Templates ─────────────────────────────────────────────────────
+
+export async function sendWelcomeEmail(email: string, name: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to HomeLedger, ${name}! 🎉</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Your account has been created successfully. HomeLedger helps you manage your finances,
+      track expenses, generate HMRC reports, and much more.
+    </p>
+    <p style="margin:0 0 8px;font-size:15px;color:#475569;line-height:1.6;">Here's what you can do:</p>
+    <ul style="margin:0 0 16px;padding-left:20px;font-size:14px;color:#475569;line-height:1.8;">
+      <li>Upload bank statements and auto-categorise transactions</li>
+      <li>Track bills and recurring payments</li>
+      <li>Generate Self Assessment tax reports</li>
+      <li>Store credentials securely in the Vault</li>
+      <li>Set financial projections and savings goals</li>
+    </ul>
+    ${buttonHtml('Get Started', `${BASE_URL}/onboarding`)}
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      If you didn't create this account, you can safely ignore this email.
+    </p>
+  `, `Welcome to HomeLedger, ${name}!`);
+
+  return sendEmail(email, `Welcome to HomeLedger, ${name}! 🎉`, html);
+}
+
+export async function sendVerificationCodeEmail(email: string, name: string, code: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Your Login Code</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, here's your one-time verification code to sign in:
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <span style="display:inline-block;padding:16px 32px;background-color:#f1f5f9;border-radius:12px;font-size:32px;font-weight:bold;letter-spacing:6px;color:#1e293b;">
+        ${code}
+      </span>
+    </div>
+    <p style="margin:0 0 8px;font-size:14px;color:#475569;">
+      This code expires in <strong>10 minutes</strong>.
+    </p>
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      If you didn't request this code, someone may be trying to access your account. You can safely ignore this email.
+    </p>
+  `, `Your HomeLedger login code: ${code}`);
+
+  return sendEmail(email, `Your HomeLedger Login Code: ${code}`, html);
+}
+
+export async function sendInvitationEmail(email: string, inviterName: string, householdName: string, token: string) {
+  const acceptUrl = `${BASE_URL}/invite/${token}`;
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">You've Been Invited!</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      <strong>${inviterName}</strong> has invited you to join <strong>${householdName}</strong> on HomeLedger.
+    </p>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      HomeLedger is a finance management platform that helps families and teams
+      track expenses, manage bills, and stay on top of their finances together.
+    </p>
+    ${buttonHtml('Accept Invitation', acceptUrl, '#f59e0b')}
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      This invitation expires in 7 days. If you don't recognise this invitation, you can safely ignore it.
+    </p>
+  `, `${inviterName} invited you to ${householdName} on HomeLedger`);
+
+  return sendEmail(email, `${inviterName} invited you to ${householdName}`, html);
+}
+
+export async function sendOnboardingReminderEmail(email: string, name: string, percentComplete: number) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Complete Your Setup, ${name}</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      You're <strong>${percentComplete}%</strong> through setting up your HomeLedger account.
+      Finish the setup to unlock all features.
+    </p>
+    <div style="background-color:#f1f5f9;border-radius:8px;height:8px;margin:16px 0;">
+      <div style="background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:8px;height:8px;width:${percentComplete}%;"></div>
+    </div>
+    ${buttonHtml('Continue Setup', `${BASE_URL}/onboarding`)}
+  `, `You're ${percentComplete}% done setting up HomeLedger`);
+
+  return sendEmail(email, `Complete your HomeLedger setup (${percentComplete}% done)`, html);
+}
+
+export async function sendPasswordChangedEmail(email: string, name: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Password Changed</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, your HomeLedger password was successfully changed.
+    </p>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      If you didn't make this change, please reset your password immediately or contact support.
+    </p>
+    ${buttonHtml('Reset Password', `${BASE_URL}/forgot-password`, '#dc2626')}
+  `, 'Your HomeLedger password was changed');
+
+  return sendEmail(email, 'Your HomeLedger password was changed', html);
+}
+
+export async function sendDeadlineReminderEmail(
+  email: string,
+  name: string,
+  deadlines: { title: string; dueDate: string; urgency: string; type: string }[]
+) {
+  const deadlineRows = deadlines.map(d => {
+    const color = d.urgency === 'overdue' ? '#dc2626' : d.urgency === 'due_soon' ? '#d97706' : '#2563eb';
+    const label = d.urgency === 'overdue' ? 'OVERDUE' : d.urgency === 'due_soon' ? 'DUE SOON' : 'UPCOMING';
+    return `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;">
+          <span style="font-size:14px;color:#1e293b;font-weight:500;">${d.title}</span><br>
+          <span style="font-size:12px;color:#64748b;">${d.type} · Due: ${d.dueDate}</span>
+        </td>
+        <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;text-align:right;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:${color};background-color:${color}15;">${label}</span>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Deadline Reminder</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, you have <strong>${deadlines.length} upcoming deadline${deadlines.length > 1 ? 's' : ''}</strong> that need your attention:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      ${deadlineRows}
+    </table>
+    ${buttonHtml('View Tax Timeline', `${BASE_URL}/tax-timeline`)}
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      You can manage notification preferences in your account settings.
+    </p>
+  `, `${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need your attention`);
+
+  return sendEmail(email, `HomeLedger: ${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need attention`, html);
+}
+
+export async function sendBudgetAlertEmail(
+  email: string,
+  name: string,
+  alerts: { categoryName: string; budgeted: number; spent: number; percentage: number }[]
+) {
+  const alertRows = alerts.map(a => {
+    const color = a.percentage >= 100 ? '#dc2626' : '#d97706';
+    const label = a.percentage >= 100 ? 'OVER BUDGET' : 'NEAR LIMIT';
+    return `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;">
+          <span style="font-size:14px;color:#1e293b;font-weight:500;">${a.categoryName}</span><br>
+          <span style="font-size:12px;color:#64748b;">£${a.spent.toFixed(2)} of £${a.budgeted.toFixed(2)} (${a.percentage.toFixed(0)}%)</span>
+        </td>
+        <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;text-align:right;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:${color};background-color:${color}15;">${label}</span>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Budget Alert</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, <strong>${alerts.length} budget${alerts.length > 1 ? 's are' : ' is'}</strong> at or near the limit:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      ${alertRows}
+    </table>
+    ${buttonHtml('View Budgets', `${BASE_URL}/reports`)}
+  `, `${alerts.length} budget alert${alerts.length > 1 ? 's' : ''}`);
+
+  return sendEmail(email, `HomeLedger: Budget Alert — ${alerts.length} budget${alerts.length > 1 ? 's' : ''} at limit`, html);
+}
+
+// ─── Send Helper ─────────────────────────────────────────────────────────
+
+async function sendEmail(to: string, subject: string, html: string) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log(`[Email] SMTP not configured. Would send to ${to}: ${subject}`);
+    return { success: false, simulated: true };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      to,
+      subject,
+      html,
+    });
+    console.log(`[Email] Sent to ${to}: ${subject} (${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error(`[Email] Failed to send to ${to}:`, error.message);
+    return { success: false, error: error.message };
+  }
+}

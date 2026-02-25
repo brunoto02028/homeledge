@@ -1,0 +1,1367 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum ProviderType {
+  bank
+  utility
+  subscription
+  insurance
+  other
+}
+
+enum AccountType {
+  current
+  savings
+  credit_card
+  loan
+  other
+}
+
+enum BillFrequency {
+  one_time
+  weekly
+  monthly
+  quarterly
+  yearly
+}
+
+enum ActionType {
+  bill_payment
+  account_review
+  budget_adjustment
+  other
+}
+
+enum ActionStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
+enum ActionPriority {
+  low
+  medium
+  high
+}
+
+enum TransactionType {
+  debit
+  credit
+}
+
+enum ExpenseType {
+  fixed
+  recurring
+  variable
+  one_off
+}
+
+enum InvoiceStatus {
+  pending
+  processed
+  error
+  reviewed
+}
+
+enum ParseStatus {
+  success
+  needs_review
+  failed
+}
+
+enum CategoryType {
+  expense
+  income
+}
+
+enum HMRCMapping {
+  office_costs
+  travel_costs
+  clothing
+  staff_costs
+  reselling_goods
+  premises_costs
+  advertising
+  financial_charges
+  legal_professional
+  none
+}
+
+enum DocumentType {
+  bill
+  reminder
+  fine
+  information
+  contract
+  tax_return
+  check
+  other
+}
+
+enum DocumentStatus {
+  pending
+  processed
+  filed
+  action_required
+}
+
+enum RuleMatchType {
+  exact
+  contains
+  starts_with
+  regex
+}
+
+enum EntityType {
+  limited_company
+  llp
+  sole_trader
+  partnership
+  individual
+}
+
+enum TaxRegime {
+  corporation_tax
+  self_assessment
+  both
+}
+
+model Entity {
+  id                    String      @id @default(cuid())
+  userId                String      @map("user_id")
+  name                  String
+  tradingName           String?     @map("trading_name")
+  type                  EntityType  @default(individual)
+  taxRegime             TaxRegime   @default(self_assessment) @map("tax_regime")
+  isDefault             Boolean     @default(false) @map("is_default")
+  // Companies House
+  companyNumber         String?     @map("company_number")
+  companyStatus         String?     @map("company_status")
+  sicCodes              String[]    @default([]) @map("sic_codes")
+  incorporationDate     DateTime?   @map("incorporation_date")
+  // Tax References
+  utr                   String?     // Unique Taxpayer Reference
+  vatNumber             String?     @map("vat_number")
+  isVatRegistered       Boolean     @default(false) @map("is_vat_registered")
+  vatScheme             String?     @map("vat_scheme")
+  payeReference         String?     @map("paye_reference")
+  // Personal (for individual type)
+  niNumber              String?     @map("ni_number")
+  // Address
+  registeredAddress     String?     @map("registered_address")
+  tradingAddress        String?     @map("trading_address")
+  // Financial Periods
+  financialYearStart    DateTime?   @map("financial_year_start")
+  financialYearEnd      DateTime?   @map("financial_year_end")
+  accountingBasis       String?     @map("accounting_basis") // cash / accruals
+  // Directors / Officers (JSON for flexibility)
+  officers              Json?       // [{name, role, appointedDate}]
+  // Metadata
+  logoUrl               String?     @map("logo_url")
+  notes                 String?
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankStatements        BankStatement[]
+  accounts              Account[]
+  invoices              Invoice[]
+  bills                 Bill[]
+  scannedDocuments      ScannedDocument[]
+  history               EntityHistory[]
+
+  @@index([userId])
+  @@index([companyNumber])
+  @@index([type])
+  @@map("entities")
+}
+
+enum LifeEventType {
+  // Housing
+  moving_house
+  buying_property
+  selling_property
+  renting_property
+  home_renovation
+  // Family
+  getting_married
+  having_baby
+  divorce
+  death_in_family
+  adoption
+  child_starting_school
+  sending_child_to_uni
+  becoming_carer
+  childcare_arrangements
+  // Career
+  starting_business
+  changing_jobs
+  losing_job
+  retiring
+  starting_new_job
+  self_employed_registration
+  workplace_pension
+  // Health
+  registering_with_gp
+  registering_with_dentist
+  maternity_paternity
+  long_term_illness
+  disability_claim
+  // DVLA & Transport
+  getting_driving_licence
+  buying_car
+  selling_car
+  mot_tax_insurance
+  // Council & Government
+  council_tax_registration
+  electoral_register
+  applying_for_benefits
+  universal_credit
+  applying_for_passport
+  renewing_passport
+  name_change_deed_poll
+  // Immigration
+  immigrating_to_uk
+  visa_renewal
+  settled_status
+  citizenship_application
+  biometric_residence_permit
+  // Finance
+  opening_bank_account
+  applying_for_mortgage
+  remortgaging
+  dealing_with_debt
+  bankruptcy_iva
+  // Legal
+  making_a_will
+  power_of_attorney
+  probate
+  inheriting
+  // Education
+  student_finance
+  professional_qualification
+  // Utilities
+  switching_energy_provider
+  broadband_setup
+  // Other
+  other
+}
+
+enum TaskPriority {
+  critical
+  high
+  medium
+  low
+}
+
+enum LifeEventTaskStatus {
+  pending
+  in_progress
+  completed
+  skipped
+}
+
+enum UserRole {
+  user
+  business
+  accountant
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  pending_verification
+}
+
+enum MembershipRole {
+  owner
+  editor
+  viewer
+  accountant
+}
+
+model Category {
+  id               String              @id @default(cuid())
+  name             String
+  description      String?
+  icon             String?
+  color            String?
+  type             CategoryType        @default(expense)
+  parentId         String?             @map("parent_id") // null = top-level (macro), set = subcategory
+  taxNature        String              @default("unknown") @map("tax_nature") // "allowable" | "non_allowable" | "partially_allowable" | "unknown"
+  userId           String?             @map("user_id") // null = global default, set = user custom
+  taxRegime        String              @default("universal") @map("tax_regime") // "hmrc" | "companies_house" | "universal"
+  hmrcMapping      HMRCMapping         @default(none) @map("hmrc_mapping")
+  chMapping        String?             @map("ch_mapping") // Companies House P&L / CT600 mapping
+  costType         String              @default("variable") @map("cost_type") // "fixed" | "variable" | "mixed"
+  isDefault        Boolean             @default(false) @map("is_default")
+  defaultDeductibilityPercent Int      @default(0) @map("default_deductibility_percent") // 0-100: % that is tax deductible
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  parent           Category?           @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children         Category[]          @relation("CategoryHierarchy")
+  bills            Bill[]
+  invoices         Invoice[]
+  budgets          Budget[]
+  bankTransactions BankTransaction[]
+  categorizationRules CategorizationRule[]
+  recurringTransfers  RecurringTransfer[]
+  user             User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  categoryId  String   @map("category_id")
+  userId      String?  @map("user_id")
+  amount      Float
+  period      String   @default("monthly")
+  alertAt     Float    @default(80) @map("alert_at")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, period, userId])
+  @@index([userId])
+  @@map("budgets")
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  fileName        String        @map("file_name")
+  cloudStoragePath String       @map("cloud_storage_path")
+  isPublic        Boolean       @default(false) @map("is_public")
+  status          InvoiceStatus @default(pending)
+  providerName    String?       @map("provider_name")
+  invoiceNumber   String?       @map("invoice_number")
+  invoiceDate     DateTime?     @map("invoice_date")
+  dueDate         DateTime?     @map("due_date")
+  amount          Float?
+  currency        String        @default("GBP")
+  categoryId      String?       @map("category_id")
+  userId          String?       @map("user_id")
+  entityId        String?       @map("entity_id")
+  expenseType     ExpenseType?  @map("expense_type")
+  description     String?
+  extractedData   Json?         @map("extracted_data")
+  errorMessage    String?       @map("error_message")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  processedAt     DateTime?     @map("processed_at")
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity          Entity?       @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([userId])
+  @@index([entityId])
+  @@index([invoiceDate])
+  @@map("invoices")
+}
+
+model Provider {
+  id          String       @id @default(cuid())
+  name        String
+  type        ProviderType
+  logoUrl     String?      @map("logo_url")
+  contactInfo String?      @map("contact_info")
+  userId      String?      @map("user_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  accounts    Account[]
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("providers")
+}
+
+model Account {
+  id             String          @id @default(cuid())
+  providerId     String          @map("provider_id")
+  entityId       String?         @map("entity_id")
+  accountName    String          @map("account_name")
+  accountNumber  String?         @map("account_number")
+  accountType    AccountType     @map("account_type")
+  balance        Float           @default(0)
+  currency       String          @default("GBP")
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  provider       Provider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  entity         Entity?         @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  bills          Bill[]
+  bankStatements BankStatement[]
+
+  @@index([providerId])
+  @@index([entityId])
+  @@map("accounts")
+}
+
+model Bill {
+  id           String        @id @default(cuid())
+  accountId    String?       @map("account_id")
+  userId       String?       @map("user_id")
+  billName     String        @map("bill_name")
+  iconUrl      String?       @map("icon_url")
+  amount       Float
+  currency     String        @default("GBP")
+  frequency    BillFrequency
+  dueDay       Int           @map("due_day")
+  categoryId   String?       @map("category_id")
+  entityId     String?       @map("entity_id")
+  expenseType  ExpenseType   @default(recurring) @map("expense_type")
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  account      Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity       Entity?       @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([userId])
+  @@index([entityId])
+  @@index([dueDay])
+  @@map("bills")
+}
+
+model Action {
+  id          String         @id @default(cuid())
+  actionType  ActionType     @map("action_type")
+  title       String
+  description String?
+  status      ActionStatus   @default(pending)
+  priority    ActionPriority @default(medium)
+  dueDate     DateTime?      @map("due_date")
+  userId      String?        @map("user_id")
+  createdBy   String?        @map("created_by")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  completedAt DateTime?      @map("completed_at")
+  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([priority])
+  @@index([userId])
+  @@index([dueDate])
+  @@map("actions")
+}
+
+model Event {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  eventType  String   @map("event_type")
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  occurredAt DateTime @default(now()) @map("occurred_at")
+  payload    Json?
+  readAt     DateTime? @map("read_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([entityType])
+  @@index([occurredAt])
+  @@index([readAt])
+  @@map("events")
+}
+
+model BankStatement {
+  id               String       @id @default(cuid())
+  accountId        String?      @map("account_id")
+  userId           String?      @map("user_id")
+  entityId         String?      @map("entity_id")
+  fileName         String       @map("file_name")
+  cloudStoragePath String       @map("cloud_storage_path")
+  statementDate    DateTime     @default(now()) @map("statement_date")
+  periodStart      DateTime?    @map("period_start")
+  periodEnd        DateTime?    @map("period_end")
+  totalCredits     Float        @default(0) @map("total_credits")
+  totalDebits      Float        @default(0) @map("total_debits")
+  openingBalance   Float?       @map("opening_balance")
+  closingBalance   Float?       @map("closing_balance")
+  extractedText    String?      @map("extracted_text")
+  parseStatus      ParseStatus  @default(needs_review) @map("parse_status")
+  parseError       String?      @map("parse_error")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  account          Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  user             User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity           Entity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  transactions     BankTransaction[]
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([entityId])
+  @@index([statementDate])
+  @@index([parseStatus])
+  @@map("bank_statements")
+}
+
+model BankTransaction {
+  id                  String          @id @default(cuid())
+  statementId         String          @map("statement_id")
+  date                DateTime
+  description         String
+  cleanDescription    String?         @map("clean_description")
+  reference           String?
+  amount              Float
+  type                TransactionType
+  balance             Float?
+  categoryId          String?         @map("category_id")
+  suggestedCategoryId String?         @map("suggested_category_id")
+  hmrcMapping         HMRCMapping?    @map("hmrc_mapping")
+  isTaxDeductible     Boolean         @default(false) @map("is_tax_deductible")
+  appliedDeductibilityPercent Int?    @map("applied_deductibility_percent") // Override category default (0-100)
+  confidenceScore     Float?          @map("confidence_score")
+  aiReasoning         String?         @map("ai_reasoning")
+  needsReview         Boolean         @default(true) @map("needs_review")
+  isApproved          Boolean         @default(false) @map("is_approved") // User confirmed this is correct
+  notes               String?
+  isReconciled        Boolean         @default(false) @map("is_reconciled")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  statement           BankStatement   @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  category            Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([statementId, date, description, amount])
+  @@index([statementId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([needsReview])
+  @@map("bank_transactions")
+}
+
+model TaxpayerProfile {
+  id                     String   @id @default(cuid())
+  userId                 String?  @unique @map("user_id")
+  // Personal/Individual Details
+  fullName               String?  @map("full_name")
+  dateOfBirth            DateTime? @map("date_of_birth")
+  nationalInsuranceNumber String? @map("national_insurance_number")
+  utr                    String?  // Unique Taxpayer Reference (10 digits)
+  // Address
+  addressLine1           String?  @map("address_line_1")
+  addressLine2           String?  @map("address_line_2")
+  city                   String?
+  postcode               String?
+  country                String?  @default("United Kingdom")
+  residencyStatus        String?  @map("residency_status") // UK Resident / Non-Resident
+  // Company Details (if applicable)
+  companyName            String?  @map("company_name")
+  tradingName            String?  @map("trading_name")
+  companyRegistrationNumber String? @map("company_registration_number")
+  companyUtr             String?  @map("company_utr")
+  vatRegistrationNumber  String?  @map("vat_registration_number")
+  registeredAddress      String?  @map("registered_address")
+  tradingAddress         String?  @map("trading_address")
+  accountingPeriodStart  DateTime? @map("accounting_period_start")
+  accountingPeriodEnd    DateTime? @map("accounting_period_end")
+  // Agent/Accountant Details
+  agentName              String?  @map("agent_name")
+  agentReferenceNumber   String?  @map("agent_reference_number")
+  agentUtr               String?  @map("agent_utr")
+  agentEmail             String?  @map("agent_email")
+  agentPhone             String?  @map("agent_phone")
+  hasAgentAuthority      Boolean  @default(false) @map("has_agent_authority")
+  // Settings
+  accountingBasis        String?  @map("accounting_basis") // Cash Basis / Accruals Basis
+  isVatRegistered        Boolean  @default(false) @map("is_vat_registered")
+  vatScheme              String?  @map("vat_scheme") // Standard / Flat Rate
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+  user                   User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("taxpayer_profiles")
+}
+
+model Property {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  name          String   // e.g. "123 High Street" or "Investment Flat"
+  type          String   @default("residential") // residential, buy_to_let, commercial, holiday_let
+  address       String?
+  postcode      String?
+  purchasePrice Float?   @map("purchase_price")
+  purchaseDate  DateTime? @map("purchase_date")
+  currentValue  Float?   @map("current_value")
+  mortgageBalance Float? @map("mortgage_balance")
+  mortgageRate  Float?   @map("mortgage_rate") // annual % rate
+  mortgageType  String?  @map("mortgage_type") // fixed, variable, tracker
+  monthlyPayment Float?  @map("monthly_payment")
+  rentalIncome  Float?   @map("rental_income") // monthly
+  isActive      Boolean  @default(true) @map("is_active")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("properties")
+}
+
+model RecurringTransfer {
+  id            String        @id @default(cuid())
+  userId        String        @map("user_id")
+  name          String
+  type          String        @default("standing_order") // standing_order, direct_debit, scheduled_transfer
+  fromAccount   String?       @map("from_account")
+  toAccount     String?       @map("to_account")
+  toName        String?       @map("to_name")
+  reference     String?
+  amount        Float
+  currency      String        @default("GBP")
+  frequency     BillFrequency
+  dayOfMonth    Int?          @map("day_of_month")
+  startDate     DateTime?     @map("start_date")
+  endDate       DateTime?     @map("end_date")
+  isActive      Boolean       @default(true) @map("is_active")
+  categoryId    String?       @map("category_id")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("recurring_transfers")
+}
+
+// Authentication & Authorization Models
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  passwordHash      String      @map("password_hash")
+  fullName          String      @map("full_name")
+  role              UserRole    @default(user)
+  status            UserStatus  @default(pending_verification)
+  emailVerified     Boolean     @default(false) @map("email_verified")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  lastLoginAt       DateTime?   @map("last_login_at")
+  phone             String?
+  dateOfBirth       DateTime?   @map("date_of_birth")
+  employmentStatus  String?     @map("employment_status")
+  businessName      String?     @map("business_name")
+  businessType      String?     @map("business_type")
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  locale            String      @default("en")
+  stripeCustomerId  String?     @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  plan              String      @default("free")
+  planExpiresAt     DateTime?   @map("plan_expires_at")
+  permissions       String[]    @default([])
+  logoUrl           String?     @map("logo_url")
+  idVerified        Boolean     @default(false) @map("id_verified")
+  idVerifiedAt      DateTime?   @map("id_verified_at")
+  idVerificationId  String?     @map("id_verification_id")
+  idVerificationData Json?      @map("id_verification_data")
+  amlScreenedAt     DateTime?   @map("aml_screened_at")
+  amlRiskLevel      String?     @map("aml_risk_level")
+  identityChecks    IdentityCheck[]
+  memberships       Membership[]
+  ownedHouseholds   Household[] @relation("HouseholdOwner")
+  ownedBusinesses   Business[]  @relation("BusinessOwner")
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  taxpayerProfile   TaxpayerProfile?
+  providers         Provider[]
+  bankStatements    BankStatement[]
+  invoices          Invoice[]
+  bills             Bill[]
+  actions           Action[]
+  budgets           Budget[]
+  lifeEvents        LifeEvent[]
+  scannedDocuments  ScannedDocument[]
+  invoiceTemplates  InvoiceTemplate[]
+  vaultEntries      VaultEntry[]
+  events            Event[]
+  entities          Entity[]
+  sharedLinks       SharedLink[]
+  entityHistory     EntityHistory[] @relation("EntityHistoryUser")
+  recurringTransfers RecurringTransfer[]
+  properties        Property[]
+  categories        Category[]
+  savingsGoals      SavingsGoal[]
+  debts             Debt[]
+  categorizationRules CategorizationRule[] @relation("UserCategorizationRules")
+  categorizationFeedback CategorizationFeedback[] @relation("UserCategorizationFeedback")
+  categorizationMode String @default("smart") @map("categorization_mode") // "conservative" | "smart" | "autonomous"
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model IdentityCheck {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  provider    String    @default("yoti")
+  type        String    // "idv", "aml", "esign"
+  sessionId   String?   @map("session_id")
+  status      String    @default("pending") // "pending", "completed", "failed", "expired"
+  result      Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@map("identity_checks")
+}
+
+model VerificationLink {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  createdById   String    @map("created_by_id")
+  clientName    String    @map("client_name")
+  clientEmail   String?   @map("client_email")
+  companyName   String?   @map("company_name")
+  sessionId     String?   @map("session_id")
+  status        String    @default("pending") // "pending", "started", "completed", "failed", "expired"
+  result        Json?
+  expiresAt     DateTime  @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  completedAt   DateTime? @map("completed_at")
+
+  @@index([token])
+  @@index([createdById])
+  @@map("verification_links")
+}
+
+model Household {
+  id          String       @id @default(cuid())
+  name        String
+  ownerId     String       @map("owner_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  owner       User         @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@index([ownerId])
+  @@map("households")
+}
+
+model Business {
+  id          String       @id @default(cuid())
+  name        String
+  ownerId     String       @map("owner_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  owner       User         @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@index([ownerId])
+  @@map("businesses")
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  userId      String         @map("user_id")
+  householdId String?        @map("household_id")
+  businessId  String?        @map("business_id")
+  role        MembershipRole @default(viewer)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household   Household?     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  business    Business?      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, householdId])
+  @@unique([userId, businessId])
+  @@index([userId])
+  @@index([householdId])
+  @@index([businessId])
+  @@map("memberships")
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  email       String
+  householdId String?          @map("household_id")
+  businessId  String?          @map("business_id")
+  role        MembershipRole   @default(viewer)
+  status      InvitationStatus @default(pending)
+  invitedBy   String           @map("invited_by")
+  token       String           @unique @default(cuid())
+  expiresAt   DateTime         @map("expires_at")
+  acceptedAt  DateTime?        @map("accepted_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  household   Household?       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  business    Business?        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@index([householdId])
+  @@index([businessId])
+  @@map("invitations")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model SharedLink {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  token       String   @unique @default(cuid())
+  label       String   // e.g. "My Accountant - John Smith"
+  scope       String[] @default(["reports", "categories", "bills"]) // which sections are visible
+  expiresAt   DateTime? @map("expires_at")
+  isActive    Boolean  @default(true) @map("is_active")
+  lastUsedAt  DateTime? @map("last_used_at")
+  accessCount Int      @default(0) @map("access_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("shared_links")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+model InvoiceTemplate {
+  id              String   @id @default(cuid())
+  name            String   // Template name for easy identification
+  userId          String?  @map("user_id")
+  isDefault       Boolean  @default(false) @map("is_default")
+  
+  // Business/Company Details
+  businessName    String   @map("business_name")
+  businessAddress String?  @map("business_address")
+  businessEmail   String?  @map("business_email")
+  businessPhone   String?  @map("business_phone")
+  vatNumber       String?  @map("vat_number")
+  companyNumber   String?  @map("company_number")
+  logoUrl         String?  @map("logo_url")
+  
+  // Bank Details
+  bankName        String?  @map("bank_name")
+  accountName     String?  @map("account_name")
+  sortCode        String?  @map("sort_code")
+  accountNumber   String?  @map("account_number")
+  iban            String?
+  bic             String?
+  
+  // Invoice Defaults
+  currency        String   @default("GBP")
+  vatRate         Float?   @default(20) @map("vat_rate")
+  paymentTerms    Int      @default(30) @map("payment_terms")
+  footerNotes     String?  @map("footer_notes")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("invoice_templates")
+}
+
+// 4-Layer Categorization Engine — Rules & Feedback
+model CategorizationRule {
+  id              String        @id @default(cuid())
+  userId          String?       @map("user_id")       // null = global rule
+  entityId        String?       @map("entity_id")     // entity-specific
+  keyword         String                              // pattern text
+  matchType       RuleMatchType @default(contains) @map("match_type")
+  patternField    String        @default("description") @map("pattern_field") // "description" | "merchant" | "iban" | "sortcode" | "reference"
+  transactionType String?       @map("transaction_type") // "credit" | "debit" | null (both)
+  categoryId      String        @map("category_id")
+  hmrcMapping     HMRCMapping   @default(none) @map("hmrc_mapping")
+  isTaxDeductible Boolean       @default(false) @map("is_tax_deductible")
+  confidence      Float         @default(1.0)         // 0.0-1.0
+  autoApprove     Boolean       @default(true) @map("auto_approve")
+  priority        Int           @default(0)           // higher = checked first
+  source          String        @default("manual")    // "manual" | "system" | "auto_learned"
+  description     String?                             // human-readable explanation
+  isActive        Boolean       @default(true) @map("is_active")
+  learnedFrom     String?       @map("learned_from")
+  usageCount      Int           @default(0) @map("usage_count")
+  lastUsedAt      DateTime?     @map("last_used_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user            User?         @relation("UserCategorizationRules", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([keyword, matchType, userId, entityId])
+  @@index([keyword])
+  @@index([categoryId])
+  @@index([userId])
+  @@index([isActive, priority])
+  @@map("categorization_rules")
+}
+
+model CategorizationFeedback {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  entityId          String?  @map("entity_id")
+  transactionId     String?  @map("transaction_id") // BankTransaction id
+  transactionText   String   @map("transaction_text")
+  merchantName      String?  @map("merchant_name")
+  amount            Float?
+  suggestedCategory String   @map("suggested_category") // category name AI/rule suggested
+  suggestedCategoryId String? @map("suggested_category_id")
+  finalCategory     String   @map("final_category")     // category name user chose
+  finalCategoryId   String   @map("final_category_id")
+  source            String   @default("user_correction") // "user_correction" | "user_confirm"
+  autoRuleCreated   Boolean  @default(false) @map("auto_rule_created")
+  createdAt         DateTime @default(now()) @map("created_at")
+  user              User     @relation("UserCategorizationFeedback", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([transactionText])
+  @@index([merchantName])
+  @@map("categorization_feedback")
+}
+
+// Life Event Orchestrator
+model LifeEvent {
+  id           String            @id @default(cuid())
+  userId       String?           @map("user_id")
+  eventType    LifeEventType     @map("event_type")
+  title        String
+  description  String?
+  eventDate    DateTime          @map("event_date")
+  details      Json?             // Store event-specific details (from/to address, etc.)
+  status       String            @default("active") // active, completed, cancelled
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  user         User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks        LifeEventTask[]
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([eventDate])
+  @@index([status])
+  @@map("life_events")
+}
+
+model LifeEventTask {
+  id               String              @id @default(cuid())
+  lifeEventId      String              @map("life_event_id")
+  title            String
+  description      String              @db.Text
+  providerCategory String              @map("provider_category") // government, utilities, tax, bank, etc.
+  priority         TaskPriority        @default(medium)
+  status           LifeEventTaskStatus @default(pending)
+  dueOffsetDays    Int                 @default(0) @map("due_offset_days") // Relative to event date
+  dueDate          DateTime?           @map("due_date")
+  completedAt      DateTime?           @map("completed_at")
+  referenceUrl     String?             @map("reference_url") // gov.uk link, etc.
+  notes            String?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  lifeEvent        LifeEvent           @relation(fields: [lifeEventId], references: [id], onDelete: Cascade)
+
+  @@index([lifeEventId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("life_event_tasks")
+}
+
+// Secure Credentials Vault
+enum VaultCategory {
+  banking
+  utilities
+  government
+  insurance
+  subscriptions
+  tax
+  healthcare
+  education
+  housing
+  transport
+  other
+}
+
+model VaultEntry {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  title           String
+  category        VaultCategory @default(other)
+  // Encrypted fields (stored as encrypted strings)
+  username        String?
+  passwordEnc     String?       @map("password_enc")
+  notes           String?       @db.Text
+  // Reference numbers
+  referenceNumber String?       @map("reference_number")
+  accountNumber   String?       @map("account_number")
+  sortCode        String?       @map("sort_code")
+  // Metadata
+  websiteUrl      String?       @map("website_url")
+  phoneNumber     String?       @map("phone_number")
+  email           String?
+  tags            String[]      @default([])
+  isFavorite      Boolean       @default(false) @map("is_favorite")
+  lastAccessedAt  DateTime?     @map("last_accessed_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@index([isFavorite])
+  @@map("vault_entries")
+}
+
+// Capture & Classify - Scanned Document System
+model ScannedDocument {
+  id                 String         @id @default(cuid())
+  userId             String?        @map("user_id")
+  entityId           String?        @map("entity_id")
+  // Image Storage
+  cloudStoragePath   String         @map("cloud_storage_path")
+  isPublic           Boolean        @default(false) @map("is_public")
+  fileName           String         @map("file_name")
+  // AI Extracted Data
+  senderName         String?        @map("sender_name")
+  documentType       DocumentType   @default(other) @map("document_type")
+  summary            String?
+  actionRequired     Boolean        @default(false) @map("action_required")
+  suggestedTaskTitle String?        @map("suggested_task_title")
+  // Financial Data
+  amountDue          Float?         @map("amount_due")
+  currency           String         @default("GBP")
+  dueDate            DateTime?      @map("due_date")
+  issueDate          DateTime?      @map("issue_date")
+  // Extracted References
+  accountNumber      String?        @map("account_number")
+  sortCode           String?        @map("sort_code")
+  bankAccountNumber  String?        @map("bank_account_number")
+  referenceNumber    String?        @map("reference_number")
+  // Processing Status
+  status             DocumentStatus @default(pending)
+  confidenceScore    Float?         @map("confidence_score")
+  rawExtraction      Json?          @map("raw_extraction") // Full AI response
+  // Linked Records (created from this document)
+  linkedBillId       String?        @map("linked_bill_id")
+  linkedActionId     String?        @map("linked_action_id")
+  // Metadata
+  tags               String[]       @default([])
+  notes              String?
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  processedAt        DateTime?      @map("processed_at")
+  user               User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity             Entity?        @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([senderName])
+  @@index([documentType])
+  @@index([status])
+  @@index([dueDate])
+  @@map("scanned_documents")
+}
+
+model ExternalIntegration {
+  id            String   @id @default(cuid())
+  name          String                              // e.g. "Clinic System"
+  slug          String   @unique                    // e.g. "clinic"
+  baseUrl       String   @map("base_url")           // e.g. "http://localhost:3001/api"
+  apiKey        String   @map("api_key")            // encrypted API key
+  entityId      String?  @map("entity_id")          // Associated entity/company
+  isActive      Boolean  @default(true) @map("is_active")
+  lastSyncAt    DateTime? @map("last_sync_at")
+  syncStatus    String?  @map("sync_status")        // success | error | syncing
+  syncError     String?  @map("sync_error")
+  config        Json?                               // additional config (mapping rules, etc.)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([entityId])
+  @@map("external_integrations")
+}
+
+model GovernmentConnection {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  entityId          String?   @map("entity_id")         // linked entity (company or individual)
+  provider          String                               // "companies_house" | "hmrc"
+  // OAuth 2.0 tokens
+  accessToken       String    @map("access_token")
+  refreshToken      String?   @map("refresh_token")
+  tokenExpiresAt    DateTime? @map("token_expires_at")
+  scope             String?                              // granted scopes
+  // Provider-specific identifiers
+  companyNumber     String?   @map("company_number")     // CH: company number
+  authCode          String?   @map("auth_code")          // CH: company authentication code (encrypted)
+  govGatewayId      String?   @map("gov_gateway_id")     // HMRC: Government Gateway user ID
+  // Connection status
+  status            String    @default("active")         // active | expired | revoked | error
+  lastSyncAt        DateTime? @map("last_sync_at")
+  lastError         String?   @map("last_error")
+  // Cached profile data from provider
+  profileData       Json?     @map("profile_data")       // cached company/taxpayer data from API
+  // Metadata
+  connectedAt       DateTime  @default(now()) @map("connected_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, entityId, provider])
+  @@index([userId])
+  @@index([entityId])
+  @@index([provider])
+  @@map("government_connections")
+}
+
+model GovernmentFiling {
+  id                String    @id @default(cuid())
+  connectionId      String    @map("connection_id")
+  userId            String    @map("user_id")
+  entityId          String?   @map("entity_id")
+  provider          String                               // "companies_house" | "hmrc"
+  filingType        String    @map("filing_type")        // e.g. "change_registered_office", "confirmation_statement", "sa_return", "vat_return"
+  reference         String?                              // filing reference from provider
+  status            String    @default("draft")          // draft | submitted | accepted | rejected | processing
+  submittedAt       DateTime? @map("submitted_at")
+  acceptedAt        DateTime? @map("accepted_at")
+  rejectedReason    String?   @map("rejected_reason")
+  formData          Json?     @map("form_data")          // the actual form data submitted
+  responseData      Json?     @map("response_data")      // response from provider
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([connectionId])
+  @@index([userId])
+  @@index([entityId])
+  @@index([provider, filingType])
+  @@map("government_filings")
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(cuid())
+  name          String   @unique                    // e.g. "free", "pro", "business"
+  displayName   String   @map("display_name")       // e.g. "Free", "Pro", "Business"
+  price         Float    @default(0)                // monthly price in GBP
+  interval      String   @default("monthly")        // monthly | yearly
+  features      Json?                               // array of feature strings
+  limits        Json?                               // { statements: 3, invoices: 5, vault: 10, ... }
+  isActive      Boolean  @default(true) @map("is_active")
+  isDefault     Boolean  @default(false) @map("is_default") // assigned to new users
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("subscription_plans")
+}
+
+model AccountantClient {
+  id              String   @id @default(cuid())
+  accountantId    String   @map("accountant_id")
+  clientId        String?  @map("client_id")       // null until client accepts
+  clientEmail     String   @map("client_email")
+  status          String   @default("pending")      // pending | active | revoked
+  permissions     String[] @default(["view_reports", "view_statements", "view_invoices", "view_bills", "view_entities", "view_categories", "view_documents"])
+  label           String?                            // e.g. "John Smith - Sole Trader"
+  inviteToken     String   @unique @default(cuid()) @map("invite_token")
+  invitedAt       DateTime @default(now()) @map("invited_at")
+  acceptedAt      DateTime? @map("accepted_at")
+  revokedAt       DateTime? @map("revoked_at")
+  lastAccessedAt  DateTime? @map("last_accessed_at")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([accountantId, clientEmail])
+  @@index([accountantId])
+  @@index([clientId])
+  @@index([inviteToken])
+  @@index([status])
+  @@map("accountant_clients")
+}
+
+model SavingsGoal {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  name          String
+  targetAmount  Float    @map("target_amount")
+  currentAmount Float    @default(0) @map("current_amount")
+  deadline      DateTime?
+  icon          String?
+  color         String?
+  isCompleted   Boolean  @default(false) @map("is_completed")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("savings_goals")
+}
+
+model Debt {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  name            String
+  type            String   @default("loan") // loan, credit_card, mortgage, student_loan, overdraft, other
+  totalAmount     Float    @map("total_amount")
+  remainingAmount Float    @map("remaining_amount")
+  interestRate    Float?   @map("interest_rate") // annual %
+  monthlyPayment  Float?   @map("monthly_payment")
+  lender          String?
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  isActive        Boolean  @default(true) @map("is_active")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("debts")
+}
+
+model ApiCredential {
+  id          String   @id @default(cuid())
+  provider    String   // "companies_house" | "hmrc" | "gemini" | "abacus" | "clinic" | "stripe" | "custom"
+  label       String   // Human-readable label e.g. "REST API Key"
+  keyName     String   @map("key_name") // e.g. "COMPANIES_HOUSE_API_KEY"
+  value       String   // AES-256-GCM encrypted
+  category    String   @default("api_key") // "api_key" | "oauth_client_id" | "oauth_secret" | "redirect_uri" | "endpoint" | "auth_code" | "other"
+  notes       String?
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([provider, keyName])
+  @@index([provider])
+  @@map("api_credentials")
+}
+
+model LandingPageSection {
+  id          String   @id @default(cuid())
+  sectionKey  String   @unique @map("section_key") // hero, features, howItWorks, pricing, faq, cta, footer, meta
+  title       String?
+  subtitle    String?
+  content     Json?    // flexible JSON for section-specific data (features list, FAQ items, etc.)
+  imageUrl    String?  @map("image_url")
+  isPublished Boolean  @default(true) @map("is_published")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("landing_page_sections")
+}
+
+model BankConnection {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  accountId       String?   @map("account_id")   // Link to Account model
+  entityId        String?   @map("entity_id")
+  provider        String    @default("truelayer") // truelayer, plaid, etc.
+  bankName        String?   @map("bank_name")
+  accessToken     String?   @map("access_token")
+  refreshToken    String?   @map("refresh_token")
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  consentToken    String?   @map("consent_token")
+  truelayerAccountId String? @map("truelayer_account_id")
+  status          String    @default("pending") // pending, active, expired, revoked, error
+  lastSyncAt      DateTime? @map("last_sync_at")
+  lastSyncError   String?   @map("last_sync_error")
+  syncFrequency   String    @default("daily") // daily, manual
+  autoCategories  Boolean   @default(true) @map("auto_categories")
+  metadata        Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([status])
+  @@map("bank_connections")
+}
+
+// ==================== ENTITY HISTORY & DOCUMENTS ====================
+
+enum EntityHistoryType {
+  note
+  correspondence
+  filing
+  document
+  officer_change
+  address_change
+  deadline
+  financial
+  legal
+  other
+}
+
+model EntityHistory {
+  id            String            @id @default(cuid())
+  entityId      String            @map("entity_id")
+  userId        String            @map("user_id")
+  type          EntityHistoryType @default(note)
+  title         String
+  description   String?
+  date          DateTime          @default(now())
+  // Document attachment
+  fileUrl       String?           @map("file_url")
+  fileName      String?           @map("file_name")
+  fileSize      Int?              @map("file_size")
+  fileMimeType  String?           @map("file_mime_type")
+  // Metadata
+  metadata      Json?             // flexible extra data (e.g. filing ref, officer name, old/new address)
+  tags          String[]          @default([])
+  isPinned      Boolean           @default(false) @map("is_pinned")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  // Relations
+  entity        Entity            @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  user          User              @relation("EntityHistoryUser", fields: [userId], references: [id])
+
+  @@index([entityId])
+  @@index([userId])
+  @@index([type])
+  @@index([date])
+  @@map("entity_history")
+}
