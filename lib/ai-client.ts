@@ -1,19 +1,38 @@
-// Unified AI Client - Gemini primary, Abacus AI fallback
+/**
+ * Unified AI Client for HomeLedger.
+ * Supports Gemini 2.0 Flash (primary) and Abacus AI (fallback).
+ * Provides automatic failover between providers.
+ * @module ai-client
+ */
 
+/** A single message in the AI conversation. */
 interface ChatMessage {
+  /** The role of the message sender. `'system'` sets the AI persona. */
   role: 'system' | 'user' | 'assistant';
+  /** The text content of the message. */
   content: string;
 }
 
+/** Response from an AI provider. */
 interface AIResponse {
+  /** The generated text content. */
   content: string;
+  /** Which AI provider generated the response. */
   provider: 'gemini' | 'abacus';
+  /** Token usage metadata (provider-specific format). */
   usage?: any;
 }
 
-const AI_TIMEOUT_MS = 90_000; // 90 seconds
+/** Maximum time to wait for an AI response before aborting (90 seconds). */
+const AI_TIMEOUT_MS = 90_000;
 
-// Gemini API call
+/**
+ * Call Google Gemini 2.0 Flash API.
+ * @param messages - Conversation messages (system prompt extracted as `systemInstruction`)
+ * @param options - Generation config: `maxTokens` (default 4000), `temperature` (default 0.7)
+ * @returns AI response with content and provider metadata
+ * @throws Error if `GEMINI_API_KEY` is not configured or API returns an error
+ */
 async function callGemini(messages: ChatMessage[], options?: { maxTokens?: number; temperature?: number }): Promise<AIResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
@@ -75,7 +94,13 @@ async function callGemini(messages: ChatMessage[], options?: { maxTokens?: numbe
   }
 }
 
-// Abacus AI call (existing fallback)
+/**
+ * Call Abacus AI API (OpenAI-compatible endpoint).
+ * @param messages - Conversation messages in OpenAI format
+ * @param options - Generation config: `maxTokens`, `temperature`, `model` (default `'gpt-4.1-mini'`)
+ * @returns AI response with content and provider metadata
+ * @throws Error if `ABACUSAI_API_KEY` is not configured or API returns an error
+ */
 async function callAbacus(messages: ChatMessage[], options?: { maxTokens?: number; temperature?: number; model?: string }): Promise<AIResponse> {
   const apiKey = process.env.ABACUSAI_API_KEY;
   if (!apiKey) throw new Error('ABACUSAI_API_KEY not configured');
@@ -122,7 +147,30 @@ async function callAbacus(messages: ChatMessage[], options?: { maxTokens?: numbe
   }
 }
 
-// Main AI function: tries Gemini first, falls back to Abacus
+/**
+ * Main AI function with automatic failover.
+ *
+ * Default order: Gemini → Abacus fallback.
+ * Set `preferAbacus: true` for Abacus → Gemini fallback.
+ *
+ * @param messages - Array of chat messages (system, user, assistant)
+ * @param options - Configuration options
+ * @param options.maxTokens - Maximum tokens to generate (default 4000)
+ * @param options.temperature - Sampling temperature 0.0-1.0 (default 0.7)
+ * @param options.preferAbacus - If true, try Abacus first instead of Gemini
+ * @returns AI response with generated content and provider info
+ * @throws Error if all providers fail
+ *
+ * @example
+ * ```ts
+ * const response = await callAI(
+ *   [{ role: 'user', content: 'What is double-entry bookkeeping?' }],
+ *   { maxTokens: 2000, temperature: 0.3 }
+ * );
+ * console.log(response.content); // "Double-entry bookkeeping is..."
+ * console.log(response.provider); // "gemini" or "abacus"
+ * ```
+ */
 export async function callAI(
   messages: ChatMessage[],
   options?: { maxTokens?: number; temperature?: number; preferAbacus?: boolean }

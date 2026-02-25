@@ -4,7 +4,7 @@
  * Admin users always have ALL permissions. Empty permissions array = all permissions (owner/admin default).
  */
 
-// All available permission keys — each maps to a sidebar item and route
+/** All available permission keys — each maps to a sidebar item and route in the application. */
 export const ALL_PERMISSIONS = [
   'dashboard',
   'household',
@@ -34,7 +34,7 @@ export const ALL_PERMISSIONS = [
 
 export type PermissionKey = typeof ALL_PERMISSIONS[number];
 
-// Map sidebar href → permission key
+/** Maps sidebar href paths to their corresponding permission key for route-level access control. */
 export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/dashboard': 'dashboard',
   '/household': 'household',
@@ -62,7 +62,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/settings': 'settings',
 };
 
-// Permission labels for admin UI
+/** Human-readable labels for each permission key, used in the admin UI permission grid. */
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   dashboard: 'Dashboard',
   household: 'Household',
@@ -90,7 +90,13 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   settings: 'Settings',
 };
 
-// Default plan permissions
+/**
+ * Default permission sets for each subscription plan.
+ * - `free`: Basic features (8 permissions)
+ * - `starter`: Core features (16 permissions)
+ * - `pro`: All features
+ * - `enterprise`: All features
+ */
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
   free: ['dashboard', 'statements', 'categories', 'settings', 'learn', 'academy', 'relocation', 'services'],
   starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn', 'academy', 'relocation', 'services'],
@@ -100,9 +106,23 @@ export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
 
 /**
  * Check if a user has a specific permission.
- * - Admin role always has all permissions
- * - Empty permissions array = all permissions (backward compat / owner default)
- * - Otherwise check if permission is in the user's permissions array
+ *
+ * @param userRole - The user's role (`'admin'`, `'accountant'`, `'user'`)
+ * @param userPermissions - Array of permission keys assigned to the user
+ * @param permission - The permission key to check
+ * @returns `true` if the user has the permission
+ *
+ * @remarks
+ * - Admin role always returns `true` regardless of permissions array
+ * - Empty or null permissions array grants all permissions (backward compat for existing owners)
+ * - Otherwise checks if the specific permission is in the user's array
+ *
+ * @example
+ * ```ts
+ * hasPermission('admin', [], 'vault') // true (admin always has access)
+ * hasPermission('user', [], 'vault')  // true (empty = all access)
+ * hasPermission('user', ['dashboard', 'statements'], 'vault') // false
+ * ```
  */
 export function hasPermission(
   userRole: string,
@@ -120,6 +140,17 @@ export function hasPermission(
 
 /**
  * Check if a user can access a given route path.
+ *
+ * @param userRole - The user's role
+ * @param userPermissions - Array of permission keys assigned to the user
+ * @param pathname - The route pathname to check (e.g. `'/academy'`, `'/reports'`)
+ * @returns `true` if the user can access the route
+ *
+ * @remarks
+ * - `/admin/*` routes require `'admin'` role
+ * - `/accountant/*` routes require `'accountant'` or `'admin'` role
+ * - Routes not in `ROUTE_PERMISSION_MAP` are unrestricted
+ * - Sub-routes inherit the parent route's permission (e.g. `/statements/upload` → `statements`)
  */
 export function canAccessRoute(
   userRole: string,
@@ -144,7 +175,10 @@ export function canAccessRoute(
 }
 
 /**
- * Get the list of permissions for a given plan.
+ * Get the list of permissions for a given subscription plan.
+ *
+ * @param plan - The plan name (`'free'`, `'starter'`, `'pro'`, `'enterprise'`)
+ * @returns Array of permission keys for the plan. Falls back to `free` plan for unknown names.
  */
 export function getPermissionsForPlan(plan: string): PermissionKey[] {
   return PLAN_PERMISSIONS[plan] || PLAN_PERMISSIONS.free;

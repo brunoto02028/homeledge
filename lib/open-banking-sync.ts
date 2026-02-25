@@ -8,8 +8,18 @@ import {
 import { callAI } from '@/lib/ai-client';
 
 /**
- * Get or create a monthly statement for a bank connection.
- * One statement per bank per month — never duplicated.
+ * Get or create a monthly bank statement for a connection.
+ *
+ * Ensures one statement per bank per entity per month. Uses entity-scoped
+ * filenames (e.g. `MONZO-cmm0lcy2-2025-07.json`) to prevent cross-entity mixing.
+ *
+ * @param bankName - Display name of the bank (e.g. `'MONZO'`, `'HSBC'`)
+ * @param month - Month in `YYYY-MM` format
+ * @param userId - Owner user ID
+ * @param accountId - Linked Account ID (nullable)
+ * @param entityId - Entity ID for entity-scoped statements (nullable)
+ * @param connId - BankConnection ID for the cloud storage path
+ * @returns Statement ID (existing or newly created)
  */
 export async function getOrCreateMonthlyStatement(
   bankName: string,
@@ -66,8 +76,15 @@ export async function getOrCreateMonthlyStatement(
 }
 
 /**
- * Ensure the BankConnection has an Account linked.
- * If not, auto-create one under a matching Provider.
+ * Ensure the BankConnection has a linked Account record.
+ *
+ * If no Account exists, auto-creates a Provider (if needed) and an Account
+ * under it. Updates the BankConnection with the new `accountId`.
+ *
+ * @param conn - The BankConnection record (must have `id`, `accountId`, `entityId`)
+ * @param bankName - Display name of the bank for the Provider record
+ * @param userId - Owner user ID
+ * @returns The Account ID, or `null` if creation failed
  */
 export async function ensureAccountLinked(
   conn: any,
@@ -110,7 +127,16 @@ export async function ensureAccountLinked(
 }
 
 /**
- * Auto-categorize a batch of new transactions using AI
+ * Auto-categorise a batch of new transactions using AI.
+ *
+ * Loads categories filtered by entity regime (HMRC/Companies House/Universal),
+ * then batches transactions in groups of 20 for AI classification.
+ * Auto-applies categories with ≥ 85% confidence.
+ *
+ * @param transactionIds - Array of BankTransaction IDs to categorise
+ * @param entityId - Entity ID for regime-aware category filtering (nullable)
+ * @param userId - Owner user ID
+ * @returns Number of transactions successfully categorised
  */
 export async function autoCategorizeTransactions(
   transactionIds: string[],
@@ -211,7 +237,25 @@ Only return the JSON array, no markdown.`;
 
 /**
  * Core sync logic — fetches transactions from TrueLayer and saves to DB.
- * Can be called from sync route, callback, or cron.
+ *
+ * Used by:
+ * - **Callback** (on connect): syncs 24 months of history
+ * - **Manual refresh**: incremental from `lastSyncAt` to now
+ * - **Cron** (3x/day): incremental with 1-day buffer
+ *
+ * Features:
+ * - Entity-scoped deduplication (prevents cross-entity blocking)
+ * - Monthly statement grouping (one per bank per entity per month)
+ * - Auto-categorisation of new transactions
+ * - SCA error handling with friendly fallback if recently synced
+ *
+ * @param params - Connection details and date range
+ * @param params.connectionId - BankConnection ID
+ * @param params.accessToken - TrueLayer access token
+ * @param params.userId - Owner user ID
+ * @param params.fromDate - Start date in `YYYY-MM-DD` format
+ * @param params.toDate - End date in `YYYY-MM-DD` format
+ * @returns Sync results including counts, balance, and any errors
  */
 export async function syncConnectionTransactions(params: {
   connectionId: string;

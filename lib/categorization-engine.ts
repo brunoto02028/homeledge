@@ -14,27 +14,50 @@ import { callAI } from '@/lib/ai-client';
 // Types
 // ============================================================
 
+/** Input data for a single bank transaction to be categorised. */
 export interface TransactionInput {
+  /** Transaction description as it appears on the bank statement. */
   description: string;
+  /** Transaction amount in GBP. */
   amount: number;
+  /** Whether this is money in (`'credit'`) or money out (`'debit'`). */
   type: 'credit' | 'debit';
+  /** ISO date string of the transaction (optional). */
   date?: string;
+  /** Bank reference or transaction ID (optional). */
   reference?: string;
+  /** Merchant or payee name if available (optional, used for rule matching). */
   merchantName?: string;
 }
 
+/** Result of categorising a single transaction through the 4-layer engine. */
 export interface CategorizationResult {
+  /** Matched category ID, or `null` if no match found. */
   categoryId: string | null;
+  /** Matched category name, or `null` if no match found. */
   categoryName: string | null;
-  confidence: number;          // 0.0 - 1.0
+  /** Confidence score from 0.0 (no confidence) to 1.0 (certain). */
+  confidence: number;
+  /** Which layer produced this result: `'rule'` (Layer 1), `'pattern'` (Layer 2), `'ai'` (Layer 3), or `'none'`. */
   source: 'rule' | 'pattern' | 'ai' | 'none';
+  /** Human-readable explanation of why this category was chosen. */
   justification: string;
+  /** Whether this result can be automatically applied without user review (depends on mode + confidence). */
   autoApprove: boolean;
+  /** Whether this result requires manual user review before applying. */
   needsReview: boolean;
-  ruleId?: string;             // if matched by a rule
+  /** ID of the matched `CategorizationRule`, if Layer 1 matched. */
+  ruleId?: string;
+  /** Other possible categories with lower confidence (from AI layer). */
   alternativeCategories?: Array<{ categoryId: string; categoryName: string; confidence: number }>;
 }
 
+/**
+ * User-selectable categorisation mode that controls auto-approval thresholds.
+ * - `'conservative'`: Nothing auto-approved, everything needs manual review
+ * - `'smart'` (default): Auto-approve ≥ 90% confidence, suggest 70-90%, review < 70%
+ * - `'autonomous'`: AI governs, human audits only very low confidence (< 50%)
+ */
 export type CategorizationMode = 'conservative' | 'smart' | 'autonomous';
 
 interface CategorizationOptions {
@@ -50,7 +73,18 @@ interface CategorizationOptions {
 // ============================================================
 
 /**
- * Categorize a single transaction through all 4 layers
+ * Categorise a single transaction through all 4 layers sequentially.
+ *
+ * Processing order:
+ * 1. **Deterministic Rules** — keyword/regex/exact match against DB rules (100% confidence)
+ * 2. **Smart Patterns** — fuzzy match against user's past corrections (≥50% word overlap)
+ * 3. **AI Classification** — Gemini/Abacus with confidence scoring
+ *
+ * Results are then filtered through the user's categorisation mode.
+ *
+ * @param tx - The transaction to categorise
+ * @param options - User/entity context and mode preferences
+ * @returns Categorisation result with category, confidence, source, and approval status
  */
 export async function categorizeTransaction(
   tx: TransactionInput,
@@ -76,7 +110,14 @@ export async function categorizeTransaction(
 }
 
 /**
- * Categorize a batch of transactions (more efficient for statements)
+ * Categorise a batch of transactions efficiently.
+ *
+ * Applies Layers 1-2 individually per transaction, then batches all remaining
+ * uncategorised transactions into a single AI call (Layer 3) for efficiency.
+ *
+ * @param transactions - Array of transactions to categorise
+ * @param options - User/entity context and mode preferences
+ * @returns Array of results in the same order as input transactions
  */
 export async function categorizeTransactionsBatch(
   transactions: TransactionInput[],
@@ -376,8 +417,25 @@ Use null for "id" if genuinely uncertain.`;
 // ============================================================
 
 /**
- * Record user feedback when they correct a category.
- * After 3+ identical corrections for similar text, auto-create a rule.
+ * Record user feedback when they manually correct a category (Layer 4: Feedback Loop).
+ *
+ * After 3+ identical corrections for the same merchant/pattern, automatically
+ * creates a new `CategorizationRule` with source `'auto_learned'` and 95% confidence.
+ *
+ * @param params - Feedback data including original and corrected category
+ * @returns Object with `feedbackId` and `ruleCreated` (true if auto-learning triggered)
+ *
+ * @example
+ * ```ts
+ * const { ruleCreated } = await recordFeedback({
+ *   userId: 'user-123',
+ *   transactionText: 'TESCO STORES 1234',
+ *   suggestedCategory: 'General Expenses',
+ *   finalCategory: 'Food & Groceries',
+ *   finalCategoryId: 'cat-food',
+ * });
+ * if (ruleCreated) console.log('New auto-learned rule created!');
+ * ```
  */
 export async function recordFeedback(params: {
   userId: string;
@@ -481,6 +539,12 @@ export async function recordFeedback(params: {
 // Metrics
 // ============================================================
 
+/**
+ * Get categorisation performance metrics for a user.
+ *
+ * @param userId - The user ID to fetch metrics for
+ * @returns Metrics object with rule counts, correction rate, and top-corrected merchants
+ */
 export async function getCategorizationMetrics(userId: string) {
   try {
     const [

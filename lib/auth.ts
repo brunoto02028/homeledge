@@ -136,15 +136,27 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// Helper to get userId from session
 import { getServerSession } from 'next-auth';
 
+/**
+ * Get the current authenticated user's ID from the session.
+ *
+ * @returns The user ID string, or `null` if not authenticated
+ */
 export async function getCurrentUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions);
   return (session?.user as any)?.id || null;
 }
 
-// Strict version - throws if no user (use in API routes that require auth)
+/**
+ * Get the current user ID or throw an `'UNAUTHORIZED'` error.
+ *
+ * Use this in API routes that require authentication.
+ * The error message `'UNAUTHORIZED'` is caught by route handlers to return 401.
+ *
+ * @returns The authenticated user's ID
+ * @throws Error with message `'UNAUTHORIZED'` if no session exists
+ */
 export async function requireUserId(): Promise<string> {
   const userId = await getCurrentUserId();
   if (!userId) {
@@ -153,8 +165,15 @@ export async function requireUserId(): Promise<string> {
   return userId;
 }
 
-// Returns all userIds the current user can access via household memberships
-// Owner/editor members of the same household share data
+/**
+ * Get all user IDs accessible to the current user via household memberships.
+ *
+ * Owner and editor members of the same household share data access.
+ * Used for data isolation — queries should filter by these IDs.
+ *
+ * @param userId - The current user's ID
+ * @returns Array of user IDs (always includes the input `userId`)
+ */
 export async function getAccessibleUserIds(userId: string): Promise<string[]> {
   const memberships = await prisma.membership.findMany({
     where: {
