@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { ROUTE_PERMISSION_MAP, hasPermission, type PermissionKey } from "@/lib/permissions"
@@ -30,7 +30,10 @@ const navItems = [
   { href: "/properties", labelKey: "nav.properties", icon: Home, permission: 'properties' as PermissionKey },
   { href: "/product-calculator", labelKey: "nav.productCalculator", icon: Calculator, permission: 'product_calculator' as PermissionKey },
   { href: "/tax-timeline", labelKey: "nav.taxTimeline", icon: CalendarClock, permission: 'tax_timeline' as PermissionKey },
-  { href: "/learn", labelKey: "nav.learn", icon: GraduationCap, permission: 'learn' as PermissionKey },
+  { href: "/learn", labelKey: "nav.learn", icon: BookOpen, permission: 'learn' as PermissionKey },
+  { href: "/academy", labelKey: "nav.academy", icon: GraduationCap, permission: 'academy' as PermissionKey },
+  { href: "/relocation", labelKey: "nav.relocation", icon: Globe, permission: 'relocation' as PermissionKey },
+  { href: "/services", labelKey: "nav.services", icon: ShoppingBag, permission: 'services' as PermissionKey },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, permission: 'settings' as PermissionKey },
 ]
 

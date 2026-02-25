@@ -26,6 +26,9 @@ export const ALL_PERMISSIONS = [
   'product_calculator',
   'tax_timeline',
   'learn',
+  'academy',
+  'relocation',
+  'services',
   'settings',
 ] as const;
 
@@ -53,6 +56,9 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/product-calculator': 'product_calculator',
   '/tax-timeline': 'tax_timeline',
   '/learn': 'learn',
+  '/academy': 'academy',
+  '/relocation': 'relocation',
+  '/services': 'services',
   '/settings': 'settings',
 };
 
@@ -78,13 +84,16 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   product_calculator: 'Product Calculator',
   tax_timeline: 'Tax Timeline',
   learn: 'Learn',
+  academy: 'Accounting Academy',
+  relocation: 'Relocation Hub',
+  services: 'Services',
   settings: 'Settings',
 };
 
 // Default plan permissions
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
-  free: ['dashboard', 'statements', 'categories', 'settings', 'learn'],
-  starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn'],
+  free: ['dashboard', 'statements', 'categories', 'settings', 'learn', 'academy', 'relocation', 'services'],
+  starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn', 'academy', 'relocation', 'services'],
   pro: [...ALL_PERMISSIONS] as PermissionKey[],
   enterprise: [...ALL_PERMISSIONS] as PermissionKey[],
 };

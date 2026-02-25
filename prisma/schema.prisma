@@ -1321,6 +1321,216 @@ model BankConnection {
   @@map("bank_connections")
 }
 
+// ==================== ACCOUNTING ACADEMY (EdTech) ====================
+
+enum ExamMode {
+  timed
+  study
+}
+
+enum AttemptStatus {
+  in_progress
+  completed
+  abandoned
+}
+
+enum PurchaseStatus {
+  pending
+  paid
+  in_progress
+  delivered
+  refunded
+  cancelled
+}
+
+model CourseLevel {
+  id                      String       @id @default(cuid())
+  level                   Int          @unique                    // 2, 3, 4, 5, 6
+  name                    String                                  // "AAT Level 2 Foundation Certificate"
+  shortName               String       @map("short_name")        // "Level 2"
+  description             String       @db.Text
+  // UK Legal Permissions unlocked at this level
+  hmrcPermissions         String[]     @default([]) @map("hmrc_permissions")       // ["Bookkeeping", "VAT returns"]
+  chPermissions           String[]     @default([]) @map("ch_permissions")         // ["Micro-entity accounts"]
+  professionalBody        String?      @map("professional_body")                   // "AAT", "ACCA", "CIMA", "ICAEW"
+  qualificationTitle      String?      @map("qualification_title")                 // Official qualification name
+  estimatedStudyHours     Int?         @map("estimated_study_hours")
+  examCostGbp             Float?       @map("exam_cost_gbp")                       // Real-world exam cost
+  // Content
+  prerequisites           String?                                                   // "Level 2 or equivalent"
+  careerPaths             String[]     @default([]) @map("career_paths")           // ["Accounts Assistant", "Bookkeeper"]
+  salaryRangeMin          Int?         @map("salary_range_min")
+  salaryRangeMax          Int?         @map("salary_range_max")
+  iconEmoji               String?      @map("icon_emoji")                          // "📗"
+  color                   String?                                                   // hex color for UI
+  sortOrder               Int          @default(0) @map("sort_order")
+  isActive                Boolean      @default(true) @map("is_active")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  // Relations
+  modules                 ExamModule[]
+
+  @@map("course_levels")
+}
+
+model ExamModule {
+  id              String       @id @default(cuid())
+  courseId         String       @map("course_id")
+  title           String                                          // "Bookkeeping Transactions"
+  code            String?                                          // "BTRN" (official module code)
+  description     String?      @db.Text
+  learningOutcomes String[]    @default([]) @map("learning_outcomes")
+  topicsCovered   String[]     @default([]) @map("topics_covered")
+  estimatedHours  Int?         @map("estimated_hours")
+  passMarkPercent Int          @default(70) @map("pass_mark_percent")
+  timeLimitMinutes Int         @default(90) @map("time_limit_minutes")
+  totalQuestions  Int          @default(40) @map("total_questions")            // questions per exam sitting
+  sortOrder       Int          @default(0) @map("sort_order")
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  // Relations
+  course          CourseLevel  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  attempts        UserExamAttempt[]
+
+  @@index([courseId])
+  @@map("exam_modules")
+}
+
+model Question {
+  id              String           @id @default(cuid())
+  moduleId        String           @map("module_id")
+  questionText    String           @map("question_text") @db.Text
+  // Optional scenario/context (for case-study style questions)
+  scenario        String?          @db.Text
+  imageUrl        String?          @map("image_url")                            // diagram, table, etc.
+  // AI-generated detailed explanation
+  aiExplanation   String?          @map("ai_explanation") @db.Text
+  // Categorization
+  topic           String?                                                        // "Double Entry", "VAT", "Trial Balance"
+  difficulty      String           @default("medium")                            // "easy", "medium", "hard"
+  // Reference to official syllabus
+  syllabusRef     String?          @map("syllabus_ref")                          // e.g. "1.1", "2.3"
+  // Metadata
+  sortOrder       Int              @default(0) @map("sort_order")
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  // Relations
+  module          ExamModule       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  options         QuestionOption[]
+
+  @@index([moduleId])
+  @@index([topic])
+  @@index([difficulty])
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String   @map("question_id")
+  optionText  String   @map("option_text") @db.Text
+  isCorrect   Boolean  @default(false) @map("is_correct")
+  explanation String?  @db.Text                                   // Why this option is right/wrong
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  // Relations
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("question_options")
+}
+
+model UserExamAttempt {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  moduleId        String        @map("module_id")
+  mode            ExamMode      @default(timed)
+  status          AttemptStatus @default(in_progress)
+  // Scoring
+  totalQuestions  Int           @default(0) @map("total_questions")
+  correctAnswers  Int           @default(0) @map("correct_answers")
+  scorePercent    Float?        @map("score_percent")
+  passed          Boolean?
+  // Timing
+  startedAt       DateTime      @default(now()) @map("started_at")
+  finishedAt      DateTime?     @map("finished_at")
+  timeLimitMinutes Int?         @map("time_limit_minutes")
+  timeSpentSeconds Int?         @map("time_spent_seconds")
+  // Answers stored as JSON: [{questionId, selectedOptionId, isCorrect}]
+  answers         Json?
+  // Metadata
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  // Relations
+  module          ExamModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([moduleId])
+  @@index([userId, moduleId])
+  @@map("user_exam_attempts")
+}
+
+// ==================== RELOCATION HUB & COMMERCE ====================
+
+model ServicePackage {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  description     String    @db.Text
+  shortDescription String?  @map("short_description")
+  // Pricing
+  priceGbp        Float     @map("price_gbp")
+  originalPriceGbp Float?   @map("original_price_gbp")              // for showing discounts
+  currency        String    @default("GBP")
+  // Content
+  deliverables    String[]  @default([])                             // ["NIN application form filled", "Appointment booked"]
+  requirements    String[]  @default([])                             // ["Valid passport", "Proof of address"]
+  estimatedDays   Int?      @map("estimated_days")                   // delivery time
+  category        String    @default("relocation")                   // "relocation", "company_formation", "tax", "visa"
+  iconEmoji       String?   @map("icon_emoji")
+  // Display
+  isFeatured      Boolean   @default(false) @map("is_featured")
+  isActive        Boolean   @default(true) @map("is_active")
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  // Relations
+  purchases       UserPurchase[]
+
+  @@map("service_packages")
+}
+
+model UserPurchase {
+  id                String         @id @default(cuid())
+  userId            String         @map("user_id")
+  servicePackageId  String         @map("service_package_id")
+  status            PurchaseStatus @default(pending)
+  // Payment
+  amountPaid        Float?         @map("amount_paid")
+  currency          String         @default("GBP")
+  stripePaymentIntentId String?    @map("stripe_payment_intent_id")
+  stripeSessionId   String?        @map("stripe_session_id")
+  paidAt            DateTime?      @map("paid_at")
+  // Delivery tracking
+  notes             String?        @db.Text
+  adminNotes        String?        @map("admin_notes") @db.Text
+  deliveredAt       DateTime?      @map("delivered_at")
+  // Client documents (JSON array of uploaded files)
+  documents         Json?                                            // [{fileName, url, uploadedAt}]
+  // Metadata
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  // Relations
+  servicePackage    ServicePackage @relation(fields: [servicePackageId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([servicePackageId])
+  @@index([status])
+  @@map("user_purchases")
+}
+
 // ==================== ENTITY HISTORY & DOCUMENTS ====================
 
 enum EntityHistoryType {
