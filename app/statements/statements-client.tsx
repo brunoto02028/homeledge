@@ -830,15 +830,20 @@ export default function StatementsClient() {
     });
   };
 
-  const selectAllTransactions = () => {
+  const selectAllOnPage = () => {
     const currentTxs = paginatedTransactions();
-    if (selectedTransactions.size === currentTxs.length) {
+    const allPageSelected = currentTxs.length > 0 && currentTxs.every(tx => selectedTransactions.has(tx.id));
+    if (allPageSelected) {
       // Deselect all
       setSelectedTransactions(new Set());
     } else {
-      // Select all visible
+      // Select all on current page
       setSelectedTransactions(new Set(currentTxs.map(tx => tx.id)));
     }
+  };
+
+  const selectAllAcrossPages = () => {
+    setSelectedTransactions(new Set(allFilteredTransactions.map(tx => tx.id)));
   };
 
   const bulkDeleteTransactions = async () => {
@@ -1386,6 +1391,38 @@ export default function StatementsClient() {
 
             {/* Bulk Actions Bar */}
             {selectedTransactions.size > 0 && (
+              <div className="space-y-2">
+              {/* Select all across pages banner */}
+              {totalPages > 1 && selectedTransactions.size < allFilteredTransactions.length && paginatedTransactions().every(tx => selectedTransactions.has(tx.id)) && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800 text-sm">
+                  <span className="text-yellow-800 dark:text-yellow-300">
+                    All {paginatedTransactions().length} transactions on this page are selected.
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="text-yellow-700 dark:text-yellow-400 font-semibold p-0 h-auto"
+                    onClick={selectAllAcrossPages}
+                  >
+                    Select all {allFilteredTransactions.length} transactions across all pages
+                  </Button>
+                </div>
+              )}
+              {selectedTransactions.size === allFilteredTransactions.length && totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-sm">
+                  <span className="text-green-800 dark:text-green-300">
+                    All {allFilteredTransactions.length} transactions across all pages are selected.
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="text-green-700 dark:text-green-400 font-semibold p-0 h-auto"
+                    onClick={() => setSelectedTransactions(new Set())}
+                  >
+                    Clear selection
+                  </Button>
+                </div>
+              )}
               <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                 <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
                   {selectedTransactions.size} selected
@@ -1412,6 +1449,7 @@ export default function StatementsClient() {
                   Clear Selection
                 </Button>
               </div>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -1423,8 +1461,8 @@ export default function StatementsClient() {
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={paginatedTransactions().length > 0 && selectedTransactions.size === paginatedTransactions().length}
-                      onCheckedChange={() => selectAllTransactions()}
+                      checked={paginatedTransactions().length > 0 && paginatedTransactions().every(tx => selectedTransactions.has(tx.id))}
+                      onCheckedChange={() => selectAllOnPage()}
                     />
                   </TableHead>
                   <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('date')}>
