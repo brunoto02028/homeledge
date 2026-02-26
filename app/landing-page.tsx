@@ -275,29 +275,31 @@ export function LandingPage() {
             <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '26 powerful modules designed specifically for UK personal and business finance.'}</p>
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {FEATURE_CATEGORIES.map((c) => {
-              const count = c.key === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === c.key).length;
-              const active = featureTab === c.key;
-              return (
-                <button
-                  key={c.key}
-                  onClick={() => setFeatureTab(c.key)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    active
-                      ? 'bg-gradient-to-r from-amber-400/20 to-amber-500/10 border border-amber-400/30 text-amber-300 shadow-lg shadow-amber-500/10'
-                      : 'bg-white/[0.03] border border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.06] hover:border-white/10'
-                  }`}
-                >
-                  <c.icon className={`h-4 w-4 ${active ? 'text-amber-400' : ''}`} />
-                  <span className="hidden sm:inline">{c.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-slate-500'}`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+          {/* Category Tabs — scrollable on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-12 scrollbar-hide">
+            <div className="flex sm:flex-wrap sm:justify-center gap-2 min-w-max sm:min-w-0">
+              {FEATURE_CATEGORIES.map((c) => {
+                const count = c.key === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === c.key).length;
+                const active = featureTab === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setFeatureTab(c.key)}
+                    className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                      active
+                        ? 'bg-gradient-to-r from-amber-400/20 to-amber-500/10 border border-amber-400/30 text-amber-300 shadow-lg shadow-amber-500/10'
+                        : 'bg-white/[0.03] border border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.06] hover:border-white/10'
+                    }`}
+                  >
+                    <c.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${active ? 'text-amber-400' : ''}`} />
+                    <span>{c.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-slate-500'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Feature Cards Grid — compact with expand on hover/click */}

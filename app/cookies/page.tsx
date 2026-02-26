@@ -29,7 +29,8 @@ export default function CookiePolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">2. Cookies We Use</h2>
 
-            <div className="overflow-x-auto mt-4">
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto mt-4">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b">
@@ -84,6 +85,28 @@ export default function CookiePolicyPage() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile card layout */}
+            <div className="sm:hidden mt-4 space-y-3">
+              {[
+                { name: 'next-auth.session-token', type: 'Essential', purpose: 'Keeps you signed in to your account', duration: '30 days' },
+                { name: 'next-auth.csrf-token', type: 'Essential', purpose: 'Protects against cross-site request forgery attacks', duration: 'Session' },
+                { name: 'next-auth.callback-url', type: 'Essential', purpose: 'Remembers where to redirect after login', duration: 'Session' },
+                { name: 'hl-cookie-consent', type: 'Essential', purpose: 'Stores your cookie consent preference', duration: '1 year' },
+                { name: 'hl-language', type: 'Functional', purpose: 'Remembers your language preference (English/Portuguese)', duration: '1 year' },
+                { name: 'hl-session-id', type: 'Analytics', purpose: 'Anonymous session identifier for page view and click tracking', duration: 'Session' },
+                { name: 'hl-fingerprint', type: 'Analytics', purpose: 'Browser fingerprint hash for unique visitor counting. No personal data stored.', duration: 'Runtime' },
+              ].map((c) => (
+                <div key={c.name} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <code className="text-xs font-mono font-medium">{c.name}</code>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted font-medium">{c.type}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{c.purpose}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Duration: {c.duration}</p>
+                </div>
+              ))}
             </div>
           </section>
 
