@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:health": "vitest run __tests__/api-routes-health.test.ts --reporter=verbose",
+    "test:daily": "npm run type-check && npm run lint && npm test && npm run build",
     "audit": "npm audit --audit-level=high"
   },
   "prisma": {
