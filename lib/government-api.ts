@@ -1,6 +1,11 @@
 /**
- * Government API Integration Library
- * Handles OAuth 2.0 flows for Companies House and HMRC
+ * Government API Integration Library.
+ *
+ * Provides OAuth 2.0 flows and REST API clients for:
+ * - **Companies House** — company profiles, officers, filing history, ROA changes
+ * - **HMRC** — Self Assessment (MTD), VAT (MTD), individual tax, NI, obligations
+ *
+ * @module government-api
  */
 
 // ==================== COMPANIES HOUSE ====================
@@ -26,7 +31,13 @@ export const CH_OAUTH = {
   },
 };
 
-// Companies House REST API (read-only, API key auth)
+/**
+ * Make a GET request to the Companies House REST API (read-only, API key auth).
+ *
+ * @param path - API path (e.g. `/company/12345678`)
+ * @returns Parsed JSON response
+ * @throws Error if `COMPANIES_HOUSE_API_KEY` is not configured or API returns an error
+ */
 export async function chApiGet(path: string): Promise<any> {
   const apiKey = process.env.COMPANIES_HOUSE_API_KEY;
   if (!apiKey) throw new Error('COMPANIES_HOUSE_API_KEY not configured');
@@ -45,7 +56,14 @@ export async function chApiGet(path: string): Promise<any> {
   return res.json();
 }
 
-// Companies House Filing API (OAuth-authenticated) — POST
+/**
+ * Make a POST request to the Companies House Filing API (OAuth-authenticated).
+ *
+ * @param path - Filing API path
+ * @param accessToken - OAuth 2.0 access token from CH identity service
+ * @param body - Request body to send as JSON
+ * @returns Parsed JSON response
+ */
 export async function chFilingPost(path: string, accessToken: string, body: any): Promise<any> {
   const res = await fetch(`${CH_FILING_BASE}${path}`, {
     method: 'POST',
@@ -64,7 +82,14 @@ export async function chFilingPost(path: string, accessToken: string, body: any)
   return data;
 }
 
-// Companies House Filing API — PUT (for updates like address change)
+/**
+ * Make a PUT request to the Companies House Filing API (for updates like ROA change).
+ *
+ * @param path - Filing API path
+ * @param accessToken - OAuth 2.0 access token
+ * @param body - Request body to send as JSON
+ * @returns Parsed JSON response
+ */
 export async function chFilingPut(path: string, accessToken: string, body: any): Promise<any> {
   const res = await fetch(`${CH_FILING_BASE}${path}`, {
     method: 'PUT',
@@ -83,7 +108,13 @@ export async function chFilingPut(path: string, accessToken: string, body: any):
   return data;
 }
 
-// Companies House Filing API — DELETE
+/**
+ * Make a DELETE request to the Companies House Filing API.
+ *
+ * @param path - Filing API path
+ * @param accessToken - OAuth 2.0 access token
+ * @returns `{ success: true }` on 204, or parsed JSON response
+ */
 export async function chFilingDelete(path: string, accessToken: string): Promise<any> {
   const res = await fetch(`${CH_FILING_BASE}${path}`, {
     method: 'DELETE',
@@ -104,7 +135,15 @@ export async function chFilingDelete(path: string, accessToken: string): Promise
 // ==================== CH TRANSACTION-BASED FILING ====================
 // The CH Filing API requires: 1) Create transaction → 2) Add resource → 3) Close transaction
 
-// Step 1: Create a transaction envelope
+/**
+ * Step 1 of CH transaction-based filing: create a transaction envelope.
+ *
+ * @param accessToken - OAuth 2.0 access token
+ * @param companyNumber - Companies House company number (e.g. `'12345678'`)
+ * @param description - Filing description (e.g. `'Change of registered office address'`)
+ * @param reference - Optional reference string (defaults to `HomeLedger-{timestamp}`)
+ * @returns Transaction object with `id` and metadata
+ */
 export async function createCHTransaction(
   accessToken: string,
   companyNumber: string,
@@ -134,7 +173,15 @@ export async function createCHTransaction(
   return data;
 }
 
-// Step 2a: Add ROA change resource to transaction (AD01)
+/**
+ * Step 2 of CH transaction-based filing: add a Registered Office Address (ROA) change resource.
+ *
+ * @param accessToken - OAuth 2.0 access token
+ * @param transactionId - Transaction ID from {@link createCHTransaction}
+ * @param addressData - New registered office address fields
+ * @param referenceEtag - Current ROA etag from {@link getROAEtag} (prevents stale updates)
+ * @returns Filing resource confirmation
+ */
 export async function addROAToTransaction(
   accessToken: string,
   transactionId: string,
@@ -172,7 +219,13 @@ export async function addROAToTransaction(
   return data;
 }
 
-// Step 3: Close transaction to submit to CH
+/**
+ * Step 3 of CH transaction-based filing: close (submit) the transaction.
+ *
+ * @param accessToken - OAuth 2.0 access token
+ * @param transactionId - Transaction ID to close
+ * @returns Submission confirmation
+ */
 export async function closeCHTransaction(
   accessToken: string,
   transactionId: string,
@@ -196,7 +249,13 @@ export async function closeCHTransaction(
   return data;
 }
 
-// Get transaction status (to check accept/reject)
+/**
+ * Get the status of a Companies House filing transaction.
+ *
+ * @param accessToken - OAuth 2.0 access token
+ * @param transactionId - Transaction ID to check
+ * @returns Transaction status object (accepted/rejected/pending)
+ */
 export async function getCHTransactionStatus(
   accessToken: string,
   transactionId: string,
@@ -213,7 +272,14 @@ export async function getCHTransactionStatus(
   return data;
 }
 
-// Get ROA etag (needed before creating ROA change resource)
+/**
+ * Get the current Registered Office Address etag for a company.
+ * Required before creating an ROA change resource to prevent stale updates.
+ *
+ * @param companyNumber - Companies House company number
+ * @returns The etag string
+ * @throws Error if etag cannot be retrieved
+ */
 export async function getROAEtag(companyNumber: string): Promise<string> {
   const apiKey = process.env.COMPANIES_HOUSE_API_KEY;
   if (!apiKey) throw new Error('COMPANIES_HOUSE_API_KEY not configured');
@@ -239,47 +305,53 @@ export async function getROAEtag(companyNumber: string): Promise<string> {
   return etag;
 }
 
-// Get company profile (read-only)
+/** Get company profile from Companies House (read-only, API key auth). */
 export async function getCompanyProfile(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}`);
 }
 
-// Get company officers
+/** Get list of company officers (directors, secretaries). */
 export async function getCompanyOfficers(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/officers`);
 }
 
-// Get company filing history
+/** Get company filing history (confirmation statements, annual returns, etc). */
 export async function getCompanyFilingHistory(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/filing-history`);
 }
 
-// Get registered office address
+/** Get the company's registered office address. */
 export async function getRegisteredOffice(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/registered-office-address`);
 }
 
-// Get persons with significant control (PSCs)
+/** Get persons with significant control (PSCs) for a company. */
 export async function getCompanyPSCs(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/persons-with-significant-control`);
 }
 
-// Get company charges (mortgages)
+/** Get company charges (mortgages/secured loans). */
 export async function getCompanyCharges(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/charges`);
 }
 
-// Get company registers
+/** Get company statutory registers. */
 export async function getCompanyRegisters(companyNumber: string) {
   return chApiGet(`/company/${companyNumber}/registers`);
 }
 
-// Get specific officer appointment
+/** Get a specific officer's appointment details. */
 export async function getCompanyOfficerAppointment(officerId: string) {
   return chApiGet(`/officers/${officerId}/appointments`);
 }
 
-// Build CH OAuth authorization URL
+/**
+ * Build the Companies House OAuth 2.0 authorization URL.
+ *
+ * @param state - CSRF state parameter (round-tripped through callback)
+ * @param companyNumber - Company number to build filing scopes for
+ * @returns Full authorization URL with scopes encoded as `%20`-separated
+ */
 export function buildCHAuthUrl(state: string, companyNumber: string): string {
   const scope = CH_OAUTH.buildScopes(companyNumber);
   // CH identity service requires %20 for space-separated scopes, not +
@@ -293,7 +365,12 @@ export function buildCHAuthUrl(state: string, companyNumber: string): string {
   return `${CH_OAUTH.authorizeUrl}?${params.toString()}&scope=${encodeURIComponent(scope).replace(/%2B/g, '%20')}`;
 }
 
-// Exchange CH authorization code for tokens
+/**
+ * Exchange a Companies House authorization code for access + refresh tokens.
+ *
+ * @param code - Authorization code from OAuth callback
+ * @returns Token response with `access_token`, `refresh_token`, `expires_in`
+ */
 export async function exchangeCHToken(code: string): Promise<{
   access_token: string;
   refresh_token?: string;
@@ -328,7 +405,12 @@ export async function exchangeCHToken(code: string): Promise<{
   return JSON.parse(responseText);
 }
 
-// Refresh CH access token
+/**
+ * Refresh an expired Companies House access token.
+ *
+ * @param refreshToken - The refresh token from the original token exchange
+ * @returns New token response
+ */
 export async function refreshCHToken(refreshToken: string): Promise<{
   access_token: string;
   refresh_token?: string;
@@ -369,7 +451,14 @@ export const HMRC_OAUTH = {
   scopes: 'read:self-assessment write:self-assessment read:vat write:vat read:individual-benefits read:individual-employment read:individual-tax read:national-insurance',
 };
 
-// HMRC API call with OAuth token (acceptVersion e.g. '1.0', '2.0', '4.0')
+/**
+ * Make a GET request to the HMRC API with OAuth token and versioned Accept header.
+ *
+ * @param path - HMRC API path (e.g. `/obligations/details/{nino}/income-and-expenditure`)
+ * @param accessToken - OAuth 2.0 access token
+ * @param acceptVersion - API version for Accept header (e.g. `'1.0'`, `'4.0'`, `'8.0'`)
+ * @returns Parsed JSON response
+ */
 export async function hmrcApiGet(path: string, accessToken: string, acceptVersion = '1.0'): Promise<any> {
   const base = getHMRCBase();
   const res = await fetch(`${base}${path}`, {
@@ -387,6 +476,15 @@ export async function hmrcApiGet(path: string, accessToken: string, acceptVersio
   return res.json();
 }
 
+/**
+ * Make a POST request to the HMRC API with OAuth token.
+ *
+ * @param path - HMRC API path
+ * @param accessToken - OAuth 2.0 access token
+ * @param body - Request body
+ * @param acceptVersion - API version for Accept header
+ * @returns Parsed JSON response
+ */
 export async function hmrcApiPost(path: string, accessToken: string, body: any, acceptVersion = '1.0'): Promise<any> {
   const base = getHMRCBase();
   const res = await fetch(`${base}${path}`, {
@@ -407,7 +505,12 @@ export async function hmrcApiPost(path: string, accessToken: string, body: any, 
   return data;
 }
 
-// Build HMRC OAuth authorization URL
+/**
+ * Build the HMRC OAuth 2.0 authorization URL.
+ *
+ * @param state - CSRF state parameter
+ * @returns Full authorization URL with SA, VAT, NI, and employment scopes
+ */
 export function buildHMRCAuthUrl(state: string): string {
   const params = new URLSearchParams({
     response_type: 'code',
@@ -419,7 +522,12 @@ export function buildHMRCAuthUrl(state: string): string {
   return `${HMRC_OAUTH.authorizeUrl}?${params.toString()}`;
 }
 
-// Exchange HMRC authorization code for tokens
+/**
+ * Exchange an HMRC authorization code for access + refresh tokens.
+ *
+ * @param code - Authorization code from OAuth callback
+ * @returns Token response with `access_token`, `refresh_token`, `expires_in`
+ */
 export async function exchangeHMRCToken(code: string): Promise<{
   access_token: string;
   refresh_token: string;
@@ -446,7 +554,12 @@ export async function exchangeHMRCToken(code: string): Promise<{
   return res.json();
 }
 
-// Refresh HMRC access token
+/**
+ * Refresh an expired HMRC access token.
+ *
+ * @param refreshToken - The refresh token from the original exchange
+ * @returns New token response with rotated refresh token
+ */
 export async function refreshHMRCToken(refreshToken: string): Promise<{
   access_token: string;
   refresh_token: string;
@@ -474,107 +587,117 @@ export async function refreshHMRCToken(refreshToken: string): Promise<{
 
 // --- Self Assessment (MTD) ---
 
-// Self Assessment Accounts (MTD) v4.0 - liabilities, payments, charges
+/** Get Self Assessment account balance (MTD v4.0). */
 export async function getHMRCSABalance(accessToken: string, nino: string) {
   return hmrcApiGet(`/accounts/self-assessment/${nino}/balance`, accessToken, '4.0');
 }
 
+/** Get Self Assessment transactions for a date range (MTD v4.0). */
 export async function getHMRCSATransactions(accessToken: string, nino: string, from: string, to: string) {
   return hmrcApiGet(`/accounts/self-assessment/${nino}/transactions?from=${from}&to=${to}`, accessToken, '4.0');
 }
 
+/** Get Self Assessment charges for a date range (MTD v4.0). */
 export async function getHMRCSACharges(accessToken: string, nino: string, from: string, to: string) {
   return hmrcApiGet(`/accounts/self-assessment/${nino}/charges?from=${from}&to=${to}`, accessToken, '4.0');
 }
 
+/** Get Self Assessment payments for a date range (MTD v4.0). */
 export async function getHMRCSAPayments(accessToken: string, nino: string, from: string, to: string) {
   return hmrcApiGet(`/accounts/self-assessment/${nino}/payments?from=${from}&to=${to}`, accessToken, '4.0');
 }
 
-// View Self Assessment Account v1.0 - liability breakdown
+/** Get Self Assessment liability breakdown (v1.0). */
 export async function getHMRCSALiability(accessToken: string, utr: string) {
   return hmrcApiGet(`/self-assessment/accounts/${utr}/liability`, accessToken, '1.0');
 }
 
-// Individual Calculations (MTD) v8.0 - trigger and retrieve tax calculations
+/** Retrieve a specific HMRC tax calculation result (MTD v8.0). */
 export async function getHMRCTaxCalculation(accessToken: string, nino: string, taxYear: string, calculationId: string) {
   return hmrcApiGet(`/individuals/calculations/${nino}/self-assessment/${taxYear}/${calculationId}`, accessToken, '8.0');
 }
 
+/** Trigger a new HMRC tax calculation for a tax year (MTD v8.0). */
 export async function triggerHMRCTaxCalculation(accessToken: string, nino: string, taxYear: string) {
   return hmrcApiPost(`/individuals/calculations/${nino}/self-assessment/${taxYear}`, accessToken, {}, '8.0');
 }
 
+/** List all HMRC tax calculations for a tax year (MTD v8.0). */
 export async function listHMRCTaxCalculations(accessToken: string, nino: string, taxYear: string) {
   return hmrcApiGet(`/individuals/calculations/${nino}/self-assessment?taxYear=${taxYear}`, accessToken, '8.0');
 }
 
-// Obligations (MTD) v3.0 - filing deadlines
+/** Get HMRC filing obligations/deadlines (MTD v3.0). */
 export async function getHMRCObligations(accessToken: string, nino: string) {
   return hmrcApiGet(`/obligations/details/${nino}/income-and-expenditure`, accessToken, '3.0');
 }
 
-// Self Employment Business (MTD) v5.0
+/** Get self-employment businesses registered with HMRC (MTD v5.0). */
 export async function getHMRCSEBusinesses(accessToken: string, nino: string) {
   return hmrcApiGet(`/individuals/business/self-employment/${nino}`, accessToken, '5.0');
 }
 
-// Business Details (MTD) v2.0
+/** Get HMRC business details list (MTD v2.0). */
 export async function getHMRCBusinessDetails(accessToken: string, nino: string) {
   return hmrcApiGet(`/individuals/business/details/${nino}/list`, accessToken, '2.0');
 }
 
-// Self Assessment Individual Details (MTD) v2.0
+/** Get individual taxpayer details from HMRC (MTD v2.0). */
 export async function getHMRCIndividualDetails(accessToken: string, nino: string) {
   return hmrcApiGet(`/individuals/details/${nino}`, accessToken, '2.0');
 }
 
 // --- Individual APIs (non-MTD) ---
 
-// Individual Benefits v1.1
+/** Get individual benefits data from HMRC (v1.1). */
 export async function getHMRCIndividualBenefits(accessToken: string) {
   return hmrcApiGet('/individual-benefits', accessToken, '1.1');
 }
 
-// Individual Employment v1.2
+/** Get individual employment data from HMRC (v1.2). */
 export async function getHMRCIndividualEmployment(accessToken: string) {
   return hmrcApiGet('/individual-employment', accessToken, '1.2');
 }
 
-// Individual Income v1.2
+/** Get individual income data from HMRC (v1.2). */
 export async function getHMRCIndividualIncome(accessToken: string) {
   return hmrcApiGet('/individual-income', accessToken, '1.2');
 }
 
-// Individual Tax v1.1
+/** Get individual tax data from HMRC (v1.1). */
 export async function getHMRCIndividualTax(accessToken: string) {
   return hmrcApiGet('/individual-tax', accessToken, '1.1');
 }
 
-// National Insurance v1.1
+/** Get National Insurance contributions data from HMRC (v1.1). */
 export async function getHMRCNationalInsurance(accessToken: string) {
   return hmrcApiGet('/national-insurance', accessToken, '1.1');
 }
 
 // --- VAT (MTD) v1.0 ---
 
+/** Get VAT filing obligations for a VAT-registered business (MTD v1.0). */
 export async function getHMRCVATObligations(accessToken: string, vrn: string, from?: string, to?: string) {
   const qs = from && to ? `?from=${from}&to=${to}` : '';
   return hmrcApiGet(`/organisations/vat/${vrn}/obligations${qs}`, accessToken, '1.0');
 }
 
+/** Get a specific VAT return by period key (MTD v1.0). */
 export async function getHMRCVATReturn(accessToken: string, vrn: string, periodKey: string) {
   return hmrcApiGet(`/organisations/vat/${vrn}/returns/${periodKey}`, accessToken, '1.0');
 }
 
+/** Submit a VAT return to HMRC (MTD v1.0). */
 export async function submitHMRCVATReturn(accessToken: string, vrn: string, body: any) {
   return hmrcApiPost(`/organisations/vat/${vrn}/returns`, accessToken, body, '1.0');
 }
 
+/** Get VAT liabilities for a date range (MTD v1.0). */
 export async function getHMRCVATLiabilities(accessToken: string, vrn: string, from: string, to: string) {
   return hmrcApiGet(`/organisations/vat/${vrn}/liabilities?from=${from}&to=${to}`, accessToken, '1.0');
 }
 
+/** Get VAT payments for a date range (MTD v1.0). */
 export async function getHMRCVATPayments(accessToken: string, vrn: string, from: string, to: string) {
   return hmrcApiGet(`/organisations/vat/${vrn}/payments?from=${from}&to=${to}`, accessToken, '1.0');
 }
@@ -582,6 +705,17 @@ export async function getHMRCVATPayments(accessToken: string, vrn: string, from:
 
 // ==================== TOKEN MANAGEMENT ====================
 
+/**
+ * Ensure a government API access token is still valid, refreshing if expired.
+ *
+ * Checks token expiry with a 5-minute buffer. If expired, automatically
+ * refreshes using the appropriate provider's refresh endpoint (CH or HMRC).
+ *
+ * @param connection - Connection record with token details
+ * @param updateFn - Callback to persist the refreshed token to the database
+ * @returns Valid access token string
+ * @throws Error if token is expired and cannot be refreshed
+ */
 export async function ensureValidToken(
   connection: { accessToken: string; refreshToken: string | null; tokenExpiresAt: Date | null; provider: string },
   updateFn: (newToken: { accessToken: string; refreshToken?: string; tokenExpiresAt: Date }) => Promise<void>

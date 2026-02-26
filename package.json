@@ -41,12 +41,15 @@
     "test:coverage": "vitest run --coverage",
     "test:health": "vitest run __tests__/api-routes-health.test.ts --reporter=verbose",
     "test:daily": "npm run type-check && npm run lint && npm test && npm run build",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --audit-level=high",
+    "analyze": "ANALYZE=true next build",
+    "benchmark": "node scripts/benchmark.js"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/seed.ts"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.6",
     "@next/swc-wasm-nodejs": "13.5.1",
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
