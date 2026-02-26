@@ -6,16 +6,16 @@ const client = new OpenAI({
   baseURL: 'https://routellm.abacus.ai/v1',
 });
 
-// HMRC Transaction Classifier Prompt
+// HMRC Transaction Classifier Prompt (British English)
 const HMRC_CLASSIFIER_PROMPT = `# SYSTEM ROLE
-You are an expert UK Accountant specialized in HMRC Self Assessment tax returns. Your job is to categorize bank transactions accurately, identifying "Allowable Expenses" for tax deduction purposes.
+You are an expert UK Accountant specialised in HMRC Self Assessment tax returns. Your job is to categorize bank transactions accurately, identifying "Allowable Expenses" for tax deduction purposes.
 
 # CONTEXT
 The user is a UK resident (potentially Sole Trader or Freelancer).
 Current Tax Year: 6 April to 5 April.
 
 # HMRC ALLOWABLE EXPENSES MAPPING
-Map every transaction to one of these keys:
+Map every transaction to one of these keys (use British English throughout):
 - "office_costs": Phone, internet, stationery, software subscriptions (Adobe, Microsoft, AWS, Google).
 - "travel_costs": Fuel, parking, train/bus tickets (TFL, Trainline, National Rail), hotel, Uber/taxi for business.
 - "clothing": Uniforms, protective clothing (NOT everyday wear).
@@ -33,7 +33,7 @@ You will receive a list of transactions in JSON format:
 
 # TASK
 For each transaction:
-1. Analyze the 'description' and 'amount'.
+1. Analyse the 'description' and 'amount'.
 2. Assign a human-readable 'category_name' (e.g., "Public Transport", "Groceries", "Software").
 3. Assign the correct 'hmrc_mapping' from the list above.
 4. Determine 'is_tax_deductible': true if it's a business cost, false if personal.
@@ -81,7 +81,7 @@ export function cleanDescription(desc: string): string {
   return cleaned;
 }
 
-// MEMORY LAYER: Apply existing categorization rules
+// MEMORY LAYER: Apply existing categorisation rules
 export async function applyExistingRules(
   description: string,
   cleanDesc: string
@@ -134,7 +134,7 @@ export async function applyExistingRules(
   return { matched: false };
 }
 
-// INTELLIGENCE LAYER: Classify transactions with AI
+// INTELLIGENCE LAYER: Classify transactions with AI (batch)
 export async function classifyWithAI(
   transactions: Array<{
     id: string;
@@ -210,7 +210,7 @@ export async function classifyWithAI(
   return results;
 }
 
-// Get or create category by name
+// Get or create category by name (upsert)
 export async function getOrCreateCategory(
   name: string,
   hmrcMapping: string,
@@ -236,7 +236,7 @@ export async function getOrCreateCategory(
   return { id: category.id, hmrcMapping: category.hmrcMapping };
 }
 
-// Main function to classify a list of transactions
+// Main function to classify a list of transactions (orchestrator)
 export async function classifyTransactions(
   transactions: Array<{
     id: string;
@@ -265,7 +265,7 @@ export async function classifyTransactions(
     source: 'rule' | 'ai';
   }>();
 
-  const uncategorized: Array<{
+  const uncategorised: Array<{
     id: string;
     description: string;
     cleanDescription: string;
@@ -299,7 +299,7 @@ export async function classifyTransactions(
     }
 
     // No rule matched, add to AI queue
-    uncategorized.push({
+    uncategorised.push({
       id: tx.id,
       description: cleanDesc,
       cleanDescription: cleanDesc,
@@ -308,12 +308,12 @@ export async function classifyTransactions(
     });
   }
 
-  // Step 2: Classify uncategorized with AI
-  if (uncategorized.length > 0) {
-    console.log(`[HMRC Classifier] ${uncategorized.length} transactions need AI classification`);
+  // Step 2: Classify uncategorised with AI
+  if (uncategorised.length > 0) {
+    console.log(`[HMRC Classifier] ${uncategorised.length} transactions need AI classification`);
     
     const aiResults = await classifyWithAI(
-      uncategorized.map(tx => ({
+      uncategorised.map(tx => ({
         id: tx.id,
         description: tx.description,
         amount: tx.amount,
@@ -322,7 +322,7 @@ export async function classifyTransactions(
     );
 
     for (const result of aiResults) {
-      const tx = uncategorized.find(t => t.id === result.transaction_id);
+      const tx = uncategorised.find(t => t.id === result.transaction_id);
       if (!tx) continue;
 
       // Get or create category
@@ -349,7 +349,7 @@ export async function classifyTransactions(
   return results;
 }
 
-// Learn a new rule from user correction
+// Learn a new rule from user correction (Layer 4 feedback)
 export async function learnFromCorrection(
   transactionId: string,
   newCategoryId: string

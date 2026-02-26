@@ -274,7 +274,7 @@ function getSuggestions(section: string): string[] {
     ],
     statements: [
       'Explain my spending patterns',
-      'Which transactions should I categorize?',
+      'Which transactions should I categorise?',
       'Are there any unusual transactions?',
     ],
     invoices: [

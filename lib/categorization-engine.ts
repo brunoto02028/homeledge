@@ -1,5 +1,5 @@
 /**
- * 4-Layer Intelligent Categorization Engine
+ * 4-Layer Intelligent Categorisation Engine
  * 
  * Layer 1: Deterministic Rules (Hard Rules) — DB-stored patterns, 100% confidence
  * Layer 2: Smart Rules (Pattern Detection) — recurring patterns, fuzzy matching
@@ -104,7 +104,7 @@ export async function categorizeTransaction(
     return applyMode(patternResult, mode);
   }
 
-  // Layer 3: AI (single transaction — for batch, use categorizeTransactionsBatch)
+  // Layer 3: AI (single transaction — for batch, use categoriseTransactionsBatch)
   const aiResult = await categorizeWithAISingle(tx, options);
   return applyMode(aiResult, mode);
 }
@@ -125,7 +125,7 @@ export async function categorizeTransactionsBatch(
 ): Promise<CategorizationResult[]> {
   const mode = options.mode || 'smart';
   const results: CategorizationResult[] = new Array(transactions.length);
-  const uncategorizedIndices: number[] = [];
+  const uncategorisedIndices: number[] = [];
 
   // Load categories once
   const categories = options.categories || await loadCategories(options);
@@ -147,16 +147,16 @@ export async function categorizeTransactionsBatch(
       continue;
     }
 
-    uncategorizedIndices.push(i);
+    uncategorisedIndices.push(i);
   }
 
-  // Layer 3: Batch AI for remaining uncategorized
-  if (uncategorizedIndices.length > 0) {
-    const uncategorizedTxs = uncategorizedIndices.map(i => transactions[i]);
-    const aiResults = await categorizeWithAIBatch(uncategorizedTxs, opts);
+  // Layer 3: Batch AI for remaining uncategorised
+  if (uncategorisedIndices.length > 0) {
+    const uncategorisedTxs = uncategorisedIndices.map(i => transactions[i]);
+    const aiResults = await categorizeWithAIBatch(uncategorisedTxs, opts);
 
-    for (let j = 0; j < uncategorizedIndices.length; j++) {
-      const idx = uncategorizedIndices[j];
+    for (let j = 0; j < uncategorisedIndices.length; j++) {
+      const idx = uncategorisedIndices[j];
       results[idx] = applyMode(aiResults[j] || noMatch(), mode);
     }
   }
@@ -263,7 +263,7 @@ async function matchSmartPattern(
   if (!options.userId) return noMatch();
 
   try {
-    // Look for similar past transactions that were manually categorized
+    // Look for similar past transactions that were manually categorised
     const descWords = tx.description.toLowerCase().split(/\s+/).filter(w => w.length > 3);
     if (descWords.length === 0) return noMatch();
 
@@ -323,7 +323,7 @@ async function matchSmartPattern(
 }
 
 // ============================================================
-// Layer 3: AI Categorization
+// Layer 3: AI Categorisation
 // ============================================================
 
 async function categorizeWithAISingle(
@@ -396,7 +396,7 @@ Use null for "id" if genuinely uncertain.`;
             categoryName: m.n || cat.name,
             confidence,
             source: 'ai',
-            justification: m.j || 'AI categorization',
+            justification: m.j || 'AI categorisation',
             autoApprove: confidence >= 0.90,
             needsReview: confidence < 0.90,
             alternativeCategories: [],
@@ -421,6 +421,7 @@ Use null for "id" if genuinely uncertain.`;
  *
  * After 3+ identical corrections for the same merchant/pattern, automatically
  * creates a new `CategorizationRule` with source `'auto_learned'` and 95% confidence.
+ * (Note: Prisma model name remains `CategorizationRule` to match DB schema.)
  *
  * @param params - Feedback data including original and corrected category
  * @returns Object with `feedbackId` and `ruleCreated` (true if auto-learning triggered)
@@ -563,7 +564,7 @@ export async function getCategorizationMetrics(userId: string) {
       (prisma as any).categorizationFeedback.count({ where: { userId, source: 'user_correction' } }),
     ]);
 
-    // Top corrected merchants
+    // Top-corrected merchants
     const topCorrected = await (prisma as any).categorizationFeedback.groupBy({
       by: ['transactionText'],
       where: { userId, source: 'user_correction' },
@@ -610,11 +611,11 @@ function noMatch(): CategorizationResult {
 function applyMode(result: CategorizationResult, mode: CategorizationMode): CategorizationResult {
   switch (mode) {
     case 'conservative':
-      // Nothing auto-approved, everything needs review
+      // Nothing auto-approved; everything needs review
       return { ...result, autoApprove: false, needsReview: true };
 
     case 'autonomous':
-      // Auto-approve everything with a category, only review truly unknown
+      // Auto-approve everything with a category; only review truly unknown
       if (result.categoryId) {
         return { ...result, autoApprove: true, needsReview: result.confidence < 0.50 };
       }
@@ -622,7 +623,7 @@ function applyMode(result: CategorizationResult, mode: CategorizationMode): Cate
 
     case 'smart':
     default:
-      // Auto-approve >= 90%, suggest 70-90%, review < 70%
+      // Auto-approve ≥ 90%; suggest 70–90%; review < 70%
       if (result.categoryId) {
         return {
           ...result,

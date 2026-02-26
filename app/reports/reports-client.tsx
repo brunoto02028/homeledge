@@ -639,7 +639,7 @@ export default function ReportsClient() {
     return filteredTransactions.filter(tx => {
       // Exclude transactions that have been moved to another category
       if (movedTransactionIds.includes(tx.id)) return false;
-      return selectedCategory.id === 'uncategorized' 
+      return selectedCategory.id === 'uncategorised' 
         ? !tx.categoryId 
         : tx.categoryId === selectedCategory.id;
     });
@@ -660,24 +660,24 @@ export default function ReportsClient() {
   }, [filteredTransactions, selectedHMRCBox, movedTransactionIds]);
 
   // Calculate totals for the selected tax year
-  // Separates categorized business income/expenses from raw bank credits/debits
+  // Separates categorised business income/expenses from raw bank credits/debits
   const taxYearTotals = useMemo(() => {
     let bankCredits = 0, bankDebits = 0;
     let businessIncome = 0, businessExpenses = 0;
-    let uncategorizedCredits = 0, uncategorizedDebits = 0;
-    let uncategorized = 0;
+    let uncategorisedCredits = 0, uncategorisedDebits = 0;
+    let uncategorised = 0;
 
     filteredTransactions.forEach(tx => {
       if (tx.type === 'credit') {
         bankCredits += tx.amount;
         if (tx.category?.type === 'income') businessIncome += tx.amount;
         else if (tx.category?.type === 'expense') { /* credit on expense category = refund, reduce expenses */ }
-        else if (!tx.categoryId) { uncategorized++; uncategorizedCredits += tx.amount; }
+        else if (!tx.categoryId) { uncategorised++; uncategorisedCredits += tx.amount; }
       } else {
         bankDebits += tx.amount;
         if (tx.category?.type === 'expense') businessExpenses += tx.amount;
         else if (tx.category?.type === 'income') { /* debit on income category = chargeback, reduce income */ }
-        else if (!tx.categoryId) { uncategorized++; uncategorizedDebits += tx.amount; }
+        else if (!tx.categoryId) { uncategorised++; uncategorisedDebits += tx.amount; }
       }
     });
 
@@ -686,11 +686,11 @@ export default function ReportsClient() {
       debits: bankDebits,
       businessIncome,
       businessExpenses,
-      uncategorizedCredits,
-      uncategorizedDebits,
+      uncategorisedCredits,
+      uncategorisedDebits,
       netProfit: businessIncome - businessExpenses,
       bankNetProfit: bankCredits - bankDebits,
-      uncategorized,
+      uncategorised,
       total: filteredTransactions.length,
     };
   }, [filteredTransactions]);
@@ -770,7 +770,7 @@ export default function ReportsClient() {
   const trialBalance = useMemo(() => {
     const accounts: Record<string, { name: string; type: string; debits: number; credits: number; net: number; txCount: number }> = {};
     filteredTransactions.forEach(tx => {
-      const catName = tx.category?.name || 'Uncategorized';
+      const catName = tx.category?.name || 'Uncategorised';
       const catType = tx.category?.type || 'expense';
       if (!accounts[catName]) accounts[catName] = { name: catName, type: catType, debits: 0, credits: 0, net: 0, txCount: 0 };
       if (tx.type === 'debit') accounts[catName].debits += tx.amount;
@@ -788,7 +788,7 @@ export default function ReportsClient() {
   const generalLedger = useMemo(() => {
     const ledger: Record<string, { name: string; type: string; transactions: typeof filteredTransactions }> = {};
     filteredTransactions.forEach(tx => {
-      const catName = tx.category?.name || 'Uncategorized';
+      const catName = tx.category?.name || 'Uncategorised';
       const catType = tx.category?.type || 'expense';
       if (!ledger[catName]) ledger[catName] = { name: catName, type: catType, transactions: [] };
       ledger[catName].transactions.push(tx);
@@ -848,10 +848,10 @@ export default function ReportsClient() {
   // Compliance Alerts — smart warnings about filing readiness
   const complianceAlerts = useMemo(() => {
     const alerts: { level: 'error' | 'warning' | 'info'; message: string; action?: string }[] = [];
-    // Uncategorized transactions
-    if (taxYearTotals.uncategorized > 0) {
-      const pct = ((taxYearTotals.uncategorized / taxYearTotals.total) * 100).toFixed(0);
-      alerts.push({ level: 'error', message: `${taxYearTotals.uncategorized} uncategorized transactions (${pct}% of total)`, action: '/statements?tab=uncategorized' });
+    // Uncategorised transactions
+    if (taxYearTotals.uncategorised > 0) {
+      const pct = ((taxYearTotals.uncategorised / taxYearTotals.total) * 100).toFixed(0);
+      alerts.push({ level: 'error', message: `${taxYearTotals.uncategorised} uncategorised transactions (${pct}% of total)`, action: '/statements?tab=uncategorised' });
     }
     // Missing company profile data
     if (entityRegime === 'companies_house') {
@@ -865,9 +865,9 @@ export default function ReportsClient() {
     if (taxYearTotals.businessIncome > 85000 && !taxpayerProfile.isVatRegistered) {
       alerts.push({ level: 'error', message: 'Turnover exceeds £85,000 VAT threshold — you may need to register for VAT' });
     }
-    // Low categorization coverage
-    if (taxYearTotals.total > 0 && taxYearTotals.uncategorized / taxYearTotals.total > 0.5) {
-      alerts.push({ level: 'error', message: 'Over 50% of transactions are uncategorized — tax calculations are unreliable' });
+    // Low categorisation coverage
+    if (taxYearTotals.total > 0 && taxYearTotals.uncategorised / taxYearTotals.total > 0.5) {
+      alerts.push({ level: 'error', message: 'Over 50% of transactions are uncategorised — tax calculations are unreliable' });
     }
     // No transactions
     if (taxYearTotals.total === 0) {
@@ -1002,7 +1002,7 @@ export default function ReportsClient() {
         },
         hmrcBreakdown,
         categoryBreakdown,
-        uncategorizedCount: taxYearTotals.uncategorized,
+        uncategorisedCount: taxYearTotals.uncategorised,
       };
 
       // Generate transactions CSV
@@ -1014,7 +1014,7 @@ export default function ReportsClient() {
           tx.description,
           tx.type,
           tx.amount.toFixed(2),
-          tx.category?.name || 'Uncategorized',
+          tx.category?.name || 'Uncategorised',
           hmrcBox?.box || '-',
         ];
       });
@@ -1080,7 +1080,7 @@ export default function ReportsClient() {
         <tr><td>Estimated Tax</td><td style="${amt}">${taxEstimate.total.toFixed(2)}</td></tr>
         <tr><td>Effective Rate</td><td>${taxEstimate.effectiveRate}%</td></tr>
         <tr><td>Transactions</td><td>${taxYearTotals.total}</td></tr>
-        <tr><td>Uncategorized</td><td>${taxYearTotals.uncategorized}</td></tr>
+        <tr><td>Uncategorised</td><td>${taxYearTotals.uncategorised}</td></tr>
       </table>
       </div>
     `);
@@ -1135,7 +1135,7 @@ export default function ReportsClient() {
         <table border="1" cellpadding="4">
           <tr><th colspan="5" style="${hdr}">Transactions (${Array.isArray(txData) ? txData.length : 0})</th></tr>
           <tr style="${subHdr}"><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount (£)</th></tr>
-          ${(Array.isArray(txData) ? txData.slice(0, 5000) : []).map((tx: any) => `<tr><td>${tx.date ? new Date(tx.date).toLocaleDateString('en-GB') : ''}</td><td>${tx.description || ''}</td><td>${tx.category?.name || tx.category || 'Uncategorized'}</td><td>${tx.type}</td><td style="${amt}">${(typeof tx.amount === 'number' ? tx.amount : 0).toFixed(2)}</td></tr>`).join('')}
+          ${(Array.isArray(txData) ? txData.slice(0, 5000) : []).map((tx: any) => `<tr><td>${tx.date ? new Date(tx.date).toLocaleDateString('en-GB') : ''}</td><td>${tx.description || ''}</td><td>${tx.category?.name || tx.category || 'Uncategorised'}</td><td>${tx.type}</td><td style="${amt}">${(typeof tx.amount === 'number' ? tx.amount : 0).toFixed(2)}</td></tr>`).join('')}
         </table>
         </div>
       `);
@@ -1374,12 +1374,12 @@ export default function ReportsClient() {
         </div>
         `}
 
-        ${taxYearTotals.uncategorized > 0 ? `
+        ${taxYearTotals.uncategorised > 0 ? `
         <h2>7. Data Quality Warning</h2>
         <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-          <p><strong>\u26a0\ufe0f ${taxYearTotals.uncategorized} uncategorized transaction(s)</strong></p>
-          <p>Please review and categorize all transactions for accurate HMRC reporting.</p>
-          <p style="font-size:12px;">Uncategorized transactions are excluded from HMRC box mapping and may affect your tax calculation.</p>
+          <p><strong>\u26a0\ufe0f ${taxYearTotals.uncategorised} uncategorised transaction(s)</strong></p>
+          <p>Please review and categorise all transactions for accurate HMRC reporting.</p>
+          <p style="font-size:12px;">Uncategorised transactions are excluded from HMRC box mapping and may affect your tax calculation.</p>
         </div>
         ` : ''}
 
@@ -2001,7 +2001,7 @@ export default function ReportsClient() {
                         ) : (
                           <div className="flex items-center gap-1">
                             <Badge variant="outline" className="text-xs">
-                              {tx.category?.name || 'Uncategorized'}
+                              {tx.category?.name || 'Uncategorised'}
                             </Badge>
                             <span className={`text-xs font-bold ${getDeductibilityColor(currentDeductibility)}`}>
                               {currentDeductibility}%
@@ -2267,7 +2267,7 @@ export default function ReportsClient() {
       </div>
 
       {/* Data Health Check Banner */}
-      {taxYearTotals.uncategorized > 0 ? (
+      {taxYearTotals.uncategorised > 0 ? (
         <Card className="border-amber-400 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -2275,12 +2275,12 @@ export default function ReportsClient() {
                 <AlertTriangle className="h-6 w-6 text-amber-600" />
                 <div>
                   <p className="font-semibold text-amber-800 dark:text-amber-300">
-                    ⚠️ {taxYearTotals.uncategorized} uncategorized transaction{taxYearTotals.uncategorized !== 1 ? 's' : ''} for this tax year
+                    ⚠️ {taxYearTotals.uncategorised} uncategorised transaction{taxYearTotals.uncategorised !== 1 ? 's' : ''} for this tax year
                   </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">Your tax report may be inaccurate. Categorize all transactions for proper {entityRegime === 'companies_house' ? 'Companies House' : 'HMRC'} compliance.</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">Your tax report may be inaccurate. Categorise all transactions for proper {entityRegime === 'companies_house' ? 'Companies House' : 'HMRC'} compliance.</p>
                 </div>
               </div>
-              <Button variant="outline" className="bg-card border-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30" onClick={() => window.location.href = '/statements?tab=uncategorized'}>
+              <Button variant="outline" className="bg-card border-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30" onClick={() => window.location.href = '/statements?tab=uncategorised'}>
                 Fix Categories <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -2652,7 +2652,7 @@ export default function ReportsClient() {
                   <TableCell></TableCell>
                 </TableRow>
                 {categoryBreakdown.filter(c => c.type === 'income').map((cat, i) => (
-                  <TableRow key={i} className="cursor-pointer hover:bg-muted/50" onClick={() => { const category = categories.find(c => c.name === cat.name); openCategoryModal(category?.id || 'uncategorized', cat.name, cat.type); }}>
+                  <TableRow key={i} className="cursor-pointer hover:bg-muted/50" onClick={() => { const category = categories.find(c => c.name === cat.name); openCategoryModal(category?.id || 'uncategorised', cat.name, cat.type); }}>
                     <TableCell className="pl-8">{cat.name}</TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">{cat.count} txns</TableCell>
                     <TableCell className="text-right font-medium text-green-600">{formatCurrency(cat.amount)}</TableCell>
@@ -2670,7 +2670,7 @@ export default function ReportsClient() {
                   <TableCell></TableCell>
                 </TableRow>
                 {categoryBreakdown.filter(c => c.type === 'expense').map((cat, i) => (
-                  <TableRow key={i} className="cursor-pointer hover:bg-muted/50" onClick={() => { const category = categories.find(c => c.name === cat.name); openCategoryModal(category?.id || 'uncategorized', cat.name, cat.type); }}>
+                  <TableRow key={i} className="cursor-pointer hover:bg-muted/50" onClick={() => { const category = categories.find(c => c.name === cat.name); openCategoryModal(category?.id || 'uncategorised', cat.name, cat.type); }}>
                     <TableCell className="pl-8">{cat.name}</TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">{cat.count} txns</TableCell>
                     <TableCell className="text-right font-medium text-red-600">({formatCurrency(cat.amount)})</TableCell>
@@ -3049,7 +3049,7 @@ export default function ReportsClient() {
                     <TableRow key={tx.id}>
                       <TableCell className="text-sm">{new Date(tx.date).toLocaleDateString('en-GB')}</TableCell>
                       <TableCell className="text-sm max-w-[250px] truncate" title={tx.description}>{tx.description}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{tx.category?.name || 'Uncategorized'}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-xs">{tx.category?.name || 'Uncategorised'}</Badge></TableCell>
                       <TableCell className={`text-right font-medium ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                         {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                       </TableCell>
@@ -3628,7 +3628,7 @@ export default function ReportsClient() {
                               <div 
                                 key={i} 
                                 className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-950/20 rounded cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/40 transition-colors group"
-                                onClick={() => openCategoryModal(category?.id || 'uncategorized', cat.name, cat.type)}
+                                onClick={() => openCategoryModal(category?.id || 'uncategorised', cat.name, cat.type)}
                               >
                                 <div className="flex items-center gap-2">
                                   <span>{cat.name}</span>
@@ -3668,7 +3668,7 @@ export default function ReportsClient() {
                               >
                                 <div 
                                   className="flex items-center gap-2 flex-1"
-                                  onClick={() => openCategoryModal(category?.id || 'uncategorized', cat.name, cat.type)}
+                                  onClick={() => openCategoryModal(category?.id || 'uncategorised', cat.name, cat.type)}
                                 >
                                   <span>{cat.name}</span>
                                   <Badge variant="outline" className="text-xs">{cat.count}</Badge>

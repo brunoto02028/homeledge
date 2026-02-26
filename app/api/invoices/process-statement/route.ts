@@ -8,7 +8,7 @@ import path from 'path';
 import { prisma } from '@/lib/db';
 import { requireUserId } from '@/lib/auth';
 
-// Common UK transaction keywords for automatic categorization
+// Common UK transaction keywords for automatic categorisation
 // Category names MUST exactly match DEFAULT_CATEGORIES in lib/types.ts
 const HMRC_KEYWORDS: Record<string, string[]> = {
   // === INCOME CATEGORIES ===
@@ -91,7 +91,7 @@ function getKeywordsForRegime(regime: string): Record<string, string[]> {
   return regime === 'companies_house' ? CH_KEYWORDS : HMRC_KEYWORDS;
 }
 
-// Smart categorization based on transaction description
+// Smart categorisation based on transaction description
 function suggestCategoryByKeywords(description: string, type: 'credit' | 'debit', categories: any[], regime: string = 'hmrc'): string | null {
   const descLower = description.toLowerCase();
   const keywordSet = getKeywordsForRegime(regime);
@@ -117,22 +117,22 @@ function suggestCategoryByKeywords(description: string, type: 'credit' | 'debit'
   return null;
 }
 
-// AI-powered batch categorization for remaining uncategorized transactions
+// AI-powered batch categorisation for remaining uncategorised transactions
 async function categorizeWithAI(transactions: any[], categories: any[], regime: string = 'hmrc'): Promise<Map<number, string>> {
   const categoryMap = new Map<number, string>();
   
-  // Filter uncategorized transactions
-  const uncategorizedIndices = transactions
+  // Filter uncategorised transactions
+  const uncategorisedIndices = transactions
     .map((tx, i) => tx.suggestedCategoryId ? null : i)
     .filter((i): i is number => i !== null);
   
-  if (uncategorizedIndices.length === 0) return categoryMap;
+  if (uncategorisedIndices.length === 0) return categoryMap;
   
   // Prepare category list for AI
   const categoryList = categories.map(c => `${c.id}: ${c.name} (${c.type})`).join('\n');
   
   // Prepare transactions for AI (max 100 at a time for efficiency)
-  const transactionsToCategories = uncategorizedIndices.slice(0, 100).map(i => ({
+  const transactionsToCategories = uncategorisedIndices.slice(0, 100).map(i => ({
     index: i,
     description: transactions[i].description,
     amount: transactions[i].amount,
@@ -151,13 +151,13 @@ async function categorizeWithAI(transactions: any[], categories: any[], regime: 
   
   let prompt: string;
   if (isCompany) {
-    prompt = `You are a UK chartered accountant specializing in Companies House annual accounts and Corporation Tax (CT600).
-Your task: categorize COMPANY bank transactions for statutory accounts and CT600 filing.
+    prompt = `You are a UK chartered accountant specialising in Companies House annual accounts and Corporation Tax (CT600).
+Your task: categorise COMPANY bank transactions for statutory accounts and CT600 filing.
 
 CRITICAL RULES:
 1. INCOME transactions (credits) MUST only be assigned to income-type categories
 2. EXPENSE transactions (debits) MUST only be assigned to expense-type categories
-3. This is a COMPANY bank account - categorize for P&L / CT600
+3. This is a COMPANY bank account — categorise for P&L / CT600
 4. Director salary payments = "Directors Remuneration"
 5. Staff wages = "Employee Costs"
 6. HMRC CT payments = "Corporation Tax Payment"
@@ -174,15 +174,15 @@ CRITICAL RULES:
 Available categories (ID: Name (type)):
 ${categoryList}
 
-Transactions to categorize:
+Transactions to categorise:
 ${txLines}
 
 Return a JSON array: [[index, "categoryId"], ...]
-Use null for categoryId if genuinely uncertain.
+Only return the JSON array, nothing else.
 Return raw JSON array only, no markdown:`;
   } else {
-    prompt = `You are a UK chartered accountant specializing in HMRC Self Assessment (SA103) and personal tax.
-Your task: categorize bank transactions with precision for tax reporting.
+    prompt = `You are a UK chartered accountant specialising in HMRC Self Assessment (SA103) and personal tax.
+Your task: categorise bank transactions with precision for tax reporting.
 
 CRITICAL RULES:
 1. INCOME transactions (credits) MUST only be assigned to income-type categories
@@ -241,7 +241,7 @@ Return raw JSON array only, no markdown:`;
       }
     }
   } catch (err) {
-    console.error('[Categorize] AI categorization error:', err);
+    console.error('[Categorise] AI categorisation error:', err);
   }
   
   return categoryMap;
@@ -414,7 +414,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Determine entity regime for categorization
+    // Determine entity regime for categorisation
     let entityRegime = 'hmrc'; // default to individual/sole trader
     if (entityId) {
       try {
@@ -429,7 +429,7 @@ export async function POST(request: Request) {
       } catch { /* default to hmrc */ }
     }
     // ═══════════════════════════════════════════════════════════
-    // 4-Layer Categorization Engine
+    // 4-Layer Categorisation Engine
     // Layer 1: Deterministic Rules (DB stored)
     // Layer 2: Smart Pattern Detection (user feedback history)
     // Layer 3: AI Supervised (Gemini/Abacus with confidence)
@@ -439,7 +439,7 @@ export async function POST(request: Request) {
       try {
         const userId = await requireUserId();
 
-        // Get user's categorization mode
+        // Get user's categorisation mode
         let catMode: 'conservative' | 'smart' | 'autonomous' = 'smart';
         try {
           const user = await prisma.user.findUnique({ where: { id: userId }, select: { categorizationMode: true } as any });
@@ -482,9 +482,9 @@ export async function POST(request: Request) {
 
         const bySource = { rule: 0, pattern: 0, ai: 0, none: 0 };
         catResults.forEach(r => { if (r.source in bySource) bySource[r.source as keyof typeof bySource]++; });
-        console.log(`[CatEngine] Results: ${bySource.rule} rules, ${bySource.pattern} patterns, ${bySource.ai} AI, ${bySource.none} uncategorized`);
+        console.log(`[CatEngine] Results: ${bySource.rule} rules, ${bySource.pattern} patterns, ${bySource.ai} AI, ${bySource.none} uncategorised`);
       } catch (catError: any) {
-        console.error('[ProcessStatement] Categorization error (non-fatal):', catError.message);
+        console.error('[ProcessStatement] Categorisation error (non-fatal):', catError.message);
       }
     }
 

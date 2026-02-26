@@ -23,7 +23,7 @@ interface HealthData {
     expenses: number;
     savingsRate: number;
     totalTransactions: number;
-    categorizedPercent: number;
+    categorisedPercent: number;
     activeBills: number;
     overdueActions: number;
     budgetsActive: number;
@@ -144,8 +144,8 @@ export function HealthScore() {
             <p className="text-[11px] text-muted-foreground">Savings Rate</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
-            <p className="text-lg font-semibold">{data.summary.categorizedPercent.toFixed(0)}%</p>
-            <p className="text-[11px] text-muted-foreground">Categorized</p>
+            <p className="text-lg font-semibold">{data.summary.categorisedPercent.toFixed(0)}%</p>
+            <p className="text-[11px] text-muted-foreground">Categorised</p>
           </div>
         </div>
       </CardContent>

@@ -53,17 +53,17 @@ export async function GET() {
       tip: billScore >= 70 ? 'Bills are well tracked' : 'Add more bills to track your commitments',
     });
 
-    // 2. Transaction Categorization (weight: 25) - What % of transactions are categorized?
+    // 2. Transaction Categorisation (weight: 25) — What % of transactions are categorised?
     const totalTx = bankTransactions.length;
-    const categorizedTx = bankTransactions.filter(t => t.categoryId).length;
-    const catPercent = totalTx > 0 ? (categorizedTx / totalTx) * 100 : 0;
+    const categorisedTx = bankTransactions.filter(t => t.categoryId).length;
+    const catPercent = totalTx > 0 ? (categorisedTx / totalTx) * 100 : 0;
     const catScore = catPercent >= 90 ? 100 : catPercent >= 70 ? 80 : catPercent >= 50 ? 60 : catPercent >= 20 ? 30 : 0;
     components.push({
-      name: 'Categorization',
+      name: 'Categorisation',
       score: catScore,
       weight: 25,
       status: catScore >= 80 ? 'good' : catScore >= 50 ? 'warning' : 'danger',
-      tip: catScore >= 80 ? `${catPercent.toFixed(0)}% categorized` : `${(100 - catPercent).toFixed(0)}% of transactions need categorization`,
+      tip: catScore >= 80 ? `${catPercent.toFixed(0)}% categorised` : `${(100 - catPercent).toFixed(0)}% of transactions need categorisation`,
     });
 
     // 3. Overdue Actions (weight: 15) - Any overdue actions?
@@ -130,7 +130,7 @@ export async function GET() {
         expenses: Math.round(expenses * 100) / 100,
         savingsRate: Math.round(savingsRate * 100) / 100,
         totalTransactions: totalTx,
-        categorizedPercent: Math.round(catPercent * 100) / 100,
+        categorisedPercent: Math.round(catPercent * 100) / 100,
         activeBills: billCount,
         overdueActions: overdueActions.length,
         budgetsActive: budgets.length,

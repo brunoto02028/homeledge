@@ -159,7 +159,7 @@ export default function CategorizationRulesPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Brain className="h-7 w-7 text-purple-500" />
-            Categorization Intelligence
+            Categorisation Intelligence
           </h1>
           <p className="text-muted-foreground mt-1">4-layer engine: Rules → Patterns → AI → Learning</p>
         </div>
@@ -240,7 +240,7 @@ export default function CategorizationRulesPage() {
       {showCreate && (
         <div className="rounded-xl border bg-card p-5 space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
-            <Plus className="h-4 w-4 text-purple-500" /> Create Categorization Rule
+            <Plus className="h-4 w-4 text-purple-500" /> Create Categorisation Rule
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -331,7 +331,7 @@ export default function CategorizationRulesPage() {
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     <Brain className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    {search || sourceFilter !== 'all' ? 'No rules match your filter' : 'No categorization rules yet. Create one or run the seed script.'}
+                    {search || sourceFilter !== 'all' ? 'No rules match your filter' : 'No categorisation rules yet. Create one or run the seed script.'}
                   </td>
                 </tr>
               ) : (

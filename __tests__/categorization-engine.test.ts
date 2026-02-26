@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 /**
- * Tests for the categorization engine's pure logic.
+ * Tests for the categorisation engine's pure logic.
  * We import the module but mock prisma and callAI to isolate the logic.
  */
 
@@ -176,7 +176,7 @@ describe('applyMode — smart', () => {
 // ============================================================
 
 describe('applyMode — autonomous', () => {
-  it('auto-approves any categorized result', () => {
+  it('auto-approves any categorised result', () => {
     const input: CategorizationResult = {
       categoryId: 'cat-1', categoryName: 'X', confidence: 0.60,
       source: 'ai', justification: '', autoApprove: false, needsReview: true,
@@ -203,7 +203,7 @@ describe('applyMode — autonomous', () => {
 });
 
 // ============================================================
-// CategorizationResult type structure
+// CategorizationResult type structure (Prisma model name unchanged)
 // ============================================================
 
 describe('CategorizationResult structure', () => {
@@ -230,7 +230,7 @@ describe('CategorizationResult structure', () => {
 // Mode behavior matrix
 // ============================================================
 
-describe('Mode behavior matrix', () => {
+describe('Mode behaviour matrix', () => {
   const modes: CategorizationMode[] = ['conservative', 'smart', 'autonomous'];
   const confidenceLevels = [0.30, 0.50, 0.70, 0.90, 1.0];
 
@@ -254,7 +254,7 @@ describe('Mode behavior matrix', () => {
     }
   });
 
-  it('autonomous auto-approves all categorized results', () => {
+  it('autonomous auto-approves all categorised results', () => {
     for (const conf of confidenceLevels) {
       const result = applyMode({
         categoryId: 'cat-1', categoryName: 'X', confidence: conf,

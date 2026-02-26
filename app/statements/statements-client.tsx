@@ -85,7 +85,7 @@ export default function StatementsClient() {
   const [processing, setProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'uncategorized'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'uncategorised'>('all');
   const [selectedStatement, setSelectedStatement] = useState<string | null>(null);
   const [expandedStatements, setExpandedStatements] = useState<Set<string>>(new Set());
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
@@ -109,15 +109,15 @@ export default function StatementsClient() {
   // Apply to similar dialog state
   const [showApplyToSimilarDialog, setShowApplyToSimilarDialog] = useState(false);
   const [similarTransactions, setSimilarTransactions] = useState<BankTransaction[]>([]);
-  const [pendingCategorization, setPendingCategorization] = useState<{
+  const [pendingCategorisation, setPendingCategorization] = useState<{
     transactionId: string;
     categoryId: string;
     keyword: string;
   } | null>(null);
   const [applyingToSimilar, setApplyingToSimilar] = useState(false);
   
-  // Draft categorization state - stores pending category selections before confirmation
-  const [draftCategorizations, setDraftCategorizations] = useState<Map<string, string>>(new Map());
+  // Draft categorisation state — stores pending category selections before confirmation
+  const [draftCategorisations, setDraftCategorizations] = useState<Map<string, string>>(new Map());
   const [savingCategory, setSavingCategory] = useState<string | null>(null);
   
   // AI Category Assistant state
@@ -310,7 +310,7 @@ export default function StatementsClient() {
         setUploadStatus(`Saving statement to database...`);
 
         const result = await processRes.json();
-        const categorizedCount = result.transactions?.filter((tx: any) => tx.suggestedCategoryId).length || 0;
+        const categorisedCount = result.transactions?.filter((tx: any) => tx.suggestedCategoryId).length || 0;
         const _parseError = result.parseError;
 
         // Step 4: Save to database (80% -> 100%)
@@ -345,14 +345,14 @@ export default function StatementsClient() {
           const createResult = await createRes.json();
           const txCount = createResult.transactionsCreated || result.transactions?.length || 0;
           const status = result.parseStatus;
-          const autoCategorized = createResult.categorizedCount || categorizedCount || 0;
+          const autoCategorised = createResult.categorisedCount || categorisedCount || 0;
           
           if (status === 'success' && txCount > 0) {
             let msg = createResult.duplicatesSkipped > 0
               ? `${txCount} transactions added, ${createResult.duplicatesSkipped} duplicates skipped`
               : `${txCount} transactions added`;
-            if (autoCategorized > 0) {
-              msg += ` • ${autoCategorized} auto-categorized`;
+            if (autoCategorised > 0) {
+              msg += ` • ${autoCategorised} auto-categorised`;
             }
             toast({ title: 'Statement Processed ✓', description: msg });
           } else if (status === 'needs_review') {
@@ -401,7 +401,7 @@ export default function StatementsClient() {
     return keyword.toUpperCase();
   };
 
-  // Find similar uncategorized transactions
+  // Find similar uncategorised transactions
   const findSimilarTransactions = (transactionId: string, keyword: string): BankTransaction[] => {
     const allTx = getAllTransactions();
     const currentTx = allTx.find(tx => tx.id === transactionId);
@@ -409,7 +409,7 @@ export default function StatementsClient() {
 
     return allTx.filter(tx => 
       tx.id !== transactionId && 
-      !tx.categoryId && // Only uncategorized
+      !tx.categoryId && // Only uncategorised
       tx.type === currentTx.type && // Same type (income/expense)
       tx.description.toUpperCase().includes(keyword)
     );
@@ -426,7 +426,7 @@ export default function StatementsClient() {
         });
         const data = await res.json();
         
-        // Check for similar uncategorized transactions
+        // Check for similar uncategorised transactions
         if (!skipSimilarCheck && data.rule?.keyword) {
           const similar = findSimilarTransactions(transactionId, data.rule.keyword);
           
@@ -471,7 +471,7 @@ export default function StatementsClient() {
 
   // Apply category to all similar transactions
   const applyToSimilarTransactions = async (count?: number) => {
-    if (!pendingCategorization || similarTransactions.length === 0) return;
+    if (!pendingCategorisation || similarTransactions.length === 0) return;
     
     setApplyingToSimilar(true);
     const toApply = count ? similarTransactions.slice(0, count) : similarTransactions;
@@ -482,13 +482,13 @@ export default function StatementsClient() {
         await fetch(`/api/statements/transactions/${tx.id}/categorize`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ categoryId: pendingCategorization.categoryId, learnRule: false }),
+          body: JSON.stringify({ categoryId: pendingCategorisation.categoryId, learnRule: false }),
         });
         successCount++;
       }
       
       toast({ 
-        title: '✅ Bulk Categorization Complete', 
+        title: '✅ Bulk Categorisation Complete', 
         description: `Applied category to ${successCount} similar transactions`
       });
       
@@ -507,7 +507,7 @@ export default function StatementsClient() {
   const skipSimilarTransactions = () => {
     toast({ 
       title: '🧠 Rule Learned!', 
-      description: `Future "${pendingCategorization?.keyword}" transactions will be auto-categorized`
+      description: `Future "${pendingCategorisation?.keyword}" transactions will be auto-categorised`
     });
     setShowApplyToSimilarDialog(false);
     setSimilarTransactions([]);
@@ -518,7 +518,7 @@ export default function StatementsClient() {
   const setDraftCategory = (transactionId: string, categoryId: string) => {
     setDraftCategorizations(prev => {
       const newMap = new Map(prev);
-      if (categoryId === 'uncategorized') {
+      if (categoryId === 'uncategorised') {
         newMap.delete(transactionId);
       } else {
         newMap.set(transactionId, categoryId);
@@ -527,8 +527,8 @@ export default function StatementsClient() {
     });
   };
 
-  const confirmCategorization = async (transactionId: string) => {
-    const categoryId = draftCategorizations.get(transactionId);
+  const confirmCategorisation = async (transactionId: string) => {
+    const categoryId = draftCategorisations.get(transactionId);
     if (!categoryId) return;
     
     setSavingCategory(transactionId);
@@ -556,7 +556,7 @@ export default function StatementsClient() {
   // Re-classify transactions with HMRC AI
   const classifyTransactions = async (statementId: string) => {
     try {
-      toast({ title: 'Classifying...', description: 'Using AI to categorize transactions for HMRC' });
+      toast({ title: 'Classifying...', description: 'Using AI to categorise transactions for HMRC' });
       const res = await fetch('/api/statements/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -796,7 +796,7 @@ export default function StatementsClient() {
   };
 
   // Handle tab change - reset page number
-  const handleTabChange = (tab: 'all' | 'uncategorized') => {
+  const handleTabChange = (tab: 'all' | 'uncategorised') => {
     setActiveTab(tab);
     setCurrentPage(1);
     setSelectedTransactions(new Set());
@@ -846,7 +846,7 @@ export default function StatementsClient() {
     }
   };
 
-  const bulkCategorize = async () => {
+  const bulkCategorise = async () => {
     if (selectedTransactions.size === 0 || !bulkCategoryId) return;
 
     try {
@@ -862,15 +862,15 @@ export default function StatementsClient() {
       }
       
       toast({ 
-        title: '🧠 Bulk Categorization Complete', 
-        description: `${selectedTransactions.size} transactions categorized. ${learnedCount} new rules learned!`
+        title: '🧠 Bulk Categorisation Complete', 
+        description: `${selectedTransactions.size} transactions categorised. ${learnedCount} new rules learned!`
       });
       setSelectedTransactions(new Set());
       setBulkCategoryId(null);
       fetchStatements();
     } catch (error) {
-      console.error('Bulk categorize error:', error);
-      toast({ title: 'Error', description: 'Failed to categorize some transactions', variant: 'destructive' });
+      console.error('Bulk categorise error:', error);
+      toast({ title: 'Error', description: 'Failed to categorise some transactions', variant: 'destructive' });
     }
   };
 
@@ -894,7 +894,7 @@ export default function StatementsClient() {
 
   const filteredTransactions = () => {
     let txs = getAllTransactions();
-    if (activeTab === 'uncategorized') {
+    if (activeTab === 'uncategorised') {
       txs = txs.filter(tx => !tx.categoryId);
     }
     if (filterType !== 'all') {
@@ -935,7 +935,7 @@ export default function StatementsClient() {
     return {
       credits: filtered.filter(tx => tx.type === 'credit').reduce((sum, tx) => sum + tx.amount, 0),
       debits: filtered.filter(tx => tx.type === 'debit').reduce((sum, tx) => sum + tx.amount, 0),
-      uncategorized: hasDateFilter ? filtered.filter(tx => !tx.categoryId).length : all.filter(tx => !tx.categoryId).length,
+      uncategorised: hasDateFilter ? filtered.filter(tx => !tx.categoryId).length : all.filter(tx => !tx.categoryId).length,
       total: hasDateFilter ? filtered.length : all.length,
     };
   })();
@@ -949,7 +949,7 @@ export default function StatementsClient() {
         tx.description,
         tx.type,
         tx.amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        tx.category?.name || 'Uncategorized',
+        tx.category?.name || 'Uncategorised',
         tx.notes || '',
         tx.statementName,
       ]);
@@ -1182,14 +1182,14 @@ export default function StatementsClient() {
             </div>
           </CardContent>
         </Card>
-        <Card className={totals.uncategorized > 0 ? 'border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/30' : ''}>
+        <Card className={totals.uncategorised > 0 ? 'border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/30' : ''}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Uncategorized</p>
-                <p className="text-2xl font-bold text-yellow-600">{totals.uncategorized}</p>
+                <p className="text-sm text-muted-foreground">Uncategorised</p>
+                <p className="text-2xl font-bold text-yellow-600">{totals.uncategorised}</p>
               </div>
-              {totals.uncategorized > 0 ? (
+              {totals.uncategorised > 0 ? (
                 <XCircle className="h-8 w-8 text-yellow-600" />
               ) : (
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -1204,11 +1204,11 @@ export default function StatementsClient() {
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as 'all' | 'uncategorized')}>
+              <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as 'all' | 'uncategorised')}>
                 <TabsList>
                   <TabsTrigger value="all">All Transactions ({totals.total})</TabsTrigger>
-                  <TabsTrigger value="uncategorized" className={totals.uncategorized > 0 ? 'text-yellow-600' : ''}>
-                    Uncategorized ({totals.uncategorized})
+                  <TabsTrigger value="uncategorized" className={totals.uncategorised > 0 ? 'text-yellow-600' : ''}>
+                    Uncategorised ({totals.uncategorised})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1355,7 +1355,7 @@ export default function StatementsClient() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button size="sm" onClick={bulkCategorize} disabled={!bulkCategoryId}>
+                  <Button size="sm" onClick={bulkCategorise} disabled={!bulkCategoryId}>
                     Apply & Learn
                   </Button>
                   <Button size="sm" variant="destructive" onClick={bulkDeleteTransactions}>
@@ -1425,8 +1425,8 @@ export default function StatementsClient() {
                       </TableCell>
                       <TableCell>
                         {(() => {
-                          const hasDraft = draftCategorizations.has(tx.id);
-                          const draftCategoryId = draftCategorizations.get(tx.id);
+                          const hasDraft = draftCategorisations.has(tx.id);
+                          const draftCategoryId = draftCategorisations.get(tx.id);
                           const draftCategory = draftCategoryId ? categories.find(c => c.id === draftCategoryId) : null;
                           const isSaving = savingCategory === tx.id;
                           
@@ -1435,7 +1435,7 @@ export default function StatementsClient() {
                             return (
                               <div className={`flex items-center gap-2 p-2 rounded-md ${isSaving ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-300 dark:border-yellow-700'}`}>
                                 <Select
-                                  value={draftCategoryId || 'uncategorized'}
+                                  value={draftCategoryId || 'uncategorised'}
                                   onValueChange={(v) => setDraftCategory(tx.id, v)}
                                   disabled={isSaving}
                                 >
@@ -1454,7 +1454,7 @@ export default function StatementsClient() {
                                 <Button
                                   size="sm"
                                   className="h-7 px-2 bg-green-600 hover:bg-green-700"
-                                  onClick={() => confirmCategorization(tx.id)}
+                                  onClick={() => confirmCategorisation(tx.id)}
                                   disabled={isSaving}
                                 >
                                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
@@ -1480,9 +1480,9 @@ export default function StatementsClient() {
                               <div className="space-y-2">
                                 <div className="flex items-center gap-1">
                                   <Select
-                                    value={tx.categoryId || 'uncategorized'}
+                                    value={tx.categoryId || 'uncategorised'}
                                     onValueChange={(v) => {
-                                      if (v !== 'uncategorized' && v !== tx.categoryId) {
+                                      if (v !== 'uncategorised' && v !== tx.categoryId) {
                                         setDraftCategory(tx.id, v);
                                       }
                                       setEditingTransaction(null);
@@ -1593,7 +1593,7 @@ export default function StatementsClient() {
                                 {tx.category ? (
                                   <Badge variant="outline">{tx.category.name}</Badge>
                                 ) : (
-                                  <span className="text-yellow-600 italic">Click to categorize</span>
+                                  <span className="text-yellow-600 italic">Click to categorise</span>
                                 )}
                                 <Pencil className="h-3 w-3 text-muted-foreground/60" />
                               </button>
@@ -1802,8 +1802,8 @@ export default function StatementsClient() {
                               </TableCell>
                               <TableCell>
                                 {(() => {
-                                  const hasDraft = draftCategorizations.has(tx.id);
-                                  const draftCategoryId = draftCategorizations.get(tx.id);
+                                  const hasDraft = draftCategorisations.has(tx.id);
+                                  const draftCategoryId = draftCategorisations.get(tx.id);
                                   const isSaving = savingCategory === tx.id;
                                   
                                   if (hasDraft) {
@@ -1811,7 +1811,7 @@ export default function StatementsClient() {
                                     return (
                                       <div className={`flex items-center gap-1.5 p-1.5 rounded-md ${isSaving ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-300 dark:border-yellow-700'}`}>
                                         <Select
-                                          value={draftCategoryId || 'uncategorized'}
+                                          value={draftCategoryId || 'uncategorised'}
                                           onValueChange={(v) => setDraftCategory(tx.id, v)}
                                           disabled={isSaving}
                                         >
@@ -1820,7 +1820,7 @@ export default function StatementsClient() {
                                           </SelectTrigger>
                                           <SelectContent>
                                             <SelectItem value="uncategorized">
-                                              <span className="text-yellow-600">Uncategorized</span>
+                                              <span className="text-yellow-600">Uncategorised</span>
                                             </SelectItem>
                                             {categories
                                               .filter(c => c.type === (tx.type === 'credit' ? 'income' : 'expense'))
@@ -1834,7 +1834,7 @@ export default function StatementsClient() {
                                         <Button
                                           size="sm"
                                           className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
-                                          onClick={() => confirmCategorization(tx.id)}
+                                          onClick={() => confirmCategorisation(tx.id)}
                                           disabled={isSaving}
                                           title="Confirm"
                                         >
@@ -1858,9 +1858,9 @@ export default function StatementsClient() {
                                   return (
                                     <div className="flex items-center gap-1">
                                       <Select
-                                        value={tx.categoryId || 'uncategorized'}
+                                        value={tx.categoryId || 'uncategorised'}
                                         onValueChange={(v) => {
-                                          if (v !== 'uncategorized') {
+                                          if (v !== 'uncategorised') {
                                             setDraftCategory(tx.id, v);
                                           }
                                         }}
@@ -1870,7 +1870,7 @@ export default function StatementsClient() {
                                         </SelectTrigger>
                                         <SelectContent>
                                           <SelectItem value="uncategorized">
-                                            <span className="text-yellow-600">Uncategorized</span>
+                                            <span className="text-yellow-600">Uncategorised</span>
                                           </SelectItem>
                                           {categories
                                             .filter(c => c.type === (tx.type === 'credit' ? 'income' : 'expense'))
@@ -2180,7 +2180,7 @@ export default function StatementsClient() {
             </DialogTitle>
             <DialogDescription>
               We found <strong>{similarTransactions.length}</strong> other uncategorized transactions 
-              containing <Badge variant="outline" className="mx-1">{pendingCategorization?.keyword}</Badge>
+              containing <Badge variant="outline" className="mx-1">{pendingCategorisation?.keyword}</Badge>
             </DialogDescription>
           </DialogHeader>
           

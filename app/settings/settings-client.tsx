@@ -238,15 +238,15 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
-      {/* Categorization Intelligence Mode */}
+      {/* Categorisation Intelligence Mode */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-500" /> Categorization Mode
+            <Brain className="h-5 w-5 text-purple-500" /> Categorisation Mode
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">Choose how the 4-layer categorization engine handles your transactions.</p>
+          <p className="text-sm text-muted-foreground">Choose how the 4-layer categorisation engine handles your transactions.</p>
           {[
             { mode: 'conservative', icon: Eye, label: 'Conservative', desc: 'Nothing auto-approved. Every transaction needs your review.', color: 'border-amber-500/30 bg-amber-500/5' },
             { mode: 'smart', icon: Brain, label: 'Smart (Recommended)', desc: 'Auto-approves high confidence (≥90%). Suggests 70-90%. Review below 70%.', color: 'border-purple-500/30 bg-purple-500/5' },
@@ -260,7 +260,7 @@ export function SettingsClient() {
                   try {
                     await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categorizationMode: mode }) });
                     setProfile(p => p ? { ...p, categorizationMode: mode } as any : p);
-                    toast({ title: `Categorization mode set to ${label}` });
+                    toast({ title: `Categorisation mode set to ${label}` });
                   } catch { toast({ title: 'Failed to update', variant: 'destructive' }); }
                 }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${isSelected ? color + ' ring-2 ring-purple-500/50' : 'border-border hover:bg-muted/30'}`}

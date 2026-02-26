@@ -179,7 +179,7 @@ export async function autoCategorizeTransactions(
     ).join('\n');
 
     const batchSize = 20;
-    let totalCategorized = 0;
+    let totalCategorised = 0;
 
     for (let i = 0; i < transactions.length; i += batchSize) {
       const batch = transactions.slice(i, i + batchSize);
@@ -187,7 +187,7 @@ export async function autoCategorizeTransactions(
         `${idx + 1}. "${tx.description}" | £${tx.amount} | ${tx.type === 'credit' ? 'INCOME' : 'EXPENSE'} | ${new Date(tx.date).toISOString().split('T')[0]}`
       ).join('\n');
 
-      const prompt = `You are a UK accountant. Categorize these bank transactions into the best matching category.
+      const prompt = `You are a UK accountant. Categorise these bank transactions into the best matching category.
 
 CATEGORIES:
 ${catList}
@@ -221,16 +221,16 @@ Only return the JSON array, no markdown.`;
               isApproved: false,
             },
           });
-          totalCategorized++;
+          totalCategorised++;
         }
       } catch (err) {
-        console.error('[AutoCategorize] Batch error:', err);
+        console.error('[AutoCategorise] Batch error:', err);
       }
     }
 
-    return totalCategorized;
+    return totalCategorised;
   } catch (error) {
-    console.error('[AutoCategorize] Error:', error);
+    console.error('[AutoCategorise] Error:', error);
     return 0;
   }
 }
@@ -266,7 +266,7 @@ export async function syncConnectionTransactions(params: {
 }): Promise<{
   synced: number;
   skipped: number;
-  categorized: number;
+  categorised: number;
   total: number;
   months: string[];
   balance: number;
@@ -322,7 +322,7 @@ export async function syncConnectionTransactions(params: {
       if (recentSync) {
         // Don't overwrite lastSyncError — keep it clean
         return {
-          synced: 0, skipped: 0, categorized: 0, total: 0,
+          synced: 0, skipped: 0, categorised: 0, total: 0,
           months: [], balance: currentBalance, bank: bankName,
           period: { from: fromDate, to: toDate },
           error: 'ALREADY_SYNCED', code: 'ALREADY_SYNCED',
@@ -333,7 +333,7 @@ export async function syncConnectionTransactions(params: {
         data: { lastSyncError: 'SCA expired — reconnect bank for historical data' },
       });
       return {
-        synced: 0, skipped: 0, categorized: 0, total: 0,
+        synced: 0, skipped: 0, categorised: 0, total: 0,
         months: [], balance: currentBalance, bank: bankName,
         period: { from: fromDate, to: toDate },
         error: 'SCA_EXCEEDED', code: 'SCA_EXCEEDED',
@@ -348,7 +348,7 @@ export async function syncConnectionTransactions(params: {
       data: { lastSyncAt: new Date(), lastSyncError: null },
     });
     return {
-      synced: 0, skipped: 0, categorized: 0, total: 0,
+      synced: 0, skipped: 0, categorised: 0, total: 0,
       months: [], balance: currentBalance, bank: bankName,
       period: { from: fromDate, to: toDate },
     };
@@ -377,7 +377,7 @@ export async function syncConnectionTransactions(params: {
       data: { lastSyncAt: new Date(), lastSyncError: null },
     });
     return {
-      synced: 0, skipped: skippedCount, categorized: 0, total: transactions.length,
+      synced: 0, skipped: skippedCount, categorised: 0, total: transactions.length,
       months: [], balance: currentBalance, bank: bankName,
       period: { from: fromDate, to: toDate },
     };
@@ -444,10 +444,10 @@ export async function syncConnectionTransactions(params: {
     });
   }
 
-  // Auto-categorize
-  let categorized = 0;
+  // Auto-categorise
+  let categorised = 0;
   if (conn.autoCategories && newCount > 0) {
-    categorized = await autoCategorizeTransactions(newTxIds, conn.entityId, userId);
+    categorised = await autoCategorizeTransactions(newTxIds, conn.entityId, userId);
   }
 
   // Update connection
@@ -464,7 +464,7 @@ export async function syncConnectionTransactions(params: {
   return {
     synced: newCount,
     skipped: skippedCount,
-    categorized,
+    categorised,
     total: transactions.length,
     months: Array.from(txByMonth.keys()),
     balance: currentBalance,
