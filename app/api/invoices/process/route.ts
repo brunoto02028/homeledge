@@ -36,12 +36,13 @@ Check for account/reference numbers which serve as invoice numbers.`;
 }
 
 export async function POST(request: Request) {
+  const formData = await request.formData();
+  const file = formData.get('file') as File;
+  const invoiceId = formData.get('invoiceId') as string;
+
   try {
     const userId = await requireUserId();
     const userIds = await getAccessibleUserIds(userId);
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const invoiceId = formData.get('invoiceId') as string;
 
     if (!file || !invoiceId) {
       return NextResponse.json(
@@ -291,7 +292,6 @@ export async function POST(request: Request) {
     console.error('Error processing invoice:', error);
     
     // Update invoice status to error
-    const invoiceId = (await request.formData()).get('invoiceId') as string;
     if (invoiceId) {
       await prisma.invoice.update({
         where: { id: invoiceId },
