@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Category } from '@/lib/types';
-import { Upload, FileSpreadsheet, Loader2, Pencil, Trash2, ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle, XCircle, Filter, Download, ChevronDown, ChevronUp, AlertTriangle, Eye, CheckSquare, Square, Sparkles, Bot, Lightbulb, Landmark, User, Building2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, Loader2, Pencil, Trash2, ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle, XCircle, Filter, Download, ChevronDown, ChevronUp, AlertTriangle, Eye, CheckSquare, Square, Sparkles, Bot, Lightbulb, Landmark, User, Building2, ArrowUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/lib/i18n';
 
@@ -108,6 +108,8 @@ export default function StatementsClient() {
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const [bulkCategoryId, setBulkCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<'date' | 'description' | 'type' | 'amount' | 'category'>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
   // Apply to similar dialog state
   const [showApplyToSimilarDialog, setShowApplyToSimilarDialog] = useState(false);
@@ -930,7 +932,29 @@ export default function StatementsClient() {
         tx.notes?.toLowerCase().includes(query)
       );
     }
+    // Apply sorting
+    txs.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'date': cmp = new Date(a.date).getTime() - new Date(b.date).getTime(); break;
+        case 'description': cmp = a.description.localeCompare(b.description); break;
+        case 'type': cmp = a.type.localeCompare(b.type); break;
+        case 'amount': cmp = Math.abs(a.amount) - Math.abs(b.amount); break;
+        case 'category': cmp = (a.category?.name || 'zzz').localeCompare(b.category?.name || 'zzz'); break;
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
     return txs;
+  };
+
+  const toggleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'date' ? 'desc' : 'asc');
+    }
+    setCurrentPage(1);
   };
 
   const allFilteredTransactions = filteredTransactions();
@@ -1394,11 +1418,21 @@ export default function StatementsClient() {
                       onCheckedChange={() => selectAllTransactions()}
                     />
                   </TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('date')}>
+                    <span className="flex items-center gap-1">Date {sortField === 'date' ? (sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />}</span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('description')}>
+                    <span className="flex items-center gap-1">Description {sortField === 'description' ? (sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />}</span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('type')}>
+                    <span className="flex items-center gap-1">Type {sortField === 'type' ? (sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />}</span>
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('amount')}>
+                    <span className="flex items-center justify-end gap-1">Amount {sortField === 'amount' ? (sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />}</span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => toggleSort('category')}>
+                    <span className="flex items-center gap-1">Category {sortField === 'category' ? (sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />}</span>
+                  </TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
