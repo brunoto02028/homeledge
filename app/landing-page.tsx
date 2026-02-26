@@ -469,72 +469,122 @@ export function LandingPage() {
                 </a>
               </div>
             </div>
-            {/* Right — Phone Mockup SVG Illustration */}
+            {/* Right — iPhone Pro Max Mockup */}
             <div className="flex justify-center relative">
-              <div className="relative w-[260px] sm:w-[280px]">
-                {/* Phone Frame */}
-                <div className="relative rounded-[2.5rem] border-[3px] border-slate-600/50 bg-slate-900 p-3 shadow-2xl shadow-violet-500/20 ring-1 ring-violet-500/10">
-                  {/* Notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-slate-900 rounded-b-2xl z-10" />
-                  {/* Screen */}
-                  <div className="rounded-[2rem] bg-gradient-to-b from-slate-800 to-slate-900 overflow-hidden">
-                    {/* Status Bar */}
-                    <div className="flex justify-between items-center px-5 pt-7 pb-1 text-[10px] text-slate-500">
-                      <span>14:32</span>
-                      <div className="flex items-center gap-1"><Wifi className="h-2.5 w-2.5" /><span>98%</span></div>
-                    </div>
-                    {/* App Header */}
-                    <div className="px-4 py-2.5 border-b border-white/5">
-                      <div className="flex items-center gap-2">
-                        <Fingerprint className="h-4 w-4 text-violet-400" />
-                        <span className="text-white text-xs font-semibold">Identity Check</span>
-                      </div>
-                    </div>
-                    {/* Camera Viewfinder */}
-                    <div className="px-4 py-3">
-                      <div className="relative aspect-[4/3] rounded-xl border-2 border-dashed border-violet-400/30 bg-violet-400/5 flex flex-col items-center justify-center gap-2">
-                        <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-violet-400 rounded-tl-md" />
-                        <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-violet-400 rounded-tr-md" />
-                        <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-violet-400 rounded-bl-md" />
-                        <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-violet-400 rounded-br-md" />
-                        <Scan className="h-7 w-7 text-violet-400/50" />
-                        <span className="text-violet-400/80 text-[10px] font-medium">Position your ID here</span>
-                      </div>
-                      <p className="text-center text-[9px] text-slate-500 mt-1.5">Align passport or driving licence within the frame</p>
-                    </div>
-                    {/* Progress Steps */}
-                    <div className="px-4 pb-3 space-y-1.5">
-                      {[
-                        { text: 'Scan ID Document', done: true },
-                        { text: 'Take a Selfie', done: false },
-                        { text: 'Verification Complete', done: false },
-                      ].map((s, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-bold ${s.done ? 'bg-violet-400 text-slate-900' : 'bg-white/10 text-slate-500'}`}>
-                            {s.done ? <Check className="h-2.5 w-2.5" /> : i + 1}
-                          </div>
-                          <span className={`text-[11px] ${s.done ? 'text-white' : 'text-slate-500'}`}>{s.text}</span>
+              <div className="relative" style={{ width: 290 }}>
+                {/* Outer titanium frame */}
+                <div className="relative rounded-[3.2rem] bg-gradient-to-b from-[#8a8a8e] via-[#6e6e73] to-[#48484a] p-[2.5px] shadow-[0_0_80px_rgba(139,92,246,0.15),0_25px_60px_rgba(0,0,0,0.6)]">
+                  {/* Side Buttons — Left */}
+                  <div className="absolute -left-[3.5px] top-[100px] w-[3px] h-[28px] rounded-l-sm bg-gradient-to-b from-[#7a7a7e] to-[#5a5a5e]" />
+                  <div className="absolute -left-[3.5px] top-[145px] w-[3px] h-[50px] rounded-l-sm bg-gradient-to-b from-[#7a7a7e] to-[#5a5a5e]" />
+                  <div className="absolute -left-[3.5px] top-[205px] w-[3px] h-[50px] rounded-l-sm bg-gradient-to-b from-[#7a7a7e] to-[#5a5a5e]" />
+                  {/* Side Button — Right (power) */}
+                  <div className="absolute -right-[3.5px] top-[160px] w-[3px] h-[65px] rounded-r-sm bg-gradient-to-b from-[#7a7a7e] to-[#5a5a5e]" />
+
+                  {/* Inner bezel */}
+                  <div className="rounded-[3rem] bg-black p-[6px]">
+                    {/* Screen */}
+                    <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-slate-800 via-slate-850 to-slate-900" style={{ aspectRatio: '393/852' }}>
+
+                      {/* Glass reflection overlay */}
+                      <div className="absolute inset-0 z-30 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.02) 100%)' }} />
+
+                      {/* Dynamic Island */}
+                      <div className="absolute top-[10px] left-1/2 -translate-x-1/2 z-20">
+                        <div className="w-[90px] h-[28px] bg-black rounded-full flex items-center justify-center gap-[6px]">
+                          <div className="w-[8px] h-[8px] rounded-full bg-[#1a1a2e] ring-1 ring-[#2a2a3e]" />
                         </div>
-                      ))}
-                    </div>
-                    {/* Button */}
-                    <div className="px-4 pb-5">
-                      <div className="w-full py-2 rounded-lg bg-gradient-to-r from-violet-400 to-cyan-400 text-center text-slate-900 text-[11px] font-bold">
-                        Capture Document
                       </div>
+
+                      {/* Status Bar */}
+                      <div className="relative z-10 flex justify-between items-center px-7 pt-[14px] pb-0">
+                        <span className="text-[11px] font-semibold text-white/80" style={{ fontFeatureSettings: '"tnum"' }}>14:32</span>
+                        <div className="flex items-center gap-[5px]">
+                          <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="3" width="3" height="8" rx="0.8" fill="white" fillOpacity="0.8"/><rect x="4.5" y="2" width="3" height="9" rx="0.8" fill="white" fillOpacity="0.8"/><rect x="9" y="0" width="3" height="11" rx="0.8" fill="white" fillOpacity="0.8"/><rect x="13.5" y="0" width="3" height="11" rx="0.8" fill="white" fillOpacity="0.3"/></svg>
+                          <Wifi className="h-[11px] w-[11px] text-white/80" />
+                          <div className="flex items-center">
+                            <div className="w-[20px] h-[10px] rounded-[2.5px] border border-white/40 flex items-center p-[1.5px]">
+                              <div className="h-full w-[75%] rounded-[1px] bg-emerald-400" />
+                            </div>
+                            <div className="w-[1.5px] h-[4px] rounded-r-sm bg-white/40 ml-[1px]" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* App Content */}
+                      <div className="relative z-10 px-4 pt-6">
+                        {/* App Header */}
+                        <div className="flex items-center gap-2.5 mb-4">
+                          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                            <Fingerprint className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <span className="text-white text-[13px] font-semibold block leading-tight">Identity Check</span>
+                            <span className="text-[9px] text-emerald-400 font-medium">HomeLedger • Certified</span>
+                          </div>
+                        </div>
+
+                        {/* Camera Viewfinder */}
+                        <div className="relative rounded-2xl border border-violet-400/20 bg-violet-400/5 overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                            {/* Corner brackets */}
+                            <div className="absolute top-3 left-3 w-6 h-6 border-t-[2.5px] border-l-[2.5px] border-violet-400 rounded-tl-lg" />
+                            <div className="absolute top-3 right-3 w-6 h-6 border-t-[2.5px] border-r-[2.5px] border-violet-400 rounded-tr-lg" />
+                            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-[2.5px] border-l-[2.5px] border-violet-400 rounded-bl-lg" />
+                            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-[2.5px] border-r-[2.5px] border-violet-400 rounded-br-lg" />
+                            {/* Scan icon + text */}
+                            <div className="h-10 w-10 rounded-full bg-violet-400/10 flex items-center justify-center">
+                              <Scan className="h-5 w-5 text-violet-400/70" />
+                            </div>
+                            <span className="text-violet-300 text-[10px] font-medium">Position your ID here</span>
+                            <span className="text-slate-500 text-[8px]">Passport, Driving Licence, or BRP</span>
+                          </div>
+                          {/* Animated scan line */}
+                          <div className="absolute left-3 right-3 h-[1.5px] bg-gradient-to-r from-transparent via-violet-400 to-transparent opacity-60" style={{ top: '45%' }} />
+                        </div>
+
+                        <p className="text-center text-[8px] text-slate-500 mt-2">Align document within the frame</p>
+
+                        {/* Progress Steps */}
+                        <div className="mt-3 space-y-[7px]">
+                          {[
+                            { text: 'Scan ID Document', done: true },
+                            { text: 'Take a Selfie', done: false },
+                            { text: 'Verification Complete', done: false },
+                          ].map((s, i) => (
+                            <div key={i} className={`flex items-center gap-2.5 px-3 py-[6px] rounded-xl ${s.done ? 'bg-violet-400/10 border border-violet-400/20' : 'bg-white/[0.03] border border-white/5'}`}>
+                              <div className={`h-[18px] w-[18px] rounded-full flex items-center justify-center text-[8px] font-bold ${s.done ? 'bg-violet-400 text-white' : 'bg-white/10 text-slate-500'}`}>
+                                {s.done ? <Check className="h-2.5 w-2.5" /> : i + 1}
+                              </div>
+                              <span className={`text-[11px] font-medium ${s.done ? 'text-white' : 'text-slate-500'}`}>{s.text}</span>
+                              {s.done && <Check className="h-3 w-3 text-emerald-400 ml-auto" />}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Capture Button */}
+                        <div className="mt-3 mb-5">
+                          <div className="w-full py-[10px] rounded-2xl bg-gradient-to-r from-violet-500 to-cyan-400 text-center text-white text-[12px] font-bold shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2">
+                            <Camera className="h-3.5 w-3.5" /> Capture Document
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Home Indicator */}
+                      <div className="absolute bottom-[6px] left-1/2 -translate-x-1/2 w-[100px] h-[4px] rounded-full bg-white/20 z-20" />
                     </div>
                   </div>
                 </div>
 
-                {/* Floating Badges — positioned well outside the phone */}
-                <div className="absolute -top-3 -right-16 sm:-right-20 px-3 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 backdrop-blur-sm">
-                  <CircleCheck className="h-3.5 w-3.5" /> Face Match: 99.7%
+                {/* Floating Badges — outside the phone */}
+                <div className="absolute -top-4 -right-12 sm:-right-24 px-3 py-2 rounded-2xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-emerald-500/10 backdrop-blur-md">
+                  <div className="h-6 w-6 rounded-full bg-emerald-400/20 flex items-center justify-center"><CircleCheck className="h-3.5 w-3.5" /></div> Face Match: 99.7%
                 </div>
-                <div className="absolute top-1/2 -right-14 sm:-right-[4.5rem] px-3 py-1.5 rounded-lg bg-violet-400/10 border border-violet-400/20 text-violet-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-violet-500/10 backdrop-blur-sm">
-                  <Shield className="h-3.5 w-3.5" /> GDPR Certified
+                <div className="absolute top-1/2 -translate-y-1/2 -right-10 sm:-right-24 px-3 py-2 rounded-2xl bg-violet-400/10 border border-violet-400/20 text-violet-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-violet-500/10 backdrop-blur-md">
+                  <div className="h-6 w-6 rounded-full bg-violet-400/20 flex items-center justify-center"><Shield className="h-3.5 w-3.5" /></div> GDPR Certified
                 </div>
-                <div className="absolute -bottom-3 -left-14 sm:-left-16 px-3 py-1.5 rounded-lg bg-blue-400/10 border border-blue-400/20 text-blue-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-blue-500/10 backdrop-blur-sm">
-                  <Clock className="h-3.5 w-3.5" /> ~90 seconds
+                <div className="absolute -bottom-4 -left-10 sm:-left-20 px-3 py-2 rounded-2xl bg-blue-400/10 border border-blue-400/20 text-blue-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-blue-500/10 backdrop-blur-md">
+                  <div className="h-6 w-6 rounded-full bg-blue-400/20 flex items-center justify-center"><Clock className="h-3.5 w-3.5" /></div> ~90 seconds
                 </div>
               </div>
             </div>
