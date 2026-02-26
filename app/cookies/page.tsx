@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { ManagePrefsButton } from './manage-prefs-button';
 
 export const metadata: Metadata = {
   title: 'Cookie Policy | HomeLedger',
@@ -122,12 +123,7 @@ export default function CookiePolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">4. Managing Cookies</h2>
             <div className="mb-4">
-              <button
-                onClick={() => { if (typeof window !== 'undefined' && (window as any).__hlOpenCookiePrefs) (window as any).__hlOpenCookiePrefs(); }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                Manage Cookie Preferences
-              </button>
+              <ManagePrefsButton />
             </div>
             <p className="text-muted-foreground leading-relaxed mb-3">
               You can also manage cookies through your browser settings:
