@@ -1,19 +1,51 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireUserId } from '@/lib/auth';
+import { requireUserIdOrMobileToken } from '@/lib/auth';
 import { extractInvoice, checkDoclingHealth } from '@/lib/docling-client';
 import { callAI } from '@/lib/ai-client';
 import { categorizeTransaction } from '@/lib/categorization-engine';
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireUserId();
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const entityId = formData.get('entityId') as string | null;
+    const contentType = request.headers.get('content-type') || '';
+    let userId: string;
+    let base64String: string;
+    let mimeType: string;
+    let fileName: string;
+    let entityId: string | null = null;
+    let isPdf = false;
+    let isImage = false;
 
-    if (!file) {
-      return NextResponse.json({ error: 'File is required' }, { status: 400 });
+    if (contentType.includes('application/json')) {
+      // JSON body with base64 (from ScanUploadButton / mobile upload)
+      const body = await request.json();
+      const mobileToken = body.mobileToken || request.headers.get('X-Mobile-Token');
+      userId = await requireUserIdOrMobileToken(mobileToken);
+      base64String = body.fileBase64;
+      mimeType = body.mimeType || 'image/jpeg';
+      fileName = body.fileName || 'scan.jpg';
+      entityId = body.entityId || null;
+      isPdf = body.isPDF || mimeType === 'application/pdf';
+      isImage = mimeType.startsWith('image/');
+      if (!base64String) {
+        return NextResponse.json({ error: 'fileBase64 is required' }, { status: 400 });
+      }
+    } else {
+      // FormData body (legacy)
+      const mobileToken = request.headers.get('X-Mobile-Token');
+      userId = await requireUserIdOrMobileToken(mobileToken);
+      const formData = await request.formData();
+      const file = formData.get('file') as File;
+      entityId = formData.get('entityId') as string | null;
+      if (!file) {
+        return NextResponse.json({ error: 'File is required' }, { status: 400 });
+      }
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      base64String = fileBuffer.toString('base64');
+      mimeType = file.type || 'application/pdf';
+      fileName = file.name;
+      isPdf = mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+      isImage = mimeType.startsWith('image/');
     }
 
     // Determine entity regime
@@ -41,12 +73,6 @@ export async function POST(request: Request) {
     });
     const categoryNames = regimeCategories.map(c => c.name);
 
-    // Convert file
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    const base64String = fileBuffer.toString('base64');
-    const mimeType = file.type || 'application/pdf';
-    const isImage = mimeType.startsWith('image/');
-    const isPdf = mimeType === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
     // Build extraction prompt
     const contextNote = entityRegime === 'companies_house'
@@ -78,7 +104,8 @@ Respond with raw JSON only. No markdown or code blocks.`;
       try {
         const doclingAvailable = await checkDoclingHealth();
         if (doclingAvailable) {
-          const docResult = await extractInvoice(fileBuffer, file.name);
+          const fileBuffer = Buffer.from(base64String, 'base64');
+          const docResult = await extractInvoice(fileBuffer, fileName);
           if (docResult.success && docResult.plain_text) {
             extractedText = docResult.plain_text;
           }
@@ -103,7 +130,7 @@ Respond with raw JSON only. No markdown or code blocks.`;
         role: 'user',
         content: [
           { type: 'text', text: extractionPrompt },
-          { type: 'file', file: { filename: file.name, file_data: `data:${mimeType};base64,${base64String}` } },
+          { type: 'file', file: { filename: fileName, file_data: `data:${mimeType};base64,${base64String}` } },
         ],
       }];
     }

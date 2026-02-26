@@ -15,7 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Invoice, Category, InvoiceStatus, ExpenseType, EXPENSE_TYPE_LABELS } from '@/lib/types';
-import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings } from 'lucide-react';
+import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings, Camera } from 'lucide-react';
+import { ScanUploadButton } from '@/components/scan-upload-button';
 import { useTranslation } from '@/lib/i18n';
 
 interface InvoiceTemplate {
@@ -650,14 +651,25 @@ export default function InvoicesClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed rounded-lg p-8 text-center">
-            <input type="file" id="invoice-upload" className="hidden" multiple accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => handleFileUpload(e.target.files)} disabled={uploading} />
-            <label htmlFor="invoice-upload" className="cursor-pointer flex flex-col items-center gap-2">
-              {uploading ? <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" /> : <FileText className="h-10 w-10 text-muted-foreground" />}
-              <span className="text-lg font-medium">{uploading ? 'Uploading...' : 'Click to upload or drag and drop'}</span>
-              <span className="text-sm text-muted-foreground">PDF, PNG, JPG (max 12 files)</span>
-            </label>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 border-2 border-dashed rounded-lg p-8 text-center">
+              <input type="file" id="invoice-upload" className="hidden" multiple accept=".pdf,.png,.jpg,.jpeg"
+                onChange={(e) => handleFileUpload(e.target.files)} disabled={uploading} />
+              <label htmlFor="invoice-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                {uploading ? <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" /> : <FileText className="h-10 w-10 text-muted-foreground" />}
+                <span className="text-lg font-medium">{uploading ? 'Uploading...' : 'Click to upload or drag and drop'}</span>
+                <span className="text-sm text-muted-foreground">PDF, PNG, JPG (max 12 files)</span>
+              </label>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-2 sm:border-l sm:pl-4">
+              <p className="text-sm text-muted-foreground mb-1">Or scan with camera</p>
+              <ScanUploadButton
+                uploadType="invoice"
+                onUploadComplete={() => fetchInvoices()}
+                showUploadButton={false}
+                label="Scan Invoice"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

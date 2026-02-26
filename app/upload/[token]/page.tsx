@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Camera, Upload, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Camera, Upload, CheckCircle, XCircle, Loader2, AlertTriangle, FileText, Receipt, CreditCard } from 'lucide-react';
 
 export default function MobileUploadPage() {
   const params = useParams();
@@ -10,9 +10,19 @@ export default function MobileUploadPage() {
   const [status, setStatus] = useState<'validating' | 'ready' | 'uploading' | 'success' | 'error' | 'expired'>('validating');
   const [error, setError] = useState('');
   const [userId, setUserId] = useState('');
+  const [uploadType, setUploadType] = useState<string>('document');
+  const [entityId, setEntityId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const typeLabels: Record<string, { title: string; desc: string; icon: React.ReactNode }> = {
+    document: { title: 'Scan Document', desc: 'Snap a photo of your document, receipt, or letter.', icon: <FileText className="h-12 w-12 mx-auto mb-4 text-amber-400" /> },
+    invoice: { title: 'Scan Invoice', desc: 'Take a photo of an invoice or bill to extract details automatically.', icon: <Receipt className="h-12 w-12 mx-auto mb-4 text-amber-400" /> },
+    bill: { title: 'Scan Bill', desc: 'Photograph a utility bill, subscription letter, or recurring charge.', icon: <CreditCard className="h-12 w-12 mx-auto mb-4 text-amber-400" /> },
+    statement: { title: 'Scan Statement', desc: 'Take a photo of a bank statement page to extract transactions.', icon: <FileText className="h-12 w-12 mx-auto mb-4 text-amber-400" /> },
+  };
+  const currentType = typeLabels[uploadType] || typeLabels.document;
 
   useEffect(() => {
     async function validate() {
@@ -21,6 +31,8 @@ export default function MobileUploadPage() {
         if (res.ok) {
           const data = await res.json();
           setUserId(data.userId);
+          setUploadType(data.uploadType || 'document');
+          setEntityId(data.entityId || null);
           setStatus('ready');
         } else if (res.status === 410) {
           setStatus('expired');
@@ -35,6 +47,16 @@ export default function MobileUploadPage() {
     }
     validate();
   }, [token]);
+
+  const markComplete = async () => {
+    try {
+      await fetch('/api/documents/mobile-upload', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+    } catch { /* best effort */ }
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,29 +107,41 @@ export default function MobileUploadPage() {
         reader.readAsDataURL(file);
       });
 
-      // 4. Scan document
-      const scanRes = await fetch('/api/documents/scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Mobile-Token': token,
-        },
-        body: JSON.stringify({
-          cloudStoragePath,
-          fileName: file.name,
-          fileBase64: base64,
-          mimeType: file.type,
-          isPDF: file.type === 'application/pdf',
-          mobileToken: token,
-        }),
-      });
+      // 4. Route to correct API based on upload type
+      const isPDF = file.type === 'application/pdf';
+      const commonHeaders = { 'Content-Type': 'application/json', 'X-Mobile-Token': token };
 
-      if (scanRes.ok) {
-        setStatus('success');
+      if (uploadType === 'invoice') {
+        // Create invoice + process
+        const invoiceRes = await fetch('/api/invoices', {
+          method: 'POST',
+          headers: commonHeaders,
+          body: JSON.stringify({ fileName: file.name, cloudStoragePath, isPublic: false, status: 'pending', mobileToken: token }),
+        });
+        if (invoiceRes.ok) {
+          const invoice = await invoiceRes.json();
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('invoiceId', invoice.id);
+          await fetch('/api/invoices/process', { method: 'POST', body: formData, headers: { 'X-Mobile-Token': token } });
+        }
+      } else if (uploadType === 'bill') {
+        await fetch('/api/bills/scan', {
+          method: 'POST',
+          headers: commonHeaders,
+          body: JSON.stringify({ cloudStoragePath, fileName: file.name, fileBase64: base64, mimeType: file.type, isPDF, entityId, mobileToken: token }),
+        });
       } else {
-        // Upload succeeded even if scan fails
-        setStatus('success');
+        // Default: document scan
+        await fetch('/api/documents/scan', {
+          method: 'POST',
+          headers: commonHeaders,
+          body: JSON.stringify({ cloudStoragePath, fileName: file.name, fileBase64: base64, mimeType: file.type, isPDF, entityId, mobileToken: token }),
+        });
       }
+
+      await markComplete();
+      setStatus('success');
     } catch (err: any) {
       setStatus('error');
       setError(err.message || 'Upload failed');
@@ -123,7 +157,7 @@ export default function MobileUploadPage() {
             <span className="text-2xl font-bold text-slate-900">£</span>
           </div>
           <h1 className="text-xl font-bold">HomeLedger</h1>
-          <p className="text-sm text-slate-400">Mobile Document Upload</p>
+          <p className="text-sm text-slate-400">Mobile {uploadType === 'document' ? 'Document' : uploadType === 'invoice' ? 'Invoice' : uploadType === 'bill' ? 'Bill' : 'Statement'} Upload</p>
         </div>
 
         {status === 'validating' && (
@@ -136,10 +170,10 @@ export default function MobileUploadPage() {
         {status === 'ready' && (
           <div className="space-y-4">
             <div className="bg-slate-900 rounded-2xl p-6 text-center border border-slate-800">
-              <Camera className="h-12 w-12 mx-auto mb-4 text-amber-400" />
-              <h2 className="text-lg font-semibold mb-2">Take a Photo</h2>
+              {currentType.icon}
+              <h2 className="text-lg font-semibold mb-2">{currentType.title}</h2>
               <p className="text-sm text-slate-400 mb-6">
-                Snap a photo of your document, receipt, or letter. It will be uploaded and processed automatically.
+                {currentType.desc} It will be uploaded and processed automatically.
               </p>
 
               <input

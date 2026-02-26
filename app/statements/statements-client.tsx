@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Category } from '@/lib/types';
-import { Upload, FileSpreadsheet, Loader2, Pencil, Trash2, ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle, XCircle, Filter, Download, ChevronDown, ChevronUp, AlertTriangle, Eye, CheckSquare, Square, Sparkles, Bot, Lightbulb, Landmark, User, Building2, ArrowUpDown } from 'lucide-react';
+import { Upload, FileSpreadsheet, Loader2, Pencil, Trash2, ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle, XCircle, Filter, Download, ChevronDown, ChevronUp, AlertTriangle, Eye, CheckSquare, Square, Sparkles, Bot, Lightbulb, Landmark, User, Building2, ArrowUpDown, Camera } from 'lucide-react';
+import { ScanUploadButton } from '@/components/scan-upload-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/lib/i18n';
 
@@ -1062,6 +1063,14 @@ export default function StatementsClient() {
           <Button variant="outline" onClick={() => exportTransactions('csv')}>
             <Download className="h-4 w-4 mr-2" /> Export CSV
           </Button>
+          <ScanUploadButton
+            uploadType="statement"
+            entityId={selectedEntityId || undefined}
+            onUploadComplete={() => fetchStatements()}
+            showUploadButton={false}
+            label="Scan Statement"
+            disabled={!selectedEntityId}
+          />
           <label className="cursor-pointer">
             <input
               ref={uploadInputRef}

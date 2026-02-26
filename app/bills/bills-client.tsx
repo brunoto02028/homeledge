@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
-import { Plus, Filter, Receipt } from "lucide-react"
+import { Plus, Filter, Receipt, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BillsTable } from "./bills-table"
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { Bill, Account, Category, ExpenseType } from "@/lib/types"
 import { EXPENSE_TYPE_LABELS } from "@/lib/types"
 import { useTranslation } from "@/lib/i18n"
+import { ScanUploadButton } from "@/components/scan-upload-button"
 
 export function BillsClient() {
   const { t } = useTranslation()
@@ -164,10 +165,18 @@ export function BillsClient() {
           <h2 className="text-2xl font-bold text-foreground">{t('bills.title')}</h2>
           <p className="text-muted-foreground mt-1">{t('bills.subtitle')}</p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('bills.add')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ScanUploadButton
+            uploadType="bill"
+            onUploadComplete={() => fetchBills()}
+            showUploadButton={false}
+            label="Scan Bill"
+          />
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('bills.add')}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-center p-4 bg-card rounded-xl border shadow-sm">
