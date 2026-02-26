@@ -133,6 +133,29 @@ const sections = [
     sortOrder: 6,
   },
   {
+    sectionKey: 'identityVerification',
+    title: 'Verify Anyone\'s Identity in Minutes, Not Days',
+    subtitle: 'Government-grade document verification and biometric matching.',
+    content: {
+      headline: 'Verify Anyone\'s Identity in Minutes, Not Days',
+      subheadline: 'Government-grade document verification and biometric matching. No account needed — just purchase, send the link, and get certified results. Perfect for employers, landlords, and compliance teams.',
+      useCases: [
+        { icon: 'UserCheck', title: 'New Employee Checks', description: 'Right to Work verification for new hires. Meet Home Office requirements with certified digital checks.' },
+        { icon: 'FileCheck', title: 'Visa & Immigration', description: 'Verify passports, BRPs, and visa documents. Share certified results with immigration advisors.' },
+        { icon: 'ShieldCheck', title: 'AML & KYC Compliance', description: 'Anti-Money Laundering checks for financial services. Meet FCA and HMRC regulatory requirements.' },
+        { icon: 'Home', title: 'Tenant Verification', description: 'Verify tenant identity before signing leases. Protect your property with certified ID checks.' },
+      ],
+      plans: [
+        { id: 'single-check', name: 'Single Check', price: '£2.99', checks: 1, validityDays: 30 },
+        { id: 'business-pack', name: 'Business Pack', price: '£19.99', checks: 10, validityDays: 60, badge: 'Best Value' },
+        { id: 'enterprise', name: 'Enterprise', price: '£49.99', checks: 50, validityDays: 90 },
+      ],
+      trustBadges: ['Government-Grade Security', 'GDPR Compliant', 'Biometric Matching', 'Certified Results'],
+      ctaPrimary: 'Buy Now',
+    },
+    sortOrder: 7,
+  },
+  {
     sectionKey: 'newArrivals',
     title: 'New to the UK? We\'ve Got You Covered',
     subtitle: 'Navigate UK finances, qualifications, and professional services from day one.',

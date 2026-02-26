@@ -3,12 +3,12 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/privacy', '/terms', '/cookies'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies'];
 
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
 const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans'];
-const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode'];
+const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

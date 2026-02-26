@@ -10,7 +10,8 @@ import {
   Building2, Eye, UserPlus, Menu, X, Link2, Tag, FolderOpen, Landmark,
   ArrowLeftRight, MessageSquare, GraduationCap, Sparkles, Lock, Brain,
   Github, Twitter, Linkedin, Send, Wifi, Building, Globe, ShoppingBag,
-  HeartPulse, Smartphone, BookOpen, Plane,
+  HeartPulse, Smartphone, BookOpen, Plane, Fingerprint, CreditCard,
+  BadgeCheck, ScanLine, FileCheck, UserCheck, ShieldCheck,
 } from 'lucide-react';
 
 const ALL_FEATURES = [
@@ -105,6 +106,7 @@ export function LandingPage() {
     { href: '#how-it-works', label: 'How It Works' },
     { href: '#business', label: 'For Business' },
     { href: '#accountants', label: 'For Accountants' },
+    { href: '#verify-id', label: 'Verify ID' },
     { href: '#new-arrivals', label: 'New to UK' },
     { href: '#pricing', label: 'Pricing' },
     { href: '#faq', label: 'FAQ' },
@@ -427,6 +429,118 @@ export function LandingPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Identity Verification ────────────────────────────────────── */}
+      <section id="verify-id" className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/50 via-slate-950 to-indigo-950/50" />
+        <div className="absolute inset-0 cyber-grid opacity-30" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-semibold mb-6">
+              <Fingerprint className="h-3.5 w-3.5" /> Certified Identity Verification
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
+              Verify Anyone&apos;s Identity<br />
+              <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">in Minutes, Not Days</span>
+            </h2>
+            <p className="mt-6 text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+              Government-grade document verification and biometric matching. No account needed — just purchase, send the link, and get certified results. Perfect for employers, landlords, and compliance teams.
+            </p>
+          </div>
+
+          {/* Use Cases Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
+            {[
+              { icon: UserCheck, title: 'New Employee Checks', desc: 'Right to Work verification for new hires. Meet Home Office requirements with certified digital checks.', color: 'text-emerald-400', bg: 'from-emerald-500/20 to-teal-500/10' },
+              { icon: FileCheck, title: 'Visa & Immigration', desc: 'Verify passports, BRPs, and visa documents. Share certified results with immigration advisors.', color: 'text-blue-400', bg: 'from-blue-500/20 to-cyan-500/10' },
+              { icon: ShieldCheck, title: 'AML & KYC Compliance', desc: 'Anti-Money Laundering checks for financial services. Meet FCA and HMRC regulatory requirements.', color: 'text-violet-400', bg: 'from-violet-500/20 to-purple-500/10' },
+              { icon: Home, title: 'Tenant Verification', desc: 'Verify tenant identity before signing leases. Protect your property with certified ID checks.', color: 'text-amber-400', bg: 'from-amber-500/20 to-orange-500/10' },
+            ].map((uc, i) => (
+              <div key={i} className="neon-card p-6 group hover:border-violet-400/30 transition-all">
+                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${uc.bg} flex items-center justify-center mb-4`}>
+                  <uc.icon className={`h-6 w-6 ${uc.color}`} />
+                </div>
+                <h3 className="text-base font-semibold text-white mb-2">{uc.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{uc.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* How It Works Steps */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-3 mb-16">
+            {[
+              { step: '1', title: 'Choose a Package', desc: 'Select 1, 10, or 50 verification checks', icon: CreditCard },
+              { step: '2', title: 'Send the Link', desc: 'Share the secure link with the person to verify', icon: Send },
+              { step: '3', title: 'Get Results', desc: 'Receive certified verification results by email', icon: BadgeCheck },
+            ].map((s, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/5 min-w-[260px]">
+                  <div className="h-10 w-10 rounded-xl bg-violet-400/10 border border-violet-400/20 flex items-center justify-center flex-shrink-0">
+                    <s.icon className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-violet-400 font-semibold">Step {s.step}</div>
+                    <div className="text-white text-sm font-medium">{s.title}</div>
+                    <div className="text-slate-500 text-xs">{s.desc}</div>
+                  </div>
+                </div>
+                {i < 2 && <ArrowRight className="h-5 w-5 text-violet-400/50 hidden md:block flex-shrink-0" />}
+              </div>
+            ))}
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
+            {[
+              { name: 'Single Check', price: '£2.99', per: '/check', checks: '1 verification', features: ['Document scanning', 'Biometric matching', 'Certified result', 'Email delivery', '30-day link validity'], highlighted: false },
+              { name: 'Business Pack', price: '£19.99', per: '/pack', checks: '10 verifications', features: ['Everything in Single', '10 verification links', 'Bulk management', 'Priority processing', '60-day link validity'], highlighted: true, badge: 'Best Value' },
+              { name: 'Enterprise', price: '£49.99', per: '/pack', checks: '50 verifications', features: ['Everything in Business', '50 verification links', 'Dedicated support', 'API access', '90-day link validity'], highlighted: false },
+            ].map((plan, i) => (
+              <div key={i} className={`relative neon-card p-8 transition-all ${plan.highlighted ? 'border-violet-400/40 shadow-lg shadow-violet-500/10 scale-[1.03]' : ''}`}>
+                {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-violet-500/20">{plan.badge}</div>}
+                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                <div className="text-xs text-slate-500 mt-1">{plan.checks}</div>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">{plan.price}</span>
+                  <span className="text-slate-500 text-sm">{plan.per}</span>
+                </div>
+                <ul className="mt-6 space-y-2.5">
+                  {plan.features.map((f, j) => (
+                    <li key={j} className="flex items-start gap-2.5 text-sm text-slate-400"><Check className="h-4 w-4 text-violet-400 mt-0.5 flex-shrink-0" />{f}</li>
+                  ))}
+                </ul>
+                <Link href={`/verify-purchase?plan=${plan.name.toLowerCase().replace(/\s/g, '-')}`} className={`mt-8 block w-full text-center py-3 rounded-xl font-semibold text-sm transition-all ${plan.highlighted ? 'bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20' : 'glass text-white hover:bg-white/10'}`}>
+                  Buy Now
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
+            {[
+              { icon: Shield, text: 'Government-Grade Security' },
+              { icon: Lock, text: 'GDPR Compliant' },
+              { icon: Fingerprint, text: 'Biometric Matching' },
+              { icon: BadgeCheck, text: 'Certified Results' },
+            ].map((badge, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                <badge.icon className="h-3.5 w-3.5 text-violet-400" />
+                <span>{badge.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* No Account Needed Banner */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-400/20">
+              <ScanLine className="h-5 w-5 text-violet-400" />
+              <span className="text-slate-300 text-sm font-medium">No HomeLedger account needed — anyone can purchase and use verification links</span>
             </div>
           </div>
         </div>

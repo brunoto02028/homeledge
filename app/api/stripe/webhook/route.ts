@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
 import { getPermissionsForPlan } from '@/lib/permissions';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,36 @@ export async function POST(req: Request) {
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan;
 
+        // Handle IDV purchases (no auth, one-time payment)
+        if (session.metadata?.type === 'idv_purchase') {
+          const checks = parseInt(session.metadata.checks || '1');
+          const validityDays = parseInt(session.metadata.validityDays || '30');
+          const customerName = session.metadata.customerName || 'Customer';
+          const customerEmail = session.metadata.customerEmail || '';
+          const companyName = session.metadata.companyName || null;
+
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + validityDays);
+
+          for (let i = 0; i < checks; i++) {
+            const token = crypto.randomBytes(24).toString('hex');
+            await (prisma as any).verificationLink.create({
+              data: {
+                token,
+                createdById: `stripe_${session.id}`,
+                clientName: customerName,
+                clientEmail: customerEmail,
+                companyName,
+                status: 'pending',
+                expiresAt,
+              },
+            });
+          }
+          console.log(`[Stripe Webhook] IDV purchase: ${checks} links generated for ${customerEmail}`);
+          break;
+        }
+
+        // Handle subscription plan upgrades
         if (userId && plan) {
           const permissions = getPermissionsForPlan(plan);
           await prisma.user.update({
