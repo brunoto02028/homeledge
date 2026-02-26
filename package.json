@@ -1,5 +1,32 @@
 {
   "name": "homeledger",
+  "version": "2.1.0",
+  "description": "All-in-one UK household finance SaaS platform — Open Banking sync, HMRC reporting, AI categorisation, accounting academy, identity verification, and service commerce.",
+  "homepage": "https://homeledger.co.uk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brunoto02028/homeledge.git"
+  },
+  "author": {
+    "name": "Bruno Martins",
+    "url": "https://homeledger.co.uk"
+  },
+  "license": "BSL-1.1",
+  "keywords": [
+    "finance",
+    "accounting",
+    "saas",
+    "uk",
+    "hmrc",
+    "open-banking",
+    "ai-categorisation",
+    "household-finance",
+    "companies-house",
+    "identity-verification",
+    "nextjs",
+    "typescript",
+    "prisma"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev",

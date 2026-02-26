@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [2.1.0] — 2026-02-26
+
+### Added — Project Quality & Compliance
+- `.github/FUNDING.yml` for SaaS monetization signal
+- Compliance & Security section in README with UK GDPR, PECR, HMRC MTD, DIATF, PCI DSS
+- Business model, pricing tiers, and target market clearly documented in README
+- Identity Verification (IDV-as-a-Service) feature section in README
+- `package.json` metadata: version, description, homepage, repository, keywords, author
+
+### Changed
+- License changed from MIT to **Business Source License 1.1** (BSL) — converts to MIT in 2030
+- README rewritten with commercial SaaS signals: badges, pricing, compliance, live URL
+- Tech stack table expanded: Payments (Stripe), Testing (Vitest), CI/CD (GitHub Actions)
+- `.env.example` now tracked in git
+
+### Fixed
+- Feature category tabs on mobile: horizontally scrollable with visible labels (was icons-only)
+- Cookie policy table on mobile: card layout instead of 4-column table overflow
+
+---
+
 ## [2.0.0] — 2026-02-25
 
 ### Added — Accounting Academy
