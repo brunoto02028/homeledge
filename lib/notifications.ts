@@ -1,4 +1,7 @@
-// Notification email utilities
+// @deprecated — All email sending has been migrated to lib/email.ts (Nodemailer SMTP).
+// This file used the Abacus AI notification API (noreply@mail.abacusai.app).
+// It is no longer imported anywhere and can be safely deleted.
+// Kept temporarily for reference only.
 
 interface NotificationParams {
   notificationId: string;

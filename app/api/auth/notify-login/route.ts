@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { sendNotificationEmail, generateLoginAlertHtml } from '@/lib/notifications';
+import { sendLoginAlertEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,21 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Send login notification email (don't block on failure)
     try {
-      const loginHtml = generateLoginAlertHtml(
-        user.fullName,
-        user.email,
-        ipAddress,
-        userAgent,
-        new Date()
-      );
-
-      await sendNotificationEmail({
-        notificationId: process.env.NOTIF_ID_LOGIN_SECURITY_ALERT || '',
-        recipientEmail: user.email,
-        subject: '🔐 New login detected on your HomeLedger account',
-        body: loginHtml,
-        isHtml: true,
-      });
+      await sendLoginAlertEmail(user.email, user.fullName, ipAddress, userAgent, new Date());
     } catch (emailError) {
       console.error('Failed to send login notification:', emailError);
       // Don't fail if email fails

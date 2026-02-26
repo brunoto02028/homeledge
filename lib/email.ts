@@ -249,6 +249,119 @@ export async function sendBudgetAlertEmail(
   return sendEmail(email, `HomeLedger: Budget Alert — ${alerts.length} budget${alerts.length > 1 ? 's' : ''} at limit`, html);
 }
 
+export async function sendSignupVerificationEmail(email: string, name: string, code: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Verify Your Email</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, thank you for registering! Please verify your email with the code below:
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <span style="display:inline-block;padding:16px 32px;background-color:#f1f5f9;border-radius:12px;font-size:32px;font-weight:bold;letter-spacing:6px;color:#1e293b;">
+        ${code}
+      </span>
+    </div>
+    <p style="margin:0 0 8px;font-size:14px;color:#475569;">
+      This code expires in <strong>30 minutes</strong>.
+    </p>
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      If you didn't create this account, you can safely ignore this email.
+    </p>
+  `, `Your HomeLedger verification code: ${code}`);
+
+  return sendEmail(email, `Your HomeLedger verification code: ${code}`, html);
+}
+
+export async function sendPasswordResetEmail(email: string, name: string, code: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Password Reset</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, we received a request to reset your password. Use the code below:
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <span style="display:inline-block;padding:16px 32px;background-color:#f1f5f9;border-radius:12px;font-size:32px;font-weight:bold;letter-spacing:6px;color:#1e293b;">
+        ${code}
+      </span>
+    </div>
+    <p style="margin:0 0 8px;font-size:14px;color:#475569;">
+      This code expires in <strong>15 minutes</strong>.
+    </p>
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      If you didn't request this, please ignore this email. Your password will remain unchanged.
+    </p>
+  `, `Your HomeLedger password reset code: ${code}`);
+
+  return sendEmail(email, `Your HomeLedger password reset code: ${code}`, html);
+}
+
+export async function sendLoginAlertEmail(
+  email: string,
+  name: string,
+  ipAddress: string,
+  userAgent: string,
+  timestamp: Date
+) {
+  const deviceInfo = parseUserAgent(userAgent);
+  const formattedTime = timestamp.toLocaleString('en-GB', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+  });
+
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">New Login Detected</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, a new sign-in was detected on your HomeLedger account.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Email</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${email}</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Time</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${formattedTime}</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">IP Address</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${ipAddress}</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Device</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${deviceInfo.device}</td></tr>
+      <tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Browser</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;">${deviceInfo.browser}</td></tr>
+    </table>
+    <p style="margin:16px 0;padding:12px 16px;background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">
+      <strong>Wasn't you?</strong> Change your password immediately and contact support.
+    </p>
+  `, 'New login detected on your HomeLedger account');
+
+  return sendEmail(email, 'New login detected on your HomeLedger account', html);
+}
+
+export async function sendAdminCreatedAccountEmail(email: string, name: string, role: string) {
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to HomeLedger!</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, an administrator has created a HomeLedger account for you.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Email</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${email}</td></tr>
+      <tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Role</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;">${role}</td></tr>
+    </table>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Your temporary password has been set by the administrator. Please sign in and change it as soon as possible.
+    </p>
+    ${buttonHtml('Sign In to HomeLedger', `${BASE_URL}/login`)}
+  `, `Your HomeLedger account has been created`);
+
+  return sendEmail(email, `Welcome to HomeLedger, ${name}!`, html);
+}
+
+function parseUserAgent(userAgent: string): { browser: string; device: string } {
+  let browser = 'Unknown Browser';
+  let device = 'Unknown Device';
+  if (userAgent.includes('Firefox')) browser = 'Mozilla Firefox';
+  else if (userAgent.includes('Edg')) browser = 'Microsoft Edge';
+  else if (userAgent.includes('Chrome')) browser = 'Google Chrome';
+  else if (userAgent.includes('Safari')) browser = 'Apple Safari';
+  else if (userAgent.includes('Opera') || userAgent.includes('OPR')) browser = 'Opera';
+  if (userAgent.includes('iPhone')) device = 'iPhone (iOS)';
+  else if (userAgent.includes('iPad')) device = 'iPad (iOS)';
+  else if (userAgent.includes('Android')) device = userAgent.includes('Mobile') ? 'Android Phone' : 'Android Tablet';
+  else if (userAgent.includes('Windows')) device = 'Windows PC';
+  else if (userAgent.includes('Mac OS')) device = 'Mac';
+  else if (userAgent.includes('Linux')) device = 'Linux PC';
+  return { browser, device };
+}
+
 // ─── Send Helper ─────────────────────────────────────────────────────────
 
 async function sendEmail(to: string, subject: string, html: string) {

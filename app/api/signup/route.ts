@@ -2,34 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendNotificationEmail } from '@/lib/notifications';
+import { sendSignupVerificationEmail } from '@/lib/email';
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-function generateVerificationEmailHtml(fullName: string, code: string): string {
-  return `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
-      <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Verify Your Email</h1>
-        <p style="color: #bfdbfe; margin: 10px 0 0 0;">HomeLedger Account Setup</p>
-      </div>
-      <div style="padding: 30px 20px; background: white;">
-        <h2 style="color: #1e293b; margin: 0 0 20px 0;">Hello ${fullName}!</h2>
-        <p style="color: #475569; line-height: 1.6;">Thank you for registering. Please verify your email with the code below:</p>
-        <div style="background: #f1f5f9; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center;">
-          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1e40af;">${code}</span>
-        </div>
-        <p style="color: #475569; line-height: 1.6;">This code expires in <strong>30 minutes</strong>.</p>
-        <p style="color: #475569;">If you didn't create this account, please ignore this email.</p>
-        <p style="color: #1e293b; margin-top: 30px;">Best regards,<br/><strong>The HomeLedger Team</strong></p>
-      </div>
-      <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-        <p style="margin: 0;">&copy; ${new Date().getFullYear()} HomeLedger</p>
-      </div>
-    </div>
-  `;
 }
 
 export async function POST(request: NextRequest) {
@@ -70,13 +46,7 @@ export async function POST(request: NextRequest) {
         });
 
         try {
-          await sendNotificationEmail({
-            notificationId: process.env.NOTIF_ID_WELCOME_EMAIL || '',
-            recipientEmail: existingUser.email,
-            subject: `Your HomeLedger verification code: ${code}`,
-            body: generateVerificationEmailHtml(existingUser.fullName, code),
-            isHtml: true,
-          });
+          await sendSignupVerificationEmail(existingUser.email, existingUser.fullName, code);
         } catch { /* non-critical */ }
 
         return NextResponse.json({
@@ -153,13 +123,7 @@ export async function POST(request: NextRequest) {
 
     // Send verification email
     try {
-      await sendNotificationEmail({
-        notificationId: process.env.NOTIF_ID_WELCOME_EMAIL || '',
-        recipientEmail: result.user.email,
-        subject: `Your HomeLedger verification code: ${result.code}`,
-        body: generateVerificationEmailHtml(result.user.fullName, result.code),
-        isHtml: true,
-      });
+      await sendSignupVerificationEmail(result.user.email, result.user.fullName, result.code);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
     }

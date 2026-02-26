@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserId } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
-import { sendNotificationEmail } from '@/lib/notifications';
+import { sendAdminCreatedAccountEmail } from '@/lib/email';
 
 async function requireAdmin() {
   const userId = await requireUserId();
@@ -121,40 +121,8 @@ export async function POST(request: Request) {
     });
 
     // Send welcome email — NO plain password, just login link
-    const appUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
     try {
-      const welcomeHtml = `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
-          <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 20px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to HomeLedger!</h1>
-            <p style="color: #bfdbfe; margin: 10px 0 0 0;">Your account has been created</p>
-          </div>
-          <div style="padding: 30px 20px; background: white;">
-            <h2 style="color: #1e293b; margin: 0 0 20px 0;">Hello ${fullName}!</h2>
-            <p style="color: #475569;">An administrator has created a HomeLedger account for you.</p>
-            <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin: 25px 0;">
-              <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-              <p style="margin: 5px 0;"><strong>Role:</strong> ${role}</p>
-            </div>
-            <p style="color: #475569;">Your temporary password has been set by the administrator. Please sign in and change it as soon as possible.</p>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${appUrl}/login" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign In to HomeLedger</a>
-            </div>
-            <p style="color: #1e293b; margin-top: 30px;">Best regards,<br/><strong>The HomeLedger Team</strong></p>
-          </div>
-          <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-            <p style="margin: 0;">&copy; ${new Date().getFullYear()} HomeLedger</p>
-          </div>
-        </div>
-      `;
-
-      await sendNotificationEmail({
-        notificationId: process.env.NOTIF_ID_WELCOME_EMAIL || '',
-        recipientEmail: email,
-        subject: `Welcome to HomeLedger, ${fullName}!`,
-        body: welcomeHtml,
-        isHtml: true,
-      });
+      await sendAdminCreatedAccountEmail(email, fullName, role);
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
     }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendNotificationEmail, generateWelcomeEmailHtml } from '@/lib/notifications';
+import { sendWelcomeEmail } from '@/lib/email';
 
 // POST /api/auth/verify-email — Verify email with 6-digit code
 export async function POST(request: Request) {
@@ -65,14 +65,7 @@ export async function POST(request: Request) {
 
     // Send welcome email now that user is verified
     try {
-      const welcomeHtml = generateWelcomeEmailHtml(user.fullName, user.role === 'business' ? 'business' : 'household');
-      await sendNotificationEmail({
-        notificationId: process.env.NOTIF_ID_WELCOME_EMAIL || '',
-        recipientEmail: user.email,
-        subject: `Welcome to HomeLedger, ${user.fullName}! 🎉`,
-        body: welcomeHtml,
-        isHtml: true,
-      });
+      await sendWelcomeEmail(user.email, user.fullName);
     } catch { /* non-critical */ }
 
     return NextResponse.json({
