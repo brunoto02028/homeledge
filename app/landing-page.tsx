@@ -15,33 +15,42 @@ import {
   AlertTriangle, Clock, Scan, CircleCheck, ChevronRight,
 } from 'lucide-react';
 
+const FEATURE_CATEGORIES = [
+  { key: 'all', label: 'All Features', icon: Sparkles },
+  { key: 'finance', label: 'Core Finance', icon: PoundSterling },
+  { key: 'ai', label: 'AI & Automation', icon: Brain },
+  { key: 'compliance', label: 'Compliance & Gov', icon: Shield },
+  { key: 'learning', label: 'Learning & Services', icon: GraduationCap },
+  { key: 'tools', label: 'Tools & Integrations', icon: Zap },
+];
+
 const ALL_FEATURES = [
-  { icon: FileSpreadsheet, title: 'Bank Statements', desc: 'Upload CSV, PDF or Excel statements. AI categorises every transaction and maps it to your accounts automatically.', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400' },
-  { icon: FileText, title: 'Invoices', desc: 'Create professional invoices, track payments and overdue amounts. Scan paper invoices with AI document processing.', color: 'from-blue-500/20 to-cyan-500/10', ic: 'text-blue-400' },
-  { icon: Receipt, title: 'Bills & Subscriptions', desc: 'Manage recurring bills, set due-date reminders and track spending by provider. Never miss a payment.', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400' },
-  { icon: BarChart3, title: 'HMRC Tax Reports', desc: 'Generate SA103, CT600 and tax summaries with automatic HMRC box mapping. Export to PDF in one click.', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400' },
-  { icon: KeyRound, title: 'Secure Vault', desc: 'Store passwords, API keys and credentials with AES-256-GCM encryption. Bank-grade security for all your secrets.', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400' },
-  { icon: TrendingUp, title: 'Financial Projections', desc: 'Cash flow forecasting, budget tracking, savings goals and debt payoff plans. See your financial future.', color: 'from-cyan-500/20 to-sky-500/10', ic: 'text-cyan-400' },
-  { icon: CalendarClock, title: 'Tax Timeline', desc: 'Visual calendar of HMRC deadlines — Self Assessment, VAT, Corporation Tax, PAYE. Alerts before every due date.', color: 'from-amber-500/20 to-yellow-500/10', ic: 'text-amber-400' },
-  { icon: Camera, title: 'Capture & Classify', desc: 'Scan receipts and documents from your phone. AI extracts, categorises, and files everything automatically.', color: 'from-indigo-500/20 to-blue-500/10', ic: 'text-indigo-400' },
-  { icon: Link2, title: 'Government APIs', desc: 'Connect to Companies House and HMRC. View company profiles, filing history, tax obligations and submit returns.', color: 'from-teal-500/20 to-emerald-500/10', ic: 'text-teal-400' },
-  { icon: Home, title: 'UK Life Events', desc: 'Track life milestones — buying a home, marriage, starting a business. Personalised financial checklists.', color: 'from-pink-500/20 to-rose-500/10', ic: 'text-pink-400' },
-  { icon: Landmark, title: 'Multi-Entity', desc: 'Manage personal finances alongside multiple Ltd companies, CICs or sole-trader businesses — all in one account.', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400' },
-  { icon: MessageSquare, title: 'AI Assistant', desc: 'Context-aware AI chat that understands your data. Ask about your finances and get instant, accurate answers.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400' },
-  { icon: Tag, title: 'Smart Categories', desc: 'Custom categories with HMRC tax-box mapping. AI suggests the right category for every transaction.', color: 'from-orange-500/20 to-amber-500/10', ic: 'text-orange-400' },
-  { icon: FolderOpen, title: 'Document Storage', desc: 'Upload and organise financial documents. Full-text search, entity linking and secure cloud storage.', color: 'from-lime-500/20 to-emerald-500/10', ic: 'text-lime-400' },
-  { icon: ArrowLeftRight, title: 'Transfers', desc: 'Track inter-account transfers and reconcile balances across all your bank accounts and entities.', color: 'from-fuchsia-500/20 to-pink-500/10', ic: 'text-fuchsia-400' },
-  { icon: GraduationCap, title: 'Financial Learning', desc: 'Built-in guides on UK tax, self-assessment, VAT registration, company accounts and personal finance.', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400' },
-  { icon: Brain, title: '4-Layer AI Categorisation', desc: 'Our intelligent engine learns from your corrections. Deterministic rules, pattern matching, AI classification, and auto-learning — 90%+ accuracy.', color: 'from-purple-500/20 to-fuchsia-500/10', ic: 'text-purple-400' },
-  { icon: Shield, title: 'Identity Verification (KYC)', desc: 'Built-in certified identity checks. Verify yourself or your clients with document scanning and biometric matching. Stay compliant.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400' },
-  { icon: Wifi, title: 'Open Banking Sync', desc: 'Connect your UK bank accounts securely. Transactions sync automatically 3x daily. Full 24-month history on first connect.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400' },
-  { icon: Building, title: 'Companies House Filing', desc: 'File address changes and confirmation statements directly to Companies House. View officers, filing history, and company status in real time.', color: 'from-slate-500/20 to-zinc-500/10', ic: 'text-slate-400' },
-  { icon: GraduationCap, title: 'Accounting Academy', desc: 'AAT & ACCA exam practice with timed tests, study mode, AI tutor, and a visual career roadmap from Level 2 to Level 6.', color: 'from-indigo-500/20 to-violet-500/10', ic: 'text-indigo-400' },
-  { icon: Globe, title: 'UK Relocation Hub', desc: 'AI-powered guide for newcomers to the UK. Visa advice, NI numbers, bank accounts, GP registration — fully OISC compliant.', color: 'from-teal-500/20 to-cyan-500/10', ic: 'text-teal-400' },
-  { icon: ShoppingBag, title: 'Service Marketplace', desc: 'Professional accounting, tax filing, and bookkeeping services. Browse packages, compare prices, and track your orders.', color: 'from-rose-500/20 to-orange-500/10', ic: 'text-rose-400' },
-  { icon: HeartPulse, title: 'Financial Health Score', desc: 'Real-time score based on 6 components: bill tracking, categorisation, savings rate, budgets, actions, and data freshness.', color: 'from-red-500/20 to-pink-500/10', ic: 'text-red-400' },
-  { icon: Smartphone, title: 'Install as App (PWA)', desc: 'Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400' },
-  { icon: Link2, title: 'Accountant Portal', desc: 'Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400' },
+  { icon: FileSpreadsheet, title: 'Bank Statements', desc: 'Upload CSV, PDF or Excel statements. AI categorises every transaction and maps it to your accounts automatically.', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'finance' },
+  { icon: FileText, title: 'Invoices', desc: 'Create professional invoices, track payments and overdue amounts. Scan paper invoices with AI document processing.', color: 'from-blue-500/20 to-cyan-500/10', ic: 'text-blue-400', cat: 'finance' },
+  { icon: Receipt, title: 'Bills & Subscriptions', desc: 'Manage recurring bills, set due-date reminders and track spending by provider. Never miss a payment.', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'finance' },
+  { icon: BarChart3, title: 'HMRC Tax Reports', desc: 'Generate SA103, CT600 and tax summaries with automatic HMRC box mapping. Export to PDF in one click.', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400', cat: 'finance' },
+  { icon: TrendingUp, title: 'Financial Projections', desc: 'Cash flow forecasting, budget tracking, savings goals and debt payoff plans. See your financial future.', color: 'from-cyan-500/20 to-sky-500/10', ic: 'text-cyan-400', cat: 'finance' },
+  { icon: ArrowLeftRight, title: 'Transfers', desc: 'Track inter-account transfers and reconcile balances across all your bank accounts and entities.', color: 'from-fuchsia-500/20 to-pink-500/10', ic: 'text-fuchsia-400', cat: 'finance' },
+  { icon: HeartPulse, title: 'Financial Health Score', desc: 'Real-time score based on 6 components: bill tracking, categorisation, savings rate, budgets, actions, and data freshness.', color: 'from-red-500/20 to-pink-500/10', ic: 'text-red-400', cat: 'finance' },
+  { icon: Brain, title: '4-Layer AI Categorisation', desc: 'Our intelligent engine learns from your corrections. Deterministic rules, pattern matching, AI classification, and auto-learning — 90%+ accuracy.', color: 'from-purple-500/20 to-fuchsia-500/10', ic: 'text-purple-400', cat: 'ai' },
+  { icon: MessageSquare, title: 'AI Assistant', desc: 'Context-aware AI chat that understands your data. Ask about your finances and get instant, accurate answers.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'ai' },
+  { icon: Tag, title: 'Smart Categories', desc: 'Custom categories with HMRC tax-box mapping. AI suggests the right category for every transaction.', color: 'from-orange-500/20 to-amber-500/10', ic: 'text-orange-400', cat: 'ai' },
+  { icon: Camera, title: 'Capture & Classify', desc: 'Scan receipts and documents from your phone. AI extracts, categorises, and files everything automatically.', color: 'from-indigo-500/20 to-blue-500/10', ic: 'text-indigo-400', cat: 'ai' },
+  { icon: Shield, title: 'Identity Verification (KYC)', desc: 'Built-in certified identity checks. Verify yourself or your clients with document scanning and biometric matching. Stay compliant.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'compliance' },
+  { icon: Link2, title: 'Government APIs', desc: 'Connect to Companies House and HMRC. View company profiles, filing history, tax obligations and submit returns.', color: 'from-teal-500/20 to-emerald-500/10', ic: 'text-teal-400', cat: 'compliance' },
+  { icon: Building, title: 'Companies House Filing', desc: 'File address changes and confirmation statements directly to Companies House. View officers, filing history, and company status in real time.', color: 'from-slate-500/20 to-zinc-500/10', ic: 'text-slate-400', cat: 'compliance' },
+  { icon: CalendarClock, title: 'Tax Timeline', desc: 'Visual calendar of HMRC deadlines — Self Assessment, VAT, Corporation Tax, PAYE. Alerts before every due date.', color: 'from-amber-500/20 to-yellow-500/10', ic: 'text-amber-400', cat: 'compliance' },
+  { icon: KeyRound, title: 'Secure Vault', desc: 'Store passwords, API keys and credentials with AES-256-GCM encryption. Bank-grade security for all your secrets.', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'compliance' },
+  { icon: GraduationCap, title: 'Accounting Academy', desc: 'AAT & ACCA exam practice with timed tests, study mode, AI tutor, and a visual career roadmap from Level 2 to Level 6.', color: 'from-indigo-500/20 to-violet-500/10', ic: 'text-indigo-400', cat: 'learning' },
+  { icon: Globe, title: 'UK Relocation Hub', desc: 'AI-powered guide for newcomers to the UK. Visa advice, NI numbers, bank accounts, GP registration — fully OISC compliant.', color: 'from-teal-500/20 to-cyan-500/10', ic: 'text-teal-400', cat: 'learning' },
+  { icon: ShoppingBag, title: 'Service Marketplace', desc: 'Professional accounting, tax filing, and bookkeeping services. Browse packages, compare prices, and track your orders.', color: 'from-rose-500/20 to-orange-500/10', ic: 'text-rose-400', cat: 'learning' },
+  { icon: GraduationCap, title: 'Financial Learning', desc: 'Built-in guides on UK tax, self-assessment, VAT registration, company accounts and personal finance.', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400', cat: 'learning' },
+  { icon: Wifi, title: 'Open Banking Sync', desc: 'Connect your UK bank accounts securely. Transactions sync automatically 3x daily. Full 24-month history on first connect.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'tools' },
+  { icon: Landmark, title: 'Multi-Entity', desc: 'Manage personal finances alongside multiple Ltd companies, CICs or sole-trader businesses — all in one account.', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'tools' },
+  { icon: FolderOpen, title: 'Document Storage', desc: 'Upload and organise financial documents. Full-text search, entity linking and secure cloud storage.', color: 'from-lime-500/20 to-emerald-500/10', ic: 'text-lime-400', cat: 'tools' },
+  { icon: Home, title: 'UK Life Events', desc: 'Track life milestones — buying a home, marriage, starting a business. Personalised financial checklists.', color: 'from-pink-500/20 to-rose-500/10', ic: 'text-pink-400', cat: 'tools' },
+  { icon: Smartphone, title: 'Install as App (PWA)', desc: 'Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'tools' },
+  { icon: Link2, title: 'Accountant Portal', desc: 'Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400', cat: 'tools' },
 ];
 
 const HOW_IT_WORKS = [
@@ -84,6 +93,7 @@ export function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileNav, setMobileNav] = useState(false);
   const [loginDropdown, setLoginDropdown] = useState(false);
+  const [featureTab, setFeatureTab] = useState('all');
 
   useEffect(() => {
     fetch('/api/plans').then(r => r.json()).then(d => { if (Array.isArray(d)) setDbPlans(d); }).catch(() => {});
@@ -260,20 +270,59 @@ export function LandingPage() {
       {/* ── Features ────────────────────────────────────────────────────── */}
       <section id="features" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || 'Everything You Need in One Place'}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '22 powerful modules designed specifically for UK personal and business finance.'}</p>
+            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '26 powerful modules designed specifically for UK personal and business finance.'}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {ALL_FEATURES.map((f, i) => (
-              <div key={i} className="group neon-card p-6">
-                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4`}>
+
+          {/* Category Tabs */}
+          <div className="flex flex-wrap justify-center gap-2 mb-12">
+            {FEATURE_CATEGORIES.map((c) => {
+              const count = c.key === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === c.key).length;
+              const active = featureTab === c.key;
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setFeatureTab(c.key)}
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    active
+                      ? 'bg-gradient-to-r from-amber-400/20 to-amber-500/10 border border-amber-400/30 text-amber-300 shadow-lg shadow-amber-500/10'
+                      : 'bg-white/[0.03] border border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.06] hover:border-white/10'
+                  }`}
+                >
+                  <c.icon className={`h-4 w-4 ${active ? 'text-amber-400' : ''}`} />
+                  <span className="hidden sm:inline">{c.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-slate-500'}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Feature Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {ALL_FEATURES.filter(f => featureTab === 'all' || f.cat === featureTab).map((f, i) => (
+              <div key={f.title} className="group neon-card p-6 transition-all duration-300" style={{ animationDelay: `${i * 30}ms` }}>
+                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
                   <f.icon className={`h-6 w-6 ${f.ic} icon-neon`} />
                 </div>
                 <h3 className="text-base font-semibold text-white mb-2">{f.title}</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* Feature count summary */}
+          <div className="text-center mt-10">
+            <p className="text-sm text-slate-500">
+              Showing {featureTab === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === featureTab).length} of {ALL_FEATURES.length} modules
+              {featureTab !== 'all' && (
+                <button onClick={() => setFeatureTab('all')} className="ml-2 text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">
+                  Show all
+                </button>
+              )}
+            </p>
           </div>
         </div>
       </section>
