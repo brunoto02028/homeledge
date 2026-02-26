@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { generatePresignedUploadUrl } from '@/lib/s3';
-import { requireUserId } from '@/lib/auth';
+import { requireUserIdOrMobileToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
-    await requireUserId();
     const body = await request.json();
-    const { fileName, contentType, isPublic = false } = body;
+    const { fileName, contentType, isPublic = false, mobileToken } = body;
+    await requireUserIdOrMobileToken(mobileToken);
 
     if (!fileName || !contentType) {
       return NextResponse.json(

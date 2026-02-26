@@ -61,19 +61,21 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
     });
 
-    // Send invitation email (don't block on failure)
+    // Send invitation email
+    let emailSent = false;
     try {
-      await sendInvitationEmail(
+      const emailResult = await sendInvitationEmail(
         email.trim().toLowerCase(),
         inviter?.fullName || 'A HomeLedger user',
         household?.name || 'a household',
         invitation.token,
       );
+      emailSent = emailResult?.success === true;
     } catch (emailErr) {
       console.error('[Invite] Email failed:', emailErr);
     }
 
-    return NextResponse.json(invitation);
+    return NextResponse.json({ ...invitation, emailSent });
   } catch (error: any) {
     console.error('Error sending invitation:', error);
     return NextResponse.json({ error: error.message || 'Failed to send invitation' }, { status: 500 });

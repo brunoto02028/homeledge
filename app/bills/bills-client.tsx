@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Plus, Filter, Receipt } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,6 +16,7 @@ import { useTranslation } from "@/lib/i18n"
 
 export function BillsClient() {
   const { t } = useTranslation()
+  const searchParams = useSearchParams()
   const [bills, setBills] = useState<Bill[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -83,6 +85,16 @@ export function BillsClient() {
     fetchAccounts()
     fetchCategories()
   }, [fetchBills, fetchAccounts, fetchCategories])
+
+  // Auto-trigger add bill dialog when arriving via ?action=new
+  useEffect(() => {
+    if (loading) return
+    const action = searchParams.get('action')
+    if (action === 'new') {
+      setEditingBill(null)
+      setDialogOpen(true)
+    }
+  }, [loading, searchParams])
 
   const handleCreate = () => {
     setEditingBill(null)

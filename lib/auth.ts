@@ -174,6 +174,44 @@ export async function requireUserId(): Promise<string> {
  * @param userId - The current user's ID
  * @returns Array of user IDs (always includes the input `userId`)
  */
+/**
+ * Resolve a userId from a mobile upload token.
+ *
+ * Mobile upload pages have no session — they authenticate via a
+ * time-limited token stored in the Event table.
+ *
+ * @returns The userId that created the token, or `null` if invalid/expired
+ */
+export async function resolveUserIdFromMobileToken(token: string | null | undefined): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const event = await prisma.event.findFirst({
+      where: { eventType: 'mobile_upload_token', entityId: token },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!event) return null;
+    const payload = event.payload as any;
+    if (new Date(payload?.expiresAt) < new Date()) return null;
+    return event.userId;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the current user ID from session OR from a mobile upload token.
+ *
+ * Tries session first. If no session, falls back to mobile token.
+ * Throws 'UNAUTHORIZED' if both fail.
+ */
+export async function requireUserIdOrMobileToken(mobileToken?: string | null): Promise<string> {
+  const sessionUserId = await getCurrentUserId();
+  if (sessionUserId) return sessionUserId;
+  const tokenUserId = await resolveUserIdFromMobileToken(mobileToken);
+  if (tokenUserId) return tokenUserId;
+  throw new Error('UNAUTHORIZED');
+}
+
 export async function getAccessibleUserIds(userId: string): Promise<string[]> {
   const memberships = await prisma.membership.findMany({
     where: {

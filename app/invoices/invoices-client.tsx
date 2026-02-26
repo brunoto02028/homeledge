@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -257,6 +258,13 @@ export default function InvoicesClient() {
 
   useEffect(() => { fetchCategories(); fetchTemplates(); }, []);
   useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+
+  // Auto-trigger create dialog when arriving via ?action=new
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new') setShowCreateDialog(true);
+  }, [searchParams]);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;

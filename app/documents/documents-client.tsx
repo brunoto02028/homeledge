@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Camera, Upload, FileText, AlertCircle, CheckCircle, Clock, Tag, Plus, Receipt, ListTodo, Trash2, Eye, X, Loader2, ImageIcon, QrCode, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -74,6 +75,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 
 export function DocumentsClient() {
   const { t } = useTranslation()
+  const searchParams = useSearchParams()
   const [documents, setDocuments] = useState<ScannedDocument[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,6 +95,9 @@ export function DocumentsClient() {
   const qrPollRef = useRef<NodeJS.Timeout | null>(null)
   const [entities, setEntities] = useState<EntityOption[]>([])
   const [selectedEntityId, setSelectedEntityId] = useState<string>('')
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({})
+  const [viewImageUrl, setViewImageUrl] = useState<string>('')
+  const [viewImageLoading, setViewImageLoading] = useState(false)
   const { toast } = useToast()
 
   // Bill creation form
@@ -153,6 +158,25 @@ export function DocumentsClient() {
     fetchAccounts()
     fetchEntities()
   }, [fetchDocuments, fetchAccounts, fetchEntities])
+
+  // Auto-trigger scan/upload when arriving via ?action=scan
+  useEffect(() => {
+    if (loading) return
+    const action = searchParams.get('action')
+    if (action === 'scan') {
+      // Small delay so refs are ready
+      const isMobile = typeof window !== 'undefined' &&
+        (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 0 && window.innerWidth < 1024))
+      setTimeout(() => {
+        if (isMobile) {
+          cameraInputRef.current?.click()
+        } else {
+          fileInputRef.current?.click()
+        }
+      }, 300)
+    }
+  }, [loading, searchParams])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -274,9 +298,33 @@ export function DocumentsClient() {
     }
   }
 
-  const handleViewDocument = (doc: ScannedDocument) => {
+  const fetchImageUrl = useCallback(async (cloudStoragePath: string): Promise<string> => {
+    try {
+      const res = await fetch('/api/upload/get-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cloudStoragePath, isPublic: false }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.url || ''
+      }
+    } catch (err) {
+      console.error('Error fetching image URL:', err)
+    }
+    return ''
+  }, [])
+
+  const handleViewDocument = async (doc: ScannedDocument) => {
     setSelectedDoc(doc)
     setViewDialogOpen(true)
+    setViewImageUrl('')
+    if (doc.cloudStoragePath) {
+      setViewImageLoading(true)
+      const url = await fetchImageUrl(doc.cloudStoragePath)
+      setViewImageUrl(url)
+      setViewImageLoading(false)
+    }
   }
 
   const handleCreateBill = (doc: ScannedDocument) => {
@@ -710,6 +758,21 @@ export function DocumentsClient() {
           </DialogHeader>
           {selectedDoc && (
             <div className="space-y-4">
+              {/* Document Image Preview */}
+              {viewImageLoading ? (
+                <div className="flex items-center justify-center h-48 bg-muted/30 rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : viewImageUrl ? (
+                <div className="relative rounded-lg overflow-hidden border bg-muted/20">
+                  <img
+                    src={viewImageUrl}
+                    alt={selectedDoc.fileName || 'Document'}
+                    className="w-full max-h-[300px] object-contain"
+                  />
+                </div>
+              ) : null}
+
               {/* Type & Status */}
               <div className="flex gap-2">
                 <Badge variant="secondary">

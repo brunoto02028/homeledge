@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,8 @@ export default function StatementsClient() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -242,6 +245,15 @@ export default function StatementsClient() {
   useEffect(() => {
     fetchStatements();
   }, [fetchStatements]);
+
+  // Auto-trigger upload when arriving via ?action=upload
+  useEffect(() => {
+    if (loading) return;
+    const action = searchParams.get('action');
+    if (action === 'upload') {
+      setTimeout(() => uploadInputRef.current?.click(), 300);
+    }
+  }, [loading, searchParams]);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -1028,6 +1040,7 @@ export default function StatementsClient() {
           </Button>
           <label className="cursor-pointer">
             <input
+              ref={uploadInputRef}
               type="file"
               multiple
               accept=".csv,.xlsx,.xls,.pdf"

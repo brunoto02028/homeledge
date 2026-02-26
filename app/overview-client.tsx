@@ -128,11 +128,11 @@ function EntityCards({ entities }: { entities: Entity[] }) {
 function QuickActions() {
   const { t } = useTranslation()
   const actions = [
-    { href: '/statements', icon: Upload, label: t('overview.uploadStatement'), color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
-    { href: '/documents', icon: Camera, label: t('overview.scanDocument'), color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    { href: '/invoices', icon: FileText, label: t('overview.newInvoice'), color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
-    { href: '/bills', icon: Receipt, label: t('overview.addBill'), color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { href: '/household', icon: UserPlus, label: t('overview.inviteTeam'), color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400' },
+    { href: '/statements?action=upload', icon: Upload, label: t('overview.uploadStatement'), color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+    { href: '/documents?action=scan', icon: Camera, label: t('overview.scanDocument'), color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    { href: '/invoices?action=new', icon: FileText, label: t('overview.newInvoice'), color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+    { href: '/bills?action=new', icon: Receipt, label: t('overview.addBill'), color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    { href: '/household?action=invite', icon: UserPlus, label: t('overview.inviteTeam'), color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400' },
   ]
 
   return (

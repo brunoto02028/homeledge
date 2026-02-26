@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,6 +87,17 @@ export function HouseholdClient() {
 
   useEffect(() => { fetchHouseholds(); }, []);
 
+  // Auto-trigger invite dialog when arriving via ?action=invite
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (loading) return;
+    const action = searchParams.get('action');
+    if (action === 'invite' && households.owned.length > 0) {
+      setSelectedHousehold(households.owned[0]);
+      setShowInviteDialog(true);
+    }
+  }, [loading, searchParams, households.owned]);
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setSaving(true);
@@ -116,8 +128,17 @@ export function HouseholdClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
-      if (!res.ok) throw new Error((await res.json()).error);
-      toast({ title: t('household.inviteSent'), description: inviteEmail });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.emailSent) {
+        toast({ title: t('household.inviteSent'), description: inviteEmail });
+      } else {
+        toast({
+          title: 'Invitation Created',
+          description: `Invitation saved but email could not be sent. Share the invite link manually.`,
+          variant: 'destructive',
+        });
+      }
       setInviteEmail('');
       setShowInviteDialog(false);
       fetchHouseholds();

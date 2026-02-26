@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireUserId, getAccessibleUserIds } from '@/lib/auth';
+import { requireUserIdOrMobileToken } from '@/lib/auth';
 import OpenAI from 'openai';
 
 const client = new OpenAI({
@@ -138,9 +138,10 @@ async function extractDocumentData(base64File: string, mimeType: string, isPDF: 
 // POST: Scan a new document
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireUserId();
     const body = await request.json();
-    const { cloudStoragePath, fileName, fileBase64, mimeType, isPDF, entityId } = body;
+    const { cloudStoragePath, fileName, fileBase64, mimeType, isPDF, entityId, mobileToken } = body;
+    const headerToken = request.headers.get('X-Mobile-Token');
+    const userId = await requireUserIdOrMobileToken(mobileToken || headerToken);
 
     if (!cloudStoragePath || !fileName || !fileBase64) {
       return NextResponse.json(
