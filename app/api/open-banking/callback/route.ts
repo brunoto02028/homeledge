@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       fromDate: twentyFourMonthsAgo.toISOString().split('T')[0],
       toDate: now.toISOString().split('T')[0],
     }).then((result) => {
-      console.log(`[OpenBanking Callback] Background sync complete: ${result.synced} new, ${result.skipped} skipped, ${result.categorized} categorized`);
+      console.log(`[OpenBanking Callback] Background sync complete: ${result.synced} new, ${result.skipped} skipped, ${result.categorised} categorised`);
     }).catch((syncErr: any) => {
       console.error('[OpenBanking Callback] Background sync error:', syncErr.message);
     });
