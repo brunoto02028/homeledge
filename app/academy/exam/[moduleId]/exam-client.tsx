@@ -60,7 +60,15 @@ export function ExamClient() {
   const { toast } = useToast();
 
   const moduleId = params.moduleId as string;
-  const mode = (searchParams.get('mode') || 'study') as 'timed' | 'study';
+  const mode = (searchParams.get('mode') || 'study') as 'timed' | 'study' | 'ai-practice';
+
+  // AI Practice config
+  const [aiTopic, setAiTopic] = useState<string>('');
+  const [aiDifficulty, setAiDifficulty] = useState<string>('');
+  const [aiCount, setAiCount] = useState(10);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const isAiMode = mode === 'ai-practice';
 
   const [phase, setPhase] = useState<ExamPhase>('loading');
   const [moduleInfo, setModuleInfo] = useState<ModuleInfo | null>(null);
@@ -109,24 +117,84 @@ export function ExamClient() {
   const loadQuestions = async () => {
     setPhase('loading');
     try {
-      const res = await fetch(`/api/academy/modules/${moduleId}/questions?mode=${mode}`);
-      if (!res.ok) throw new Error('Failed');
-      const data = await res.json();
-      setModuleInfo(data.module);
-      setQuestions(data.questions || []);
+      if (isAiMode) {
+        // For AI practice, just load module info from courses API
+        const res = await fetch('/api/academy/courses');
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        let foundModule: any = null;
+        for (const course of data.courses || []) {
+          for (const m of course.modules || []) {
+            if (m.id === moduleId) { foundModule = m; break; }
+          }
+          if (foundModule) break;
+        }
+        if (foundModule) {
+          setModuleInfo({
+            id: foundModule.id,
+            title: foundModule.title,
+            code: foundModule.code,
+            passMarkPercent: foundModule.passMarkPercent,
+            timeLimitMinutes: 0,
+            totalQuestions: 0,
+          });
+          setAvailableTopics(foundModule.topicsCovered || []);
+        }
+        setPhase('ready');
+      } else {
+        const res = await fetch(`/api/academy/modules/${moduleId}/questions?mode=${mode}`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        setModuleInfo(data.module);
+        setQuestions(data.questions || []);
 
-      if (data.questions.length === 0) {
-        toast({ title: 'No questions available for this module yet', variant: 'destructive' });
-        return;
+        if (data.questions.length === 0) {
+          toast({ title: 'No questions available for this module yet', variant: 'destructive' });
+          return;
+        }
+        setPhase('ready');
       }
-      setPhase('ready');
     } catch {
       toast({ title: 'Failed to load exam', variant: 'destructive' });
     }
   };
 
+  // Generate AI questions
+  const generateAiQuestions = async () => {
+    setAiGenerating(true);
+    try {
+      const res = await fetch('/api/academy/ai-practice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moduleId,
+          topic: aiTopic || undefined,
+          difficulty: aiDifficulty || undefined,
+          count: aiCount,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      setQuestions(data.questions || []);
+      setAnswers({});
+      setCurrentIdx(0);
+      setRevealedQuestions(new Set());
+      setResults(null);
+      startTimeRef.current = Date.now();
+      setPhase('active');
+    } catch {
+      toast({ title: 'Failed to generate AI questions. Please try again.', variant: 'destructive' });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   // Start exam
   const startExam = async () => {
+    if (isAiMode) {
+      generateAiQuestions();
+      return;
+    }
     try {
       const res = await fetch('/api/academy/exam', {
         method: 'POST',
@@ -177,8 +245,8 @@ export function ExamClient() {
   // Select answer
   const selectAnswer = (questionId: string, optionId: string) => {
     if (phase !== 'active') return;
-    // In study mode with revealed, don't allow changing
-    if (mode === 'study' && revealedQuestions.has(questionId)) return;
+    // In study/ai-practice mode with revealed, don't allow changing
+    if ((mode === 'study' || isAiMode) && revealedQuestions.has(questionId)) return;
     setAnswers(prev => ({ ...prev, [questionId]: optionId }));
   };
 
@@ -197,6 +265,33 @@ export function ExamClient() {
 
     setSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // AI Practice mode: grade client-side (no DB attempt)
+    if (isAiMode) {
+      const gradedAnswers: GradedAnswer[] = questions.map(q => {
+        const selectedId = answers[q.id] || '';
+        const correctOpt = q.options.find(o => o.isCorrect);
+        return {
+          questionId: q.id,
+          selectedOptionId: selectedId,
+          correctOptionId: correctOpt?.id || '',
+          isCorrect: selectedId === correctOpt?.id,
+        };
+      });
+      const correct = gradedAnswers.filter(a => a.isCorrect).length;
+      const pct = Math.round((correct / questions.length) * 100);
+      setResults({
+        totalQuestions: questions.length,
+        correctAnswers: correct,
+        scorePercent: pct,
+        passed: pct >= (moduleInfo?.passMarkPercent || 70),
+        passMarkPercent: moduleInfo?.passMarkPercent || 70,
+        gradedAnswers,
+      });
+      setPhase('results');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -280,26 +375,32 @@ export function ExamClient() {
               <p className="text-muted-foreground mt-1">{moduleInfo?.code}</p>
             </div>
 
-            <Badge className={mode === 'timed' ? 'bg-red-500/20 text-red-600 dark:text-red-400' : 'bg-blue-500/20 text-blue-600 dark:text-blue-400'}>
-              {mode === 'timed' ? 'Timed Exam Mode' : 'Study Mode'}
+            <Badge className={
+              mode === 'timed' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
+              isAiMode ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
+              'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+            }>
+              {mode === 'timed' ? 'Timed Exam Mode' : isAiMode ? 'AI Practice Mode' : 'Study Mode'}
             </Badge>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                <p className="text-muted-foreground">Questions</p>
-                <p className="font-bold text-lg">{questions.length}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                <p className="text-muted-foreground">Pass Mark</p>
-                <p className="font-bold text-lg">{moduleInfo?.passMarkPercent || 70}%</p>
-              </div>
-              {mode === 'timed' && moduleInfo?.timeLimitMinutes && (
-                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 col-span-2">
-                  <p className="text-muted-foreground">Time Limit</p>
-                  <p className="font-bold text-lg">{moduleInfo.timeLimitMinutes} minutes</p>
+            {!isAiMode && (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <p className="text-muted-foreground">Questions</p>
+                  <p className="font-bold text-lg">{questions.length}</p>
                 </div>
-              )}
-            </div>
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <p className="text-muted-foreground">Pass Mark</p>
+                  <p className="font-bold text-lg">{moduleInfo?.passMarkPercent || 70}%</p>
+                </div>
+                {mode === 'timed' && moduleInfo?.timeLimitMinutes && (
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 col-span-2">
+                    <p className="text-muted-foreground">Time Limit</p>
+                    <p className="font-bold text-lg">{moduleInfo.timeLimitMinutes} minutes</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {mode === 'timed' && (
               <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-sm">
@@ -329,8 +430,72 @@ export function ExamClient() {
               </div>
             )}
 
-            <Button size="lg" onClick={startExam} className="w-full">
-              <Play className="h-5 w-5 mr-2" /> Start {mode === 'timed' ? 'Exam' : 'Practice'}
+            {isAiMode && (
+              <div className="space-y-4 text-left w-full">
+                <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/40 text-sm">
+                  <div className="flex items-center gap-2 font-medium text-purple-700 dark:text-purple-400">
+                    <Sparkles className="h-4 w-4" /> AI Practice Features
+                  </div>
+                  <ul className="mt-2 space-y-1 text-purple-700/80 dark:text-purple-400/80">
+                    <li>- Fresh AI-generated questions every time</li>
+                    <li>- Choose topic focus and difficulty</li>
+                    <li>- Detailed explanations for every option</li>
+                    <li>- Unlimited practice — generate as many as you need</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">Topic (optional)</label>
+                    <select
+                      value={aiTopic}
+                      onChange={e => setAiTopic(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
+                    >
+                      <option value="">All Topics</option>
+                      {availableTopics.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">Difficulty</label>
+                      <select
+                        value={aiDifficulty}
+                        onChange={e => setAiDifficulty(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
+                      >
+                        <option value="">Mixed</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">Questions</label>
+                      <select
+                        value={aiCount}
+                        onChange={e => setAiCount(Number(e.target.value))}
+                        className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
+                      >
+                        <option value={5}>5 questions</option>
+                        <option value={10}>10 questions</option>
+                        <option value={15}>15 questions</option>
+                        <option value={20}>20 questions</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button size="lg" onClick={startExam} disabled={aiGenerating} className="w-full">
+              {aiGenerating ? (
+                <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Generating Questions...</>
+              ) : (
+                <><Play className="h-5 w-5 mr-2" /> Start {mode === 'timed' ? 'Exam' : isAiMode ? 'AI Practice' : 'Practice'}</>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -527,8 +692,8 @@ export function ExamClient() {
             })}
           </div>
 
-          {/* Study mode: reveal + AI explanation */}
-          {mode === 'study' && (
+          {/* Study mode / AI practice: reveal + AI explanation */}
+          {(mode === 'study' || isAiMode) && (
             <div className="flex flex-wrap gap-3 pt-2">
               {!revealedQuestions.has(currentQuestion.id) && answers[currentQuestion.id] && (
                 <Button size="sm" variant="outline" onClick={() => revealAnswer(currentQuestion.id)}>
@@ -586,8 +751,8 @@ export function ExamClient() {
         )}
       </div>
 
-      {/* AI Tutor panel (study mode) */}
-      {mode === 'study' && (
+      {/* AI Tutor panel (study / ai-practice mode) */}
+      {(mode === 'study' || isAiMode) && (
         <Card>
           <CardContent className="p-4">
             <button

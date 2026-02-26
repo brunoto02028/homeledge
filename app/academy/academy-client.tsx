@@ -337,8 +337,8 @@ export function AcademyClient() {
                                         )}
 
                                         {/* Exam actions */}
-                                        <div className="flex items-center gap-3 pt-2">
-                                          {hasQuestions ? (
+                                        <div className="flex items-center gap-3 pt-2 flex-wrap">
+                                          {hasQuestions && (
                                             <>
                                               <Button
                                                 size="sm"
@@ -353,18 +353,22 @@ export function AcademyClient() {
                                               >
                                                 <Play className="h-4 w-4 mr-1.5" /> Timed Exam
                                               </Button>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => router.push(`/academy/exam/${mod.id}?mode=study&ai=1`)}
-                                              >
-                                                <Sparkles className="h-4 w-4 mr-1.5" /> Ask AI Tutor
-                                              </Button>
                                             </>
-                                          ) : (
+                                          )}
+                                          {mod.totalQuestions > 0 && (
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30"
+                                              onClick={() => router.push(`/academy/exam/${mod.id}?mode=ai-practice`)}
+                                            >
+                                              <Sparkles className="h-4 w-4 mr-1.5" /> AI Practice
+                                            </Button>
+                                          )}
+                                          {!hasQuestions && mod.totalQuestions === 0 && (
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                               <Lock className="h-4 w-4" />
-                                              <span>Questions coming soon — study the material above</span>
+                                              <span>Practical / written exam — no MCQ practice</span>
                                             </div>
                                           )}
                                         </div>
