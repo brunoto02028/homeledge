@@ -69,6 +69,18 @@ export default function CookiePolicyPage() {
                     <td className="py-3 pr-4">Remembers your language preference (English/Portuguese)</td>
                     <td className="py-3">1 year</td>
                   </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4 font-mono text-xs">hl-session-id</td>
+                    <td className="py-3 pr-4">Analytics</td>
+                    <td className="py-3 pr-4">Anonymous session identifier for page view and click tracking (sessionStorage)</td>
+                    <td className="py-3">Session</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4 font-mono text-xs">hl-fingerprint</td>
+                    <td className="py-3 pr-4">Analytics</td>
+                    <td className="py-3 pr-4">Browser fingerprint hash for unique visitor counting. No personal data stored.</td>
+                    <td className="py-3">Derived at runtime</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -92,8 +104,13 @@ export default function CookiePolicyPage() {
 
             <h3 className="text-lg font-medium mt-4 mb-2">Analytics Cookies</h3>
             <p className="text-muted-foreground leading-relaxed">
-              We do not currently use any third-party analytics cookies (e.g., Google Analytics).
-              If we add analytics in the future, we will update this policy and request your consent.
+              With your consent, we collect first-party analytics data including page views, click positions,
+              scroll depth, and time on page. This data is stored on our own UK-based servers and is <strong>never
+              shared with third parties</strong>. We do not use Google Analytics or any external tracking service.
+              Analytics helps us understand how visitors use the site so we can improve the experience.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mt-2">
+              You can manage your analytics preferences at any time using the button below or via the cookie banner.
             </p>
 
             <h3 className="text-lg font-medium mt-4 mb-2">Advertising Cookies</h3>
@@ -104,8 +121,16 @@ export default function CookiePolicyPage() {
 
           <section>
             <h2 className="text-2xl font-semibold mb-3">4. Managing Cookies</h2>
+            <div className="mb-4">
+              <button
+                onClick={() => { if (typeof window !== 'undefined' && (window as any).__hlOpenCookiePrefs) (window as any).__hlOpenCookiePrefs(); }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Manage Cookie Preferences
+              </button>
+            </div>
             <p className="text-muted-foreground leading-relaxed mb-3">
-              You can manage cookies through your browser settings:
+              You can also manage cookies through your browser settings:
             </p>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
               <li><strong>Chrome</strong>: Settings &gt; Privacy and Security &gt; Cookies</li>

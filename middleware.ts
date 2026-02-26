@@ -7,7 +7,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
-const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans'];
+const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect'];
 const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode'];
 
 export async function middleware(request: NextRequest) {

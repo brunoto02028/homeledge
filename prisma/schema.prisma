@@ -1575,3 +1575,75 @@ model EntityHistory {
   @@index([date])
   @@map("entity_history")
 }
+
+// ==================== SITE ANALYTICS ====================
+
+model SiteVisitor {
+  id            String          @id @default(cuid())
+  fingerprint   String          @unique // browser fingerprint hash
+  ip            String?
+  userAgent     String?         @map("user_agent")
+  country       String?
+  city          String?
+  device        String?         // desktop, mobile, tablet
+  browser       String?
+  os            String?
+  referrer      String?
+  firstSeen     DateTime        @default(now()) @map("first_seen")
+  lastSeen      DateTime        @default(now()) @map("last_seen")
+  totalVisits   Int             @default(1) @map("total_visits")
+  // Relations
+  pageViews     SitePageView[]
+  events        SiteEvent[]
+
+  @@index([ip])
+  @@index([firstSeen])
+  @@index([lastSeen])
+  @@map("site_visitors")
+}
+
+model SitePageView {
+  id            String        @id @default(cuid())
+  visitorId     String        @map("visitor_id")
+  sessionId     String        @map("session_id")
+  path          String
+  title         String?
+  referrer      String?
+  enteredAt     DateTime      @default(now()) @map("entered_at")
+  exitedAt      DateTime?     @map("exited_at")
+  timeOnPage    Int?          @map("time_on_page") // seconds
+  scrollDepth   Int?          @map("scroll_depth") // percentage 0-100
+  // Relations
+  visitor       SiteVisitor   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  events        SiteEvent[]
+
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([path])
+  @@index([enteredAt])
+  @@map("site_page_views")
+}
+
+model SiteEvent {
+  id            String        @id @default(cuid())
+  visitorId     String        @map("visitor_id")
+  pageViewId    String?       @map("page_view_id")
+  sessionId     String        @map("session_id")
+  type          String        // click, scroll, form_submit, cta_click, nav_click, rage_click
+  target        String?       // CSS selector or element description
+  x             Int?          // click x coordinate (% of viewport)
+  y             Int?          // click y coordinate (% of viewport)
+  path          String
+  metadata      Json?         // extra data (scroll %, button text, etc.)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  // Relations
+  visitor       SiteVisitor   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  pageView      SitePageView? @relation(fields: [pageViewId], references: [id], onDelete: SetNull)
+
+  @@index([visitorId])
+  @@index([pageViewId])
+  @@index([type])
+  @@index([path])
+  @@index([createdAt])
+  @@map("site_events")
+}

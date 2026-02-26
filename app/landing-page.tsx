@@ -1125,6 +1125,7 @@ export function LandingPage() {
                 <Link href="/privacy" className="block hover:text-slate-300 transition-colors">Privacy Policy</Link>
                 <Link href="/terms" className="block hover:text-slate-300 transition-colors">Terms of Service</Link>
                 <Link href="/cookies" className="block hover:text-slate-300 transition-colors">Cookie Policy</Link>
+                <button onClick={() => { if (typeof window !== 'undefined' && (window as any).__hlOpenCookiePrefs) (window as any).__hlOpenCookiePrefs(); }} className="block text-left hover:text-amber-400 transition-colors">Manage Cookies</button>
               </div>
             </div>
             <div>

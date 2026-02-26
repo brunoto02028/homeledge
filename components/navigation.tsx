@@ -44,6 +44,7 @@ const adminItems = [
   { href: "/admin/compliance", labelKey: "nav.compliance", icon: Lock },
   { href: "/admin/integrations", labelKey: "nav.integrations", icon: Cable },
   { href: "/admin/credentials", labelKey: "nav.credentials", icon: KeyRound },
+  { href: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
 ]
 
 const NAV_ORDER_KEY = 'homeledger-nav-order'
