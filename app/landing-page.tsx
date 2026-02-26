@@ -300,15 +300,28 @@ export function LandingPage() {
             })}
           </div>
 
-          {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {ALL_FEATURES.filter(f => featureTab === 'all' || f.cat === featureTab).map((f, i) => (
-              <div key={f.title} className="group neon-card p-6 transition-all duration-300" style={{ animationDelay: `${i * 30}ms` }}>
-                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                  <f.icon className={`h-6 w-6 ${f.ic} icon-neon`} />
+          {/* Feature Cards Grid — compact with expand on hover/click */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {ALL_FEATURES.filter(f => featureTab === 'all' || f.cat === featureTab).map((f) => (
+              <div
+                key={f.title}
+                className="group neon-card p-4 cursor-pointer transition-all duration-300 hover:ring-1 hover:ring-amber-400/20 hover:shadow-lg hover:shadow-amber-500/5"
+                onClick={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.toggle('expanded');
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${f.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                    <f.icon className={`h-5 w-5 ${f.ic}`} />
+                  </div>
+                  <h3 className="text-sm font-semibold text-white leading-tight">{f.title}</h3>
                 </div>
-                <h3 className="text-base font-semibold text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 [.expanded>&]:grid-rows-[1fr]">
+                  <div className="overflow-hidden">
+                    <p className="text-xs text-slate-400 leading-relaxed mt-3 pt-3 border-t border-white/5">{f.desc}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
