@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserIdOrMobileToken } from '@/lib/auth';
+import { matchDocumentToEntity, extractSignalsFromData } from '@/lib/entity-matcher';
 import OpenAI from 'openai';
 
 const client = new OpenAI({
@@ -178,6 +179,27 @@ export async function POST(request: NextRequest) {
     };
     const documentType = documentTypeMap[extractedData.document_type] || 'other';
 
+    // Entity matching — detect which entity this document belongs to
+    const signals = extractSignalsFromData({
+      senderName: extractedData.sender_name,
+      companyNumber: extractedData.extracted_details?.company_number,
+      vatNumber: extractedData.extracted_details?.vat_number,
+      address: extractedData.extracted_details?.address,
+      summary: extractedData.summary,
+      rawText: extractedData.summary,
+    });
+    const entityMatch = await matchDocumentToEntity(userId, signals, entityId || null);
+    console.log('[DocumentScan] Entity match:', JSON.stringify(entityMatch, null, 2));
+
+    // Determine final entityId: use auto-assigned if confident, otherwise keep context
+    let finalEntityId = entityId || null;
+    if (entityMatch.autoAssign && entityMatch.bestMatch) {
+      finalEntityId = entityMatch.bestMatch.entityId;
+    } else if (entityMatch.needsConfirmation && entityMatch.bestMatch && !entityId) {
+      // If no context entity was provided but we have a suggestion, use it tentatively
+      finalEntityId = entityMatch.bestMatch.entityId;
+    }
+
     // Update document with extracted data
     const updatedDocument = await prisma.scannedDocument.update({
       where: { id: document.id },
@@ -198,6 +220,7 @@ export async function POST(request: NextRequest) {
         confidenceScore: extractedData.confidence_score || null,
         tags: extractedData.tags || [],
         rawExtraction: extractedData,
+        entityId: finalEntityId,
         status: extractedData.action_required ? 'action_required' : 'processed',
         processedAt: new Date(),
       },
@@ -207,6 +230,14 @@ export async function POST(request: NextRequest) {
       success: true,
       document: updatedDocument,
       extraction: extractedData,
+      entityMatch: {
+        bestMatch: entityMatch.bestMatch,
+        candidates: entityMatch.candidates,
+        autoAssign: entityMatch.autoAssign,
+        needsConfirmation: entityMatch.needsConfirmation,
+        needsManualSelection: entityMatch.needsManualSelection,
+        mismatch: entityMatch.mismatch,
+      },
     });
   } catch (error) {
     console.error('Error scanning document:', error);

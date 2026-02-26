@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
-import { Plus, Filter, Receipt, Camera } from "lucide-react"
+import { Plus, Filter, Receipt, Camera, Building2, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BillsTable } from "./bills-table"
@@ -14,9 +14,12 @@ import type { Bill, Account, Category, ExpenseType } from "@/lib/types"
 import { EXPENSE_TYPE_LABELS } from "@/lib/types"
 import { useTranslation } from "@/lib/i18n"
 import { ScanUploadButton } from "@/components/scan-upload-button"
+import { useEntityContext } from "@/components/entity-context"
+import { Badge } from "@/components/ui/badge"
 
 export function BillsClient() {
   const { t } = useTranslation()
+  const { selectedEntityId, selectedEntity } = useEntityContext()
   const searchParams = useSearchParams()
   const [bills, setBills] = useState<Bill[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -41,6 +44,7 @@ export function BillsClient() {
       if (filters.accountId) params.set("accountId", filters.accountId)
       if (filters.isActive) params.set("isActive", filters.isActive)
       if (filters.expenseType) params.set("expenseType", filters.expenseType)
+      if (selectedEntityId) params.set("entityId", selectedEntityId)
 
       const res = await fetch(`/api/bills?${params.toString()}`)
       const data = await res.json()
@@ -51,7 +55,7 @@ export function BillsClient() {
     } finally {
       setLoading(false)
     }
-  }, [filters, toast])
+  }, [filters, toast, selectedEntityId])
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -139,10 +143,11 @@ export function BillsClient() {
     try {
       const url = editingBill ? `/api/bills/${editingBill.id}` : "/api/bills"
       const method = editingBill ? "PUT" : "POST"
+      const payload = editingBill ? data : { ...data, entityId: selectedEntityId || null }
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("Failed to save")
       toast({ title: editingBill ? t('common.updated') : t('common.created') })
@@ -168,6 +173,7 @@ export function BillsClient() {
         <div className="flex items-center gap-2">
           <ScanUploadButton
             uploadType="bill"
+            entityId={selectedEntityId || undefined}
             onUploadComplete={() => fetchBills()}
             showUploadButton={false}
             label="Scan Bill"
@@ -178,6 +184,17 @@ export function BillsClient() {
           </Button>
         </div>
       </div>
+
+      {/* Entity Context Banner */}
+      {selectedEntity && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-muted/50 text-sm">
+          {selectedEntity.type === 'individual' || selectedEntity.type === 'sole_trader'
+            ? <User className="h-4 w-4 text-amber-500" />
+            : <Building2 className="h-4 w-4 text-blue-500" />}
+          <span>Showing bills for <strong>{selectedEntity.name}</strong></span>
+          <Badge variant="outline" className="ml-1 text-xs">{selectedEntity.taxRegime === 'corporation_tax' ? 'Corporation Tax' : 'Self Assessment'}</Badge>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 items-center p-4 bg-card rounded-xl border shadow-sm">
         <Filter className="h-4 w-4 text-muted-foreground" />

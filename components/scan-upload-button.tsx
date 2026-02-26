@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Camera, Upload, Loader2, Smartphone, QrCode } from 'lucide-react';
+import { EntityConfirmDialog, type EntityMatchInfo } from '@/components/entity-confirm-dialog';
 
 export type UploadType = 'document' | 'invoice' | 'bill' | 'statement';
 
@@ -46,6 +47,11 @@ export function ScanUploadButton({
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [entityConfirmOpen, setEntityConfirmOpen] = useState(false);
+  const [pendingEntityMatch, setPendingEntityMatch] = useState<EntityMatchInfo | null>(null);
+  const [pendingDocDescription, setPendingDocDescription] = useState('');
+  const [pendingRecordId, setPendingRecordId] = useState<string | null>(null);
+  const [pendingRecordType, setPendingRecordType] = useState<'document' | 'invoice' | 'bill' | null>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -168,7 +174,7 @@ export function ScanUploadButton({
         const invoiceRes = await fetch('/api/invoices', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, cloudStoragePath, isPublic: false, status: 'pending' }),
+          body: JSON.stringify({ fileName: file.name, cloudStoragePath, isPublic: false, status: 'pending', entityId: entityId || null }),
         });
         const invoice = await invoiceRes.json();
 
@@ -177,7 +183,16 @@ export function ScanUploadButton({
         formData.append('invoiceId', invoice.id);
         const processRes = await fetch('/api/invoices/process', { method: 'POST', body: formData });
         if (processRes.ok) {
+          const processData = await processRes.json();
           toast({ title: 'Invoice Scanned!', description: 'Data extracted and categorized automatically.' });
+          // Check entity match
+          if (processData.entityMatch && (processData.entityMatch.needsConfirmation || processData.entityMatch.mismatch)) {
+            setPendingEntityMatch(processData.entityMatch);
+            setPendingDocDescription(processData.extractedData?.providerName || file.name);
+            setPendingRecordId(invoice.id);
+            setPendingRecordType('invoice');
+            setEntityConfirmOpen(true);
+          }
         } else {
           toast({ title: 'Invoice Uploaded', description: 'Uploaded but AI extraction failed. You can retry.', variant: 'default' });
         }
@@ -259,6 +274,14 @@ export function ScanUploadButton({
           title: `${typeLabel} Scanned!`,
           description: scanData.document?.summary || scanData.summary || 'Processed and categorized automatically.',
         });
+        // Check entity match
+        if (scanData.entityMatch && (scanData.entityMatch.needsConfirmation || scanData.entityMatch.mismatch)) {
+          setPendingEntityMatch(scanData.entityMatch);
+          setPendingDocDescription(scanData.document?.senderName || scanData.billName || file.name);
+          setPendingRecordId(scanData.document?.id || null);
+          setPendingRecordType(uploadType === 'bill' ? 'bill' : 'document');
+          setEntityConfirmOpen(true);
+        }
       } else {
         throw new Error(scanData.error || 'Failed to scan');
       }
@@ -274,6 +297,32 @@ export function ScanUploadButton({
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, [uploadType, entityId, onFileSelected, onUploadComplete, toast]);
+
+  // Handle entity reassignment after user confirms
+  const handleEntityConfirm = async (newEntityId: string) => {
+    if (!pendingRecordId || !pendingRecordType) return;
+    try {
+      let url = '';
+      if (pendingRecordType === 'document') {
+        url = `/api/documents/${pendingRecordId}`;
+      } else if (pendingRecordType === 'invoice') {
+        url = `/api/invoices/${pendingRecordId}`;
+      }
+      // For bills created via scan, the entityId was already set in the response
+      // but we might need to update it if the user changes their selection
+      if (url) {
+        await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityId: newEntityId }),
+        });
+      }
+      toast({ title: 'Entity Updated', description: 'Document reassigned successfully.' });
+      onUploadComplete?.();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update entity assignment', variant: 'destructive' });
+    }
+  };
 
   const defaultLabel = label || 'Scan Document';
 
@@ -345,6 +394,22 @@ export function ScanUploadButton({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Entity Confirmation Dialog */}
+      {pendingEntityMatch && (
+        <EntityConfirmDialog
+          open={entityConfirmOpen}
+          onOpenChange={setEntityConfirmOpen}
+          entityMatch={pendingEntityMatch}
+          documentDescription={pendingDocDescription}
+          onConfirm={handleEntityConfirm}
+          onSkip={() => {
+            setPendingEntityMatch(null);
+            setPendingRecordId(null);
+            setPendingRecordType(null);
+          }}
+        />
+      )}
     </>
   );
 }

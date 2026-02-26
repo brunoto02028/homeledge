@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserId, getAccessibleUserIds } from '@/lib/auth';
 import { extractInvoice, checkDoclingHealth } from '@/lib/docling-client';
+import { matchDocumentToEntity, extractSignalsFromData } from '@/lib/entity-matcher';
 
 function buildExtractionPrompt(regime: string, categoryNames: string[]): string {
   const categoryList = categoryNames.join(', ');
@@ -191,6 +192,25 @@ export async function POST(request: Request) {
       }
     }
 
+    // Entity matching — verify or detect entity from extracted data
+    const signals = extractSignalsFromData({
+      providerName: extractedData.providerName,
+      companyNumber: extractedData.companyNumber,
+      vatNumber: extractedData.vatNumber,
+      address: extractedData.address,
+      rawText: doclingText || extractedData.description,
+    });
+    const entityMatch = await matchDocumentToEntity(userId, signals, invoiceEntityId || null);
+    console.log('[InvoiceProcess] Entity match:', JSON.stringify(entityMatch, null, 2));
+
+    // Determine final entityId
+    let finalEntityId = invoiceEntityId || null;
+    if (entityMatch.autoAssign && entityMatch.bestMatch) {
+      finalEntityId = entityMatch.bestMatch.entityId;
+    } else if (entityMatch.needsConfirmation && entityMatch.bestMatch && !invoiceEntityId) {
+      finalEntityId = entityMatch.bestMatch.entityId;
+    }
+
     // Update invoice with extracted data
     const updatedInvoice = await prisma.invoice.update({
       where: { id: invoiceId },
@@ -206,6 +226,7 @@ export async function POST(request: Request) {
         expenseType: extractedData.suggestedExpenseType || null,
         description: extractedData.description || null,
         extractedData,
+        entityId: finalEntityId,
         processedAt: new Date(),
       },
       include: { category: true },
@@ -229,6 +250,14 @@ export async function POST(request: Request) {
     return NextResponse.json({
       invoice: updatedInvoice,
       extractedData,
+      entityMatch: {
+        bestMatch: entityMatch.bestMatch,
+        candidates: entityMatch.candidates,
+        autoAssign: entityMatch.autoAssign,
+        needsConfirmation: entityMatch.needsConfirmation,
+        needsManualSelection: entityMatch.needsManualSelection,
+        mismatch: entityMatch.mismatch,
+      },
     });
   } catch (error) {
     console.error('Error processing invoice:', error);

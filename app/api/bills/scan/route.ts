@@ -4,6 +4,7 @@ import { requireUserIdOrMobileToken } from '@/lib/auth';
 import { extractInvoice, checkDoclingHealth } from '@/lib/docling-client';
 import { callAI } from '@/lib/ai-client';
 import { categorizeTransaction } from '@/lib/categorization-engine';
+import { matchDocumentToEntity, extractSignalsFromData } from '@/lib/entity-matcher';
 
 export async function POST(request: Request) {
   try {
@@ -197,13 +198,37 @@ Respond with raw JSON only. No markdown or code blocks.`;
       if (matched) categoryId = matched.id;
     }
 
+    // Entity matching — verify or detect entity from extracted data
+    const signals = extractSignalsFromData({
+      senderName: billData.billName,
+      rawText: billData.description,
+    });
+    const entityMatch = await matchDocumentToEntity(userId, signals, entityId || null);
+    console.log('[BillScan] Entity match:', JSON.stringify(entityMatch, null, 2));
+
+    // Determine final entityId
+    let finalEntityId = entityId || null;
+    if (entityMatch.autoAssign && entityMatch.bestMatch) {
+      finalEntityId = entityMatch.bestMatch.entityId;
+    } else if (entityMatch.needsConfirmation && entityMatch.bestMatch && !entityId) {
+      finalEntityId = entityMatch.bestMatch.entityId;
+    }
+
     return NextResponse.json({
       ...billData,
       categoryId,
       categorizationSource: catSource,
       confidenceScore: catConfidence,
-      entityId: entityId || null,
+      entityId: finalEntityId,
       entityRegime,
+      entityMatch: {
+        bestMatch: entityMatch.bestMatch,
+        candidates: entityMatch.candidates,
+        autoAssign: entityMatch.autoAssign,
+        needsConfirmation: entityMatch.needsConfirmation,
+        needsManualSelection: entityMatch.needsManualSelection,
+        mismatch: entityMatch.mismatch,
+      },
     });
   } catch (error: any) {
     console.error('Error scanning bill:', error);

@@ -117,7 +117,9 @@ export function DocumentsClient() {
 
   const fetchDocuments = useCallback(async () => {
     try {
-      const res = await fetch('/api/documents')
+      const params = new URLSearchParams()
+      if (selectedEntityId) params.set('entityId', selectedEntityId)
+      const res = await fetch(`/api/documents?${params}`)
       const data = await res.json()
       setDocuments(data.documents || [])
     } catch (error) {
@@ -126,7 +128,7 @@ export function DocumentsClient() {
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, selectedEntityId])
 
   const fetchAccounts = useCallback(async () => {
     try {

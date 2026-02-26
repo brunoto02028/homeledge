@@ -15,9 +15,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Invoice, Category, InvoiceStatus, ExpenseType, EXPENSE_TYPE_LABELS } from '@/lib/types';
-import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings, Camera } from 'lucide-react';
+import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings, Camera, Building2, User } from 'lucide-react';
 import { ScanUploadButton } from '@/components/scan-upload-button';
 import { useTranslation } from '@/lib/i18n';
+import { useEntityContext } from '@/components/entity-context';
+import { EntityConfirmDialog, type EntityMatchInfo } from '@/components/entity-confirm-dialog';
 
 interface InvoiceTemplate {
   id: string;
@@ -96,6 +98,7 @@ const emptyInvoice: InvoiceFormData = {
 
 export default function InvoicesClient() {
   const { t } = useTranslation();
+  const { entities, selectedEntityId, selectedEntity } = useEntityContext();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,12 +125,17 @@ export default function InvoicesClient() {
   const [templateName, setTemplateName] = useState('');
   const [isDefaultTemplate, setIsDefaultTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<InvoiceTemplate | null>(null);
+  const [entityConfirmOpen, setEntityConfirmOpen] = useState(false);
+  const [pendingEntityMatch, setPendingEntityMatch] = useState<EntityMatchInfo | null>(null);
+  const [pendingEntityInvoiceId, setPendingEntityInvoiceId] = useState<string | null>(null);
+  const [pendingEntityDocDesc, setPendingEntityDocDesc] = useState('');
 
   const fetchInvoices = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (filterStatus !== 'all') params.set('status', filterStatus);
       if (filterCategory !== 'all') params.set('categoryId', filterCategory);
+      if (selectedEntityId) params.set('entityId', selectedEntityId);
       const res = await fetch(`/api/invoices?${params}`);
       const data = await res.json();
       setInvoices(data);
@@ -136,7 +144,7 @@ export default function InvoicesClient() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterCategory]);
+  }, [filterStatus, filterCategory, selectedEntityId]);
 
   const fetchCategories = async () => {
     try {
@@ -295,7 +303,7 @@ export default function InvoicesClient() {
         const invoiceRes = await fetch('/api/invoices', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, cloudStoragePath, isPublic: false, status: 'pending' }),
+          body: JSON.stringify({ fileName: file.name, cloudStoragePath, isPublic: false, status: 'pending', entityId: selectedEntityId || null }),
         });
         const invoice = await invoiceRes.json();
         uploadedInvoices.push(invoice);
@@ -329,7 +337,15 @@ export default function InvoicesClient() {
 
       const processRes = await fetch('/api/invoices/process', { method: 'POST', body: formData });
       if (processRes.ok) {
+        const processData = await processRes.json();
         toast({ title: 'Invoice Processed', description: `Data extracted from ${invoice.fileName}` });
+        // Check entity match
+        if (processData.entityMatch && (processData.entityMatch.needsConfirmation || processData.entityMatch.mismatch)) {
+          setPendingEntityMatch(processData.entityMatch);
+          setPendingEntityDocDesc(processData.extractedData?.providerName || invoice.fileName);
+          setPendingEntityInvoiceId(invoice.id);
+          setEntityConfirmOpen(true);
+        }
       } else {
         throw new Error('Processing failed');
       }
@@ -639,6 +655,17 @@ export default function InvoicesClient() {
         </Button>
       </div>
 
+      {/* Entity Context Banner */}
+      {selectedEntity && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-muted/50 text-sm">
+          {selectedEntity.type === 'individual' || selectedEntity.type === 'sole_trader'
+            ? <User className="h-4 w-4 text-amber-500" />
+            : <Building2 className="h-4 w-4 text-blue-500" />}
+          <span>Showing invoices for <strong>{selectedEntity.name}</strong></span>
+          <Badge variant="outline" className="ml-1 text-xs">{selectedEntity.taxRegime === 'corporation_tax' ? 'Corporation Tax' : 'Self Assessment'}</Badge>
+        </div>
+      )}
+
       {/* Upload Card */}
       <Card>
         <CardHeader>
@@ -665,6 +692,7 @@ export default function InvoicesClient() {
               <p className="text-sm text-muted-foreground mb-1">Or scan with camera</p>
               <ScanUploadButton
                 uploadType="invoice"
+                entityId={selectedEntityId || undefined}
                 onUploadComplete={() => fetchInvoices()}
                 showUploadButton={false}
                 label="Scan Invoice"
@@ -1186,6 +1214,38 @@ export default function InvoicesClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Entity Confirmation Dialog */}
+      {pendingEntityMatch && (
+        <EntityConfirmDialog
+          open={entityConfirmOpen}
+          onOpenChange={setEntityConfirmOpen}
+          entityMatch={pendingEntityMatch}
+          contextEntityName={selectedEntity?.name}
+          documentDescription={pendingEntityDocDesc}
+          onConfirm={async (newEntityId) => {
+            if (pendingEntityInvoiceId) {
+              try {
+                await fetch(`/api/invoices/${pendingEntityInvoiceId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ entityId: newEntityId }),
+                });
+                toast({ title: 'Entity Updated', description: 'Invoice reassigned successfully.' });
+                fetchInvoices();
+              } catch {
+                toast({ title: 'Error', description: 'Failed to update entity', variant: 'destructive' });
+              }
+            }
+            setPendingEntityMatch(null);
+            setPendingEntityInvoiceId(null);
+          }}
+          onSkip={() => {
+            setPendingEntityMatch(null);
+            setPendingEntityInvoiceId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
