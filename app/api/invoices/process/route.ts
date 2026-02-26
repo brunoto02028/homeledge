@@ -211,24 +211,52 @@ export async function POST(request: Request) {
       finalEntityId = entityMatch.bestMatch.entityId;
     }
 
-    // Update invoice with extracted data
+    // Update invoice with extracted data — PRESERVE user-edited fields
+    // If invoice was already processed/reviewed, only fill in null/empty fields
+    const isFirstProcessing = existingInvoice.status === 'pending';
+    const inv = existingInvoice as any;
+
+    const updateData: any = {
+      status: isFirstProcessing ? 'processed' : existingInvoice.status,
+      extractedData, // always store latest AI extraction for reference
+      processedAt: new Date(),
+    };
+
+    // Only update fields if: (a) first processing, OR (b) field is currently null/empty
+    if (isFirstProcessing || !inv.providerName) {
+      updateData.providerName = extractedData.providerName || null;
+    }
+    if (isFirstProcessing || !inv.invoiceNumber) {
+      updateData.invoiceNumber = extractedData.invoiceNumber || null;
+    }
+    if (isFirstProcessing || !inv.invoiceDate) {
+      updateData.invoiceDate = extractedData.invoiceDate ? new Date(extractedData.invoiceDate) : null;
+    }
+    if (isFirstProcessing || !inv.dueDate) {
+      updateData.dueDate = extractedData.dueDate ? new Date(extractedData.dueDate) : null;
+    }
+    if (isFirstProcessing || inv.amount === null || inv.amount === undefined) {
+      updateData.amount = extractedData.amount ? parseFloat(extractedData.amount) : null;
+    }
+    if (isFirstProcessing || !inv.currency) {
+      updateData.currency = extractedData.currency || 'GBP';
+    }
+    if (isFirstProcessing || !inv.categoryId) {
+      updateData.categoryId = categoryId;
+    }
+    if (isFirstProcessing || !inv.expenseType) {
+      updateData.expenseType = extractedData.suggestedExpenseType || null;
+    }
+    if (isFirstProcessing || !inv.description) {
+      updateData.description = extractedData.description || null;
+    }
+    if (isFirstProcessing || !inv.entityId) {
+      updateData.entityId = finalEntityId;
+    }
+
     const updatedInvoice = await prisma.invoice.update({
       where: { id: invoiceId },
-      data: {
-        status: 'processed',
-        providerName: extractedData.providerName || null,
-        invoiceNumber: extractedData.invoiceNumber || null,
-        invoiceDate: extractedData.invoiceDate ? new Date(extractedData.invoiceDate) : null,
-        dueDate: extractedData.dueDate ? new Date(extractedData.dueDate) : null,
-        amount: extractedData.amount ? parseFloat(extractedData.amount) : null,
-        currency: extractedData.currency || 'GBP',
-        categoryId,
-        expenseType: extractedData.suggestedExpenseType || null,
-        description: extractedData.description || null,
-        extractedData,
-        entityId: finalEntityId,
-        processedAt: new Date(),
-      },
+      data: updateData,
       include: { category: true },
     });
 

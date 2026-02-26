@@ -145,8 +145,12 @@ export async function autoCategorizeTransactions(
 ): Promise<number> {
   try {
     const transactions = await prisma.bankTransaction.findMany({
-      where: { id: { in: transactionIds } },
-      select: { id: true, description: true, amount: true, type: true, date: true },
+      where: {
+        id: { in: transactionIds },
+        // Only auto-categorize transactions NOT already approved/edited by user
+        isApproved: { not: true },
+      },
+      select: { id: true, description: true, amount: true, type: true, date: true, categoryId: true },
     });
 
     if (transactions.length === 0) return 0;

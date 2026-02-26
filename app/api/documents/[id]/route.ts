@@ -48,15 +48,18 @@ export async function PUT(
     const existing = await prisma.scannedDocument.findFirst({ where: { id, userId: { in: userIds } } });
     if (!existing) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
 
+    // Build update data — only include fields that are present in the request body
+    const updateData: any = {};
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.linkedBillId !== undefined) updateData.linkedBillId = body.linkedBillId;
+    if (body.linkedActionId !== undefined) updateData.linkedActionId = body.linkedActionId;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.entityId !== undefined) updateData.entityId = body.entityId;
+
     const document = await prisma.scannedDocument.update({
       where: { id },
-      data: {
-        status: body.status,
-        notes: body.notes,
-        linkedBillId: body.linkedBillId,
-        linkedActionId: body.linkedActionId,
-        tags: body.tags,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ document });

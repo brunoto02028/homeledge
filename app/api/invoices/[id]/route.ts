@@ -55,23 +55,27 @@ export async function PUT(
       expenseType,
       description,
       status,
+      entityId,
     } = body;
+
+    // Build update data — only include fields present in request body
+    const updateData: any = {};
+    if (providerName !== undefined) updateData.providerName = providerName;
+    if (invoiceNumber !== undefined) updateData.invoiceNumber = invoiceNumber;
+    if (invoiceDate !== undefined) updateData.invoiceDate = invoiceDate ? new Date(invoiceDate) : null;
+    if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (amount !== undefined) updateData.amount = parseFloat(amount);
+    if (currency !== undefined) updateData.currency = currency;
+    if (categoryId !== undefined) updateData.categoryId = categoryId || null;
+    if (expenseType !== undefined) updateData.expenseType = expenseType;
+    if (description !== undefined) updateData.description = description;
+    if (status !== undefined) updateData.status = status;
+    if (entityId !== undefined) updateData.entityId = entityId;
+    if (status === 'reviewed') updateData.processedAt = new Date();
 
     const invoice = await prisma.invoice.update({
       where: { id },
-      data: {
-        providerName,
-        invoiceNumber,
-        invoiceDate: invoiceDate ? new Date(invoiceDate) : null,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        amount: amount !== undefined ? parseFloat(amount) : undefined,
-        currency,
-        categoryId: categoryId || null,
-        expenseType,
-        description,
-        status,
-        processedAt: status === 'reviewed' ? new Date() : undefined,
-      },
+      data: updateData,
       include: { category: true },
     });
 
