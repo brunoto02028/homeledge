@@ -9,7 +9,8 @@ import {
   PoundSterling, Shield, Zap, Users, CalendarClock, Briefcase,
   Building2, Eye, UserPlus, Menu, X, Link2, Tag, FolderOpen, Landmark,
   ArrowLeftRight, MessageSquare, GraduationCap, Sparkles, Lock, Brain,
-  Github, Twitter, Linkedin, Send, Wifi, Building,
+  Github, Twitter, Linkedin, Send, Wifi, Building, Globe, ShoppingBag,
+  HeartPulse, Smartphone, BookOpen, Plane,
 } from 'lucide-react';
 
 const ALL_FEATURES = [
@@ -33,6 +34,12 @@ const ALL_FEATURES = [
   { icon: Shield, title: 'Identity Verification (KYC)', desc: 'Built-in certified identity checks. Verify yourself or your clients with document scanning and biometric matching. Stay compliant.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400' },
   { icon: Wifi, title: 'Open Banking Sync', desc: 'Connect your UK bank accounts securely. Transactions sync automatically 3x daily. Full 24-month history on first connect.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400' },
   { icon: Building, title: 'Companies House Filing', desc: 'File address changes and confirmation statements directly to Companies House. View officers, filing history, and company status in real time.', color: 'from-slate-500/20 to-zinc-500/10', ic: 'text-slate-400' },
+  { icon: GraduationCap, title: 'Accounting Academy', desc: 'AAT & ACCA exam practice with timed tests, study mode, AI tutor, and a visual career roadmap from Level 2 to Level 6.', color: 'from-indigo-500/20 to-violet-500/10', ic: 'text-indigo-400' },
+  { icon: Globe, title: 'UK Relocation Hub', desc: 'AI-powered guide for newcomers to the UK. Visa advice, NI numbers, bank accounts, GP registration — fully OISC compliant.', color: 'from-teal-500/20 to-cyan-500/10', ic: 'text-teal-400' },
+  { icon: ShoppingBag, title: 'Service Marketplace', desc: 'Professional accounting, tax filing, and bookkeeping services. Browse packages, compare prices, and track your orders.', color: 'from-rose-500/20 to-orange-500/10', ic: 'text-rose-400' },
+  { icon: HeartPulse, title: 'Financial Health Score', desc: 'Real-time score based on 6 components: bill tracking, categorisation, savings rate, budgets, actions, and data freshness.', color: 'from-red-500/20 to-pink-500/10', ic: 'text-red-400' },
+  { icon: Smartphone, title: 'Install as App (PWA)', desc: 'Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400' },
+  { icon: Link2, title: 'Accountant Portal', desc: 'Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400' },
 ];
 
 const HOW_IT_WORKS = [
@@ -56,6 +63,8 @@ const FAQ_ITEMS = [
   { q: 'What file formats do you support?', a: 'We accept CSV, PDF, Excel (.xlsx), and image files (JPG, PNG) for bank statements, invoices, and documents. Our AI processes them all.' },
   { q: 'Can I install HomeLedger as a desktop app?', a: 'Yes! HomeLedger is a Progressive Web App (PWA). Click "Install" in your browser to add it to your desktop or mobile home screen.' },
   { q: 'How does the AI Assistant work?', a: 'Our AI understands the context of the page you\'re on. Ask it about your statements, tax obligations, or spending patterns and it gives personalised answers.' },
+  { q: 'What is the Accounting Academy?', a: 'A built-in exam practice platform for AAT (Levels 2–4) and ACCA (Levels 5–6). Features timed exams, study mode with explanations, an AI tutor, and a visual career roadmap with salary ranges. Perfect for aspiring accountants or anyone wanting to understand UK bookkeeping.' },
+  { q: 'Do you offer relocation support for newcomers?', a: 'Yes! Our UK Relocation Hub is an AI-powered guide that helps newcomers with visa advice, National Insurance numbers, opening bank accounts, GP registration, council tax, and more. All advice is OISC compliant. We also offer professional relocation services through our marketplace.' },
 ];
 
 const FALLBACK_PLANS = [
@@ -96,6 +105,7 @@ export function LandingPage() {
     { href: '#how-it-works', label: 'How It Works' },
     { href: '#business', label: 'For Business' },
     { href: '#accountants', label: 'For Accountants' },
+    { href: '#new-arrivals', label: 'New to UK' },
     { href: '#pricing', label: 'Pricing' },
     { href: '#faq', label: 'FAQ' },
   ];
@@ -229,7 +239,7 @@ export function LandingPage() {
         <div className="neon-line w-full mb-10" />
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { n: '16+', l: 'Financial Modules', Icon: Zap },
+            { n: '22+', l: 'Financial Modules', Icon: Zap },
             { n: 'AI', l: 'Powered Automation', Icon: Sparkles },
             { n: 'HMRC', l: 'Compliant Reports', Icon: BarChart3 },
             { n: '256-bit', l: 'AES Encryption', Icon: Lock },
@@ -249,7 +259,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || 'Everything You Need in One Place'}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '16 powerful modules designed specifically for UK personal and business finance.'}</p>
+            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '22 powerful modules designed specifically for UK personal and business finance.'}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {ALL_FEATURES.map((f, i) => (
@@ -414,6 +424,65 @@ export function LandingPage() {
                       </div>
                     </div>
                     <div className={`px-2.5 py-1 rounded-full text-xs font-medium border ${i < 2 ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'}`}>{i < 2 ? 'Active' : 'Pending'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── For New Arrivals ──────────────────────────────────────────── */}
+      <section id="new-arrivals" className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 to-slate-900/50" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-400/10 border border-teal-400/20 text-teal-400 text-xs font-semibold mb-6">
+                <Plane className="h-3.5 w-3.5" /> For New UK Arrivals
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">New to the UK? We&apos;ve Got You Covered</h2>
+              <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+                Whether you&apos;re relocating for work, study, or family — HomeLedger helps you navigate UK finances, accounting qualifications, and professional services from day one.
+              </p>
+              <div className="mt-8 space-y-4">
+                {[
+                  { icon: Globe, text: 'AI Relocation Guide — visas, NI numbers, bank accounts, GP registration (OISC compliant)' },
+                  { icon: GraduationCap, text: 'Accounting Academy — AAT & ACCA exam practice with AI tutor and career roadmap' },
+                  { icon: ShoppingBag, text: 'Service Marketplace — professional accounting, tax filing, and bookkeeping packages' },
+                  { icon: HeartPulse, text: 'Financial Health Score — track your financial wellbeing with a real-time dashboard' },
+                  { icon: Smartphone, text: 'Install as App — access HomeLedger offline from your phone or desktop' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 group">
+                    <div className="h-8 w-8 rounded-lg bg-teal-400/10 border border-teal-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-teal-400/30 transition-colors">
+                      <item.icon className="h-4 w-4 text-teal-400" />
+                    </div>
+                    <span className="text-slate-400 text-sm leading-relaxed pt-1 group-hover:text-slate-300 transition-colors">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-10 flex flex-wrap gap-4">
+                <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-900 font-semibold text-sm hover:from-teal-300 hover:to-cyan-400 shadow-lg shadow-teal-500/20">
+                  Start Free Today <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <div className="neon-card p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-2"><Plane className="h-5 w-5 text-teal-400" /><span className="font-semibold text-white">Your UK Journey</span></div>
+                {[
+                  { title: 'Get your NI Number', status: 'Complete', color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
+                  { title: 'Open a UK Bank Account', status: 'Complete', color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
+                  { title: 'Register with a GP', status: 'In Progress', color: 'bg-amber-400/10 text-amber-400 border-amber-400/20' },
+                  { title: 'File Self Assessment', status: 'Upcoming', color: 'bg-slate-400/10 text-slate-400 border-slate-400/20' },
+                  { title: 'AAT Level 2 — Bookkeeping', status: '78% Score', color: 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-teal-400/20 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-teal-400/10 flex items-center justify-center"><Check className="h-4 w-4 text-teal-400" /></div>
+                      <span className="text-sm font-medium text-white">{item.title}</span>
+                    </div>
+                    <div className={`px-2.5 py-1 rounded-full text-xs font-medium border ${item.color}`}>{item.status}</div>
                   </div>
                 ))}
               </div>
