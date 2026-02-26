@@ -90,10 +90,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
-    if (category.isDefault) {
-      return NextResponse.json({ error: 'Cannot delete default categories' }, { status: 400 });
-    }
-
+    // Permanently delete — related bills/invoices/transactions get categoryId set to null (onDelete: SetNull)
+    // Budgets and categorization rules using this category are cascade-deleted
     await prisma.category.delete({ where: { id } });
 
     await prisma.event.create({

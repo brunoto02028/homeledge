@@ -204,29 +204,32 @@ export default function CategoriesClient() {
             <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(category)}>
               <Pencil className="h-4 w-4" />
             </Button>
-            {!category.isDefault && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete {category.name}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will remove the category. Bills and invoices using this category will be uncategorized.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(category.id)}>
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Permanently delete "{category.name}"?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. The category will be permanently removed from the system.
+                    Bills, invoices, and transactions using this category will become uncategorized.
+                    Any budgets and categorization rules linked to it will also be deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDelete(category.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete Permanently
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </CardHeader>
@@ -272,29 +275,32 @@ export default function CategoriesClient() {
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(category)}>
           <Pencil className="h-3.5 w-3.5" />
         </Button>
-        {!category.isDefault && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete {category.name}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove the category. Bills and invoices using this category will be uncategorized.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(category.id)}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete "{category.name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The category will be permanently removed from the system.
+                Bills, invoices, and transactions using this category will become uncategorized.
+                Any budgets and categorization rules linked to it will also be deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDelete(category.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
