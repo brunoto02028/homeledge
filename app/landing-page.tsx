@@ -470,69 +470,70 @@ export function LandingPage() {
               </div>
             </div>
             {/* Right — Phone Mockup SVG Illustration */}
-            <div className="flex justify-center">
-              <div className="relative w-[280px] sm:w-[320px]">
+            <div className="flex justify-center relative">
+              <div className="relative w-[260px] sm:w-[280px]">
                 {/* Phone Frame */}
-                <div className="relative rounded-[2.5rem] border-[3px] border-slate-600/50 bg-slate-900 p-3 shadow-2xl shadow-violet-500/10">
+                <div className="relative rounded-[2.5rem] border-[3px] border-slate-600/50 bg-slate-900 p-3 shadow-2xl shadow-violet-500/20 ring-1 ring-violet-500/10">
                   {/* Notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-900 rounded-b-2xl z-10" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-slate-900 rounded-b-2xl z-10" />
                   {/* Screen */}
                   <div className="rounded-[2rem] bg-gradient-to-b from-slate-800 to-slate-900 overflow-hidden">
                     {/* Status Bar */}
-                    <div className="flex justify-between items-center px-6 pt-8 pb-2 text-[10px] text-slate-500">
+                    <div className="flex justify-between items-center px-5 pt-7 pb-1 text-[10px] text-slate-500">
                       <span>14:32</span>
-                      <div className="flex gap-1"><Wifi className="h-3 w-3" /><span>98%</span></div>
+                      <div className="flex items-center gap-1"><Wifi className="h-2.5 w-2.5" /><span>98%</span></div>
                     </div>
                     {/* App Header */}
-                    <div className="px-5 py-3 border-b border-white/5">
+                    <div className="px-4 py-2.5 border-b border-white/5">
                       <div className="flex items-center gap-2">
-                        <Fingerprint className="h-5 w-5 text-violet-400" />
-                        <span className="text-white text-sm font-semibold">Identity Check</span>
+                        <Fingerprint className="h-4 w-4 text-violet-400" />
+                        <span className="text-white text-xs font-semibold">Identity Check</span>
                       </div>
                     </div>
                     {/* Camera Viewfinder */}
-                    <div className="px-5 py-4">
-                      <div className="relative aspect-[3/2] rounded-2xl border-2 border-dashed border-violet-400/40 bg-violet-400/5 flex flex-col items-center justify-center gap-3 overflow-hidden">
-                        <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-violet-400 rounded-tl-lg" />
-                        <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-violet-400 rounded-tr-lg" />
-                        <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-violet-400 rounded-bl-lg" />
-                        <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-violet-400 rounded-br-lg" />
-                        <Scan className="h-8 w-8 text-violet-400/60" />
-                        <span className="text-violet-400 text-xs font-medium">Position your ID here</span>
+                    <div className="px-4 py-3">
+                      <div className="relative aspect-[4/3] rounded-xl border-2 border-dashed border-violet-400/30 bg-violet-400/5 flex flex-col items-center justify-center gap-2">
+                        <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-violet-400 rounded-tl-md" />
+                        <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-violet-400 rounded-tr-md" />
+                        <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-violet-400 rounded-bl-md" />
+                        <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-violet-400 rounded-br-md" />
+                        <Scan className="h-7 w-7 text-violet-400/50" />
+                        <span className="text-violet-400/80 text-[10px] font-medium">Position your ID here</span>
                       </div>
-                      <p className="text-center text-[10px] text-slate-500 mt-2">Align passport or driving licence within the frame</p>
+                      <p className="text-center text-[9px] text-slate-500 mt-1.5">Align passport or driving licence within the frame</p>
                     </div>
                     {/* Progress Steps */}
-                    <div className="px-5 pb-4 space-y-2">
+                    <div className="px-4 pb-3 space-y-1.5">
                       {[
                         { text: 'Scan ID Document', done: true },
                         { text: 'Take a Selfie', done: false },
                         { text: 'Verification Complete', done: false },
                       ].map((s, i) => (
-                        <div key={i} className="flex items-center gap-2.5">
-                          <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${s.done ? 'bg-violet-400 text-slate-900' : 'bg-white/10 text-slate-500'}`}>
-                            {s.done ? <Check className="h-3 w-3" /> : i + 1}
+                        <div key={i} className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-bold ${s.done ? 'bg-violet-400 text-slate-900' : 'bg-white/10 text-slate-500'}`}>
+                            {s.done ? <Check className="h-2.5 w-2.5" /> : i + 1}
                           </div>
-                          <span className={`text-xs ${s.done ? 'text-white' : 'text-slate-500'}`}>{s.text}</span>
+                          <span className={`text-[11px] ${s.done ? 'text-white' : 'text-slate-500'}`}>{s.text}</span>
                         </div>
                       ))}
                     </div>
                     {/* Button */}
-                    <div className="px-5 pb-6">
-                      <div className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-center text-slate-900 text-xs font-bold">
+                    <div className="px-4 pb-5">
+                      <div className="w-full py-2 rounded-lg bg-gradient-to-r from-violet-400 to-cyan-400 text-center text-slate-900 text-[11px] font-bold">
                         Capture Document
                       </div>
                     </div>
                   </div>
                 </div>
-                {/* Floating Badges */}
-                <div className="absolute -left-6 top-16 px-3 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-xs font-medium flex items-center gap-1.5 shadow-lg animate-pulse">
+
+                {/* Floating Badges — positioned well outside the phone */}
+                <div className="absolute -top-3 -right-16 sm:-right-20 px-3 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 backdrop-blur-sm">
                   <CircleCheck className="h-3.5 w-3.5" /> Face Match: 99.7%
                 </div>
-                <div className="absolute -right-4 bottom-32 px-3 py-2 rounded-xl bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                <div className="absolute top-1/2 -right-14 sm:-right-[4.5rem] px-3 py-1.5 rounded-lg bg-violet-400/10 border border-violet-400/20 text-violet-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-violet-500/10 backdrop-blur-sm">
                   <Shield className="h-3.5 w-3.5" /> GDPR Certified
                 </div>
-                <div className="absolute -left-2 bottom-16 px-3 py-2 rounded-xl bg-blue-400/10 border border-blue-400/20 text-blue-400 text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                <div className="absolute -bottom-3 -left-14 sm:-left-16 px-3 py-1.5 rounded-lg bg-blue-400/10 border border-blue-400/20 text-blue-400 text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-blue-500/10 backdrop-blur-sm">
                   <Clock className="h-3.5 w-3.5" /> ~90 seconds
                 </div>
               </div>
