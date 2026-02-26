@@ -11,7 +11,8 @@ import {
   ArrowLeftRight, MessageSquare, GraduationCap, Sparkles, Lock, Brain,
   Github, Twitter, Linkedin, Send, Wifi, Building, Globe, ShoppingBag,
   HeartPulse, Smartphone, BookOpen, Plane, Fingerprint, CreditCard,
-  BadgeCheck, ScanLine, FileCheck, UserCheck, ShieldCheck,
+  BadgeCheck, ScanLine, FileCheck, UserCheck, ShieldCheck, Scale,
+  AlertTriangle, Clock, Scan, CircleCheck, ChevronRight,
 } from 'lucide-react';
 
 const ALL_FEATURES = [
@@ -434,75 +435,378 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── Identity Verification ────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {/* ═══  IDENTITY VERIFICATION — FULL FEATURE SHOWCASE  ═══════ */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+
+      {/* ── IDV Hero ───────────────────────────────────────────────── */}
       <section id="verify-id" className="py-20 sm:py-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/50 via-slate-950 to-indigo-950/50" />
-        <div className="absolute inset-0 cyber-grid opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/60 via-slate-950 to-indigo-950/60" />
+        <div className="absolute inset-0 cyber-grid opacity-20" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-semibold mb-6">
-              <Fingerprint className="h-3.5 w-3.5" /> Certified Identity Verification
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left — Text */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-semibold mb-6">
+                <Fingerprint className="h-3.5 w-3.5" /> Certified Identity Verification (IDV)
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
+                Verify Anyone&apos;s<br />Identity
+                <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent"> Digitally</span>
+              </h2>
+              <p className="mt-6 text-lg text-slate-400 leading-relaxed">
+                Identity Document Verification (IDV) is a <strong className="text-white">certified digital process</strong> that confirms a person is who they claim to be. It combines <strong className="text-white">document scanning</strong> (passport, driving licence, BRP) with <strong className="text-white">biometric facial matching</strong> — all from a smartphone.
+              </p>
+              <p className="mt-4 text-base text-slate-500 leading-relaxed">
+                The person simply opens a secure link on their phone, takes a photo of their ID document, then takes a selfie. Our AI compares the face on the document with the live selfie in seconds. The result is a <strong className="text-slate-300">government-grade certified report</strong> delivered straight to your inbox.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link href="/verify-purchase" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 font-semibold text-sm hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20 transition-all">
+                  Start Verifying <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="#idv-law" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10 transition-all">
+                  <Scale className="h-4 w-4" /> UK Legal Requirements
+                </a>
+              </div>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
-              Verify Anyone&apos;s Identity<br />
-              <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">in Minutes, Not Days</span>
+            {/* Right — Phone Mockup SVG Illustration */}
+            <div className="flex justify-center">
+              <div className="relative w-[280px] sm:w-[320px]">
+                {/* Phone Frame */}
+                <div className="relative rounded-[2.5rem] border-[3px] border-slate-600/50 bg-slate-900 p-3 shadow-2xl shadow-violet-500/10">
+                  {/* Notch */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-900 rounded-b-2xl z-10" />
+                  {/* Screen */}
+                  <div className="rounded-[2rem] bg-gradient-to-b from-slate-800 to-slate-900 overflow-hidden">
+                    {/* Status Bar */}
+                    <div className="flex justify-between items-center px-6 pt-8 pb-2 text-[10px] text-slate-500">
+                      <span>14:32</span>
+                      <div className="flex gap-1"><Wifi className="h-3 w-3" /><span>98%</span></div>
+                    </div>
+                    {/* App Header */}
+                    <div className="px-5 py-3 border-b border-white/5">
+                      <div className="flex items-center gap-2">
+                        <Fingerprint className="h-5 w-5 text-violet-400" />
+                        <span className="text-white text-sm font-semibold">Identity Check</span>
+                      </div>
+                    </div>
+                    {/* Camera Viewfinder */}
+                    <div className="px-5 py-4">
+                      <div className="relative aspect-[3/2] rounded-2xl border-2 border-dashed border-violet-400/40 bg-violet-400/5 flex flex-col items-center justify-center gap-3 overflow-hidden">
+                        <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-violet-400 rounded-tl-lg" />
+                        <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-violet-400 rounded-tr-lg" />
+                        <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-violet-400 rounded-bl-lg" />
+                        <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-violet-400 rounded-br-lg" />
+                        <Scan className="h-8 w-8 text-violet-400/60" />
+                        <span className="text-violet-400 text-xs font-medium">Position your ID here</span>
+                      </div>
+                      <p className="text-center text-[10px] text-slate-500 mt-2">Align passport or driving licence within the frame</p>
+                    </div>
+                    {/* Progress Steps */}
+                    <div className="px-5 pb-4 space-y-2">
+                      {[
+                        { text: 'Scan ID Document', done: true },
+                        { text: 'Take a Selfie', done: false },
+                        { text: 'Verification Complete', done: false },
+                      ].map((s, i) => (
+                        <div key={i} className="flex items-center gap-2.5">
+                          <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${s.done ? 'bg-violet-400 text-slate-900' : 'bg-white/10 text-slate-500'}`}>
+                            {s.done ? <Check className="h-3 w-3" /> : i + 1}
+                          </div>
+                          <span className={`text-xs ${s.done ? 'text-white' : 'text-slate-500'}`}>{s.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Button */}
+                    <div className="px-5 pb-6">
+                      <div className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-center text-slate-900 text-xs font-bold">
+                        Capture Document
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Floating Badges */}
+                <div className="absolute -left-6 top-16 px-3 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-xs font-medium flex items-center gap-1.5 shadow-lg animate-pulse">
+                  <CircleCheck className="h-3.5 w-3.5" /> Face Match: 99.7%
+                </div>
+                <div className="absolute -right-4 bottom-32 px-3 py-2 rounded-xl bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                  <Shield className="h-3.5 w-3.5" /> GDPR Certified
+                </div>
+                <div className="absolute -left-2 bottom-16 px-3 py-2 rounded-xl bg-blue-400/10 border border-blue-400/20 text-blue-400 text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                  <Clock className="h-3.5 w-3.5" /> ~90 seconds
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── IDV: UK Law Requires It ────────────────────────────────── */}
+      <section id="idv-law" className="py-20 sm:py-28 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-red-950/10 to-slate-950" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-400/10 border border-red-400/20 text-red-400 text-xs font-semibold mb-6">
+              <Scale className="h-3.5 w-3.5" /> UK Legal Requirement
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
+              It&apos;s Not Optional —<br />
+              <span className="text-red-400">It&apos;s UK Law</span>
             </h2>
-            <p className="mt-6 text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-              Government-grade document verification and biometric matching. No account needed — just purchase, send the link, and get certified results. Perfect for employers, landlords, and compliance teams.
+            <p className="mt-6 text-lg text-slate-400 leading-relaxed">
+              The UK government requires identity verification in multiple scenarios. Failure to comply can result in <strong className="text-white">unlimited fines</strong>, <strong className="text-white">criminal prosecution</strong>, and <strong className="text-white">loss of your licence to operate</strong>. Every business, landlord, and professional in the UK must comply.
             </p>
           </div>
 
-          {/* Use Cases Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
+          {/* Law Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {[
-              { icon: UserCheck, title: 'New Employee Checks', desc: 'Right to Work verification for new hires. Meet Home Office requirements with certified digital checks.', color: 'text-emerald-400', bg: 'from-emerald-500/20 to-teal-500/10' },
-              { icon: FileCheck, title: 'Visa & Immigration', desc: 'Verify passports, BRPs, and visa documents. Share certified results with immigration advisors.', color: 'text-blue-400', bg: 'from-blue-500/20 to-cyan-500/10' },
-              { icon: ShieldCheck, title: 'AML & KYC Compliance', desc: 'Anti-Money Laundering checks for financial services. Meet FCA and HMRC regulatory requirements.', color: 'text-violet-400', bg: 'from-violet-500/20 to-purple-500/10' },
-              { icon: Home, title: 'Tenant Verification', desc: 'Verify tenant identity before signing leases. Protect your property with certified ID checks.', color: 'text-amber-400', bg: 'from-amber-500/20 to-orange-500/10' },
-            ].map((uc, i) => (
-              <div key={i} className="neon-card p-6 group hover:border-violet-400/30 transition-all">
-                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${uc.bg} flex items-center justify-center mb-4`}>
-                  <uc.icon className={`h-6 w-6 ${uc.color}`} />
-                </div>
-                <h3 className="text-base font-semibold text-white mb-2">{uc.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{uc.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* How It Works Steps */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-3 mb-16">
-            {[
-              { step: '1', title: 'Choose a Package', desc: 'Select 1, 10, or 50 verification checks', icon: CreditCard },
-              { step: '2', title: 'Send the Link', desc: 'Share the secure link with the person to verify', icon: Send },
-              { step: '3', title: 'Get Results', desc: 'Receive certified verification results by email', icon: BadgeCheck },
-            ].map((s, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/5 min-w-[260px]">
-                  <div className="h-10 w-10 rounded-xl bg-violet-400/10 border border-violet-400/20 flex items-center justify-center flex-shrink-0">
-                    <s.icon className="h-5 w-5 text-violet-400" />
+              {
+                icon: Briefcase,
+                title: 'Right to Work (Employers)',
+                law: 'Immigration, Asylum & Nationality Act 2006',
+                desc: 'Every UK employer MUST verify the identity and right to work of all employees before their first day. Penalties: up to £60,000 per illegal worker and criminal prosecution.',
+                penalty: 'Up to £60,000 per worker',
+                iconBg: 'bg-violet-400/10 border-violet-400/20',
+                iconColor: 'text-violet-400',
+              },
+              {
+                icon: Home,
+                title: 'Right to Rent (Landlords)',
+                law: 'Immigration Act 2014 (Part 3)',
+                desc: 'All landlords in England MUST check that tenants have the right to rent in the UK. This includes verifying passports, BRPs, or share codes before signing any tenancy agreement.',
+                penalty: 'Up to £3,000 per tenant',
+                iconBg: 'bg-amber-400/10 border-amber-400/20',
+                iconColor: 'text-amber-400',
+              },
+              {
+                icon: Building2,
+                title: 'AML & KYC (Financial Services)',
+                law: 'Money Laundering Regulations 2017',
+                desc: 'Banks, accountants, estate agents, and regulated firms MUST verify customer identity under Anti-Money Laundering regulations. Required by the FCA and enforced by HMRC.',
+                penalty: 'Unlimited fines + prison',
+                iconBg: 'bg-red-400/10 border-red-400/20',
+                iconColor: 'text-red-400',
+              },
+              {
+                icon: GraduationCap,
+                title: 'DBS Checks (Education & Care)',
+                law: 'Safeguarding Vulnerable Groups Act 2006',
+                desc: 'Schools, nurseries, care homes and anyone working with children or vulnerable adults MUST undergo identity verification as part of DBS (formerly CRB) checks.',
+                penalty: 'Barred from profession',
+                iconBg: 'bg-blue-400/10 border-blue-400/20',
+                iconColor: 'text-blue-400',
+              },
+              {
+                icon: Globe,
+                title: 'Sponsor Licence (Visa Sponsors)',
+                law: 'UK Points-Based Immigration System',
+                desc: 'Businesses holding a Sponsor Licence MUST maintain records of identity checks for all sponsored workers. UKVI audits can revoke your licence if records are missing.',
+                penalty: 'Licence revocation',
+                iconBg: 'bg-teal-400/10 border-teal-400/20',
+                iconColor: 'text-teal-400',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'GDPR Data Verification',
+                law: 'UK GDPR & Data Protection Act 2018',
+                desc: 'Organisations handling personal data may need to verify identity before granting Subject Access Requests. Proper IDV ensures GDPR compliance and data protection.',
+                penalty: 'Up to £17.5 million',
+                iconBg: 'bg-emerald-400/10 border-emerald-400/20',
+                iconColor: 'text-emerald-400',
+              },
+            ].map((law, i) => (
+              <div key={i} className="neon-card p-6 group hover:border-violet-400/20 transition-all">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className={`h-11 w-11 rounded-xl ${law.iconBg} border flex items-center justify-center flex-shrink-0`}>
+                    <law.icon className={`h-5 w-5 ${law.iconColor}`} />
                   </div>
                   <div>
-                    <div className="text-xs text-violet-400 font-semibold">Step {s.step}</div>
-                    <div className="text-white text-sm font-medium">{s.title}</div>
-                    <div className="text-slate-500 text-xs">{s.desc}</div>
+                    <h3 className="text-white font-semibold text-sm">{law.title}</h3>
+                    <p className="text-[11px] text-violet-400/70 font-medium mt-0.5">{law.law}</p>
                   </div>
                 </div>
-                {i < 2 && <ArrowRight className="h-5 w-5 text-violet-400/50 hidden md:block flex-shrink-0" />}
+                <p className="text-sm text-slate-400 leading-relaxed mb-4">{law.desc}</p>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-400/5 border border-red-400/10">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                  <span className="text-xs text-red-400 font-medium">Penalty: {law.penalty}</span>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Pricing Cards */}
+          {/* Urgency Banner */}
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="rounded-2xl bg-gradient-to-r from-red-500/10 via-violet-500/10 to-red-500/10 border border-red-400/20 p-8">
+              <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-3">Are You Compliant?</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                Since <strong className="text-white">April 2022</strong>, the Home Office requires all Right to Work and Right to Rent checks to use a <strong className="text-white">certified Identity Document Validation Technology (IDVT)</strong> provider. Manual checks of physical documents are no longer sufficient for most document types. HomeLedger uses <strong className="text-white">Yoti</strong>, a UK-government certified IDVT provider.
+              </p>
+              <Link href="/verify-purchase" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 font-semibold text-sm hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20 transition-all">
+                Get Compliant Now <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── IDV: Who Needs This ────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-violet-950/20 to-slate-950" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">Who Needs Identity Verification?</h2>
+            <p className="mt-4 text-lg text-slate-400">Almost every business and professional in the UK. Here are the most common use cases.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: Briefcase, title: 'Employers & HR Teams', desc: 'Verify Right to Work for every new hire. From startups to large corporates — it\'s a legal requirement before the employee\'s first day.', people: 'All UK employers' },
+              { icon: Home, title: 'Landlords & Letting Agents', desc: 'Right to Rent checks before signing tenancy agreements. Applies to all residential lettings in England.', people: '2.6 million UK landlords' },
+              { icon: Building2, title: 'Accountants & Financial Advisors', desc: 'Client onboarding KYC/AML checks. Required under Money Laundering Regulations for all regulated firms.', people: 'FCA regulated firms' },
+              { icon: Scale, title: 'Solicitors & Law Firms', desc: 'Client verification for conveyancing, litigation, and corporate transactions. SRA requires robust ID checks.', people: 'SRA regulated solicitors' },
+              { icon: Globe, title: 'Immigration Advisors', desc: 'Document verification for visa applications, settled status, and naturalisation. Share certified results with the Home Office.', people: 'OISC registered advisors' },
+              { icon: Users, title: 'Recruitment Agencies', desc: 'Bulk verification for temporary and permanent placements. Process hundreds of checks efficiently with our Business Pack.', people: '30,000+ UK agencies' },
+            ].map((item, i) => (
+              <div key={i} className="neon-card p-6 group hover:border-violet-400/20 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-violet-400/10 flex items-center justify-center">
+                    <item.icon className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-sm">{item.title}</h3>
+                    <span className="text-violet-400/60 text-[11px] font-medium">{item.people}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── IDV: Visual Process ─────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-violet-950/20" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">How It Works — Step by Step</h2>
+            <p className="mt-4 text-lg text-slate-400">The entire process takes less than 90 seconds. No apps to download, no accounts to create.</p>
+          </div>
+
+          {/* Visual Process Flow */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            {[
+              {
+                step: '01',
+                title: 'You Buy a Package',
+                desc: 'Choose Single, Business or Enterprise. Pay securely via Stripe. You receive unique verification links instantly.',
+                illustration: (
+                  <div className="relative h-40 bg-gradient-to-b from-violet-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
+                    <div className="relative w-32 h-24 rounded-xl bg-white/5 border border-white/10 p-3">
+                      <div className="flex gap-1 mb-2">{[1,2,3].map(d => <div key={d} className="h-1.5 w-1.5 rounded-full bg-slate-600" />)}</div>
+                      <div className="space-y-1.5">
+                        <div className="h-2 w-16 bg-violet-400/20 rounded" />
+                        <div className="h-2 w-20 bg-violet-400/10 rounded" />
+                        <div className="h-6 w-full bg-gradient-to-r from-violet-400/30 to-cyan-400/30 rounded-lg mt-2 flex items-center justify-center"><CreditCard className="h-3 w-3 text-violet-400" /></div>
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                step: '02',
+                title: 'Send the Link',
+                desc: 'Share the secure verification link via email, WhatsApp, or text. The person to be verified opens it on their phone.',
+                illustration: (
+                  <div className="relative h-40 bg-gradient-to-b from-blue-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-violet-400/20 flex items-center justify-center"><Users className="h-5 w-5 text-violet-400" /></div>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="w-16 h-0.5 bg-gradient-to-r from-violet-400 to-cyan-400" />
+                        <Send className="h-3 w-3 text-cyan-400" />
+                      </div>
+                      <div className="w-8 h-14 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+                        <Fingerprint className="h-4 w-4 text-cyan-400" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                step: '03',
+                title: 'Scan & Selfie',
+                desc: 'They photograph their ID document (passport, driving licence, or BRP) and take a live selfie for biometric matching.',
+                illustration: (
+                  <div className="relative h-40 bg-gradient-to-b from-emerald-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
+                    <div className="relative">
+                      <div className="w-20 h-14 rounded-lg bg-gradient-to-br from-blue-900/40 to-blue-800/40 border border-blue-400/20 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-6 h-6 rounded-full bg-slate-600/50 mx-auto mb-1 flex items-center justify-center"><UserCheck className="h-3 w-3 text-blue-400" /></div>
+                          <div className="text-[8px] text-blue-400/60 font-mono">PASSPORT</div>
+                        </div>
+                      </div>
+                      <div className="absolute -right-6 -bottom-3 w-10 h-10 rounded-full bg-emerald-400/10 border-2 border-emerald-400/30 flex items-center justify-center">
+                        <Camera className="h-4 w-4 text-emerald-400" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                step: '04',
+                title: 'Certified Result',
+                desc: 'AI verifies the document and matches the face. You receive a certified result by email within seconds.',
+                illustration: (
+                  <div className="relative h-40 bg-gradient-to-b from-emerald-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
+                    <div className="w-28 h-20 rounded-xl bg-white/5 border border-emerald-400/20 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CircleCheck className="h-4 w-4 text-emerald-400" />
+                        <span className="text-[10px] text-emerald-400 font-bold">VERIFIED</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[8px]"><span className="text-slate-500">Name</span><span className="text-white">John Smith</span></div>
+                        <div className="flex justify-between text-[8px]"><span className="text-slate-500">Match</span><span className="text-emerald-400">99.7%</span></div>
+                        <div className="flex justify-between text-[8px]"><span className="text-slate-500">Doc</span><span className="text-white">Passport</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                {s.illustration}
+                <div className="mt-4">
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded-full">{s.step}</span>
+                    <h3 className="text-white font-semibold text-sm">{s.title}</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── IDV: Pricing ───────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-slate-950 to-indigo-950/30" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">Simple, Transparent Verification Pricing</h2>
+            <p className="mt-4 text-lg text-slate-400">No hidden fees. No subscription. Pay once, verify as needed. <strong className="text-white">No HomeLedger account required.</strong></p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
             {[
-              { name: 'Single Check', price: '£2.99', per: '/check', checks: '1 verification', features: ['Document scanning', 'Biometric matching', 'Certified result', 'Email delivery', '30-day link validity'], highlighted: false },
-              { name: 'Business Pack', price: '£19.99', per: '/pack', checks: '10 verifications', features: ['Everything in Single', '10 verification links', 'Bulk management', 'Priority processing', '60-day link validity'], highlighted: true, badge: 'Best Value' },
-              { name: 'Enterprise', price: '£49.99', per: '/pack', checks: '50 verifications', features: ['Everything in Business', '50 verification links', 'Dedicated support', 'API access', '90-day link validity'], highlighted: false },
+              { name: 'Single Check', price: '£2.99', per: '/check', checks: '1 verification', features: ['Document scanning', 'Biometric face match', 'Certified PDF result', 'Email delivery', '30-day link validity', 'Passport, DL, or BRP'], highlighted: false },
+              { name: 'Business Pack', price: '£19.99', per: '/pack', checks: '10 verifications', features: ['Everything in Single', '10 unique verification links', 'Bulk management dashboard', 'Priority processing', '60-day link validity', 'Ideal for SMEs & agencies'], highlighted: true, badge: 'Best Value — Save 33%' },
+              { name: 'Enterprise', price: '£49.99', per: '/pack', checks: '50 verifications', features: ['Everything in Business', '50 unique verification links', 'Dedicated account support', 'API access for automation', '90-day link validity', 'For large organisations'], highlighted: false },
             ].map((plan, i) => (
               <div key={i} className={`relative neon-card p-8 transition-all ${plan.highlighted ? 'border-violet-400/40 shadow-lg shadow-violet-500/10 scale-[1.03]' : ''}`}>
-                {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-violet-500/20">{plan.badge}</div>}
+                {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-violet-500/20 whitespace-nowrap">{plan.badge}</div>}
                 <h3 className="text-lg font-bold text-white">{plan.name}</h3>
                 <div className="text-xs text-slate-500 mt-1">{plan.checks}</div>
                 <div className="mt-4 flex items-baseline gap-1">
@@ -521,13 +825,14 @@ export function LandingPage() {
             ))}
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
+          {/* Trust Bar */}
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 mb-8">
             {[
-              { icon: Shield, text: 'Government-Grade Security' },
-              { icon: Lock, text: 'GDPR Compliant' },
-              { icon: Fingerprint, text: 'Biometric Matching' },
-              { icon: BadgeCheck, text: 'Certified Results' },
+              { icon: Shield, text: 'Government-Certified (IDVT)' },
+              { icon: Lock, text: 'UK GDPR Compliant' },
+              { icon: Fingerprint, text: 'AI Biometric Matching' },
+              { icon: BadgeCheck, text: 'Home Office Approved' },
+              { icon: Clock, text: 'Results in ~90 Seconds' },
             ].map((badge, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
                 <badge.icon className="h-3.5 w-3.5 text-violet-400" />
@@ -536,11 +841,10 @@ export function LandingPage() {
             ))}
           </div>
 
-          {/* No Account Needed Banner */}
-          <div className="mt-12 text-center">
+          <div className="text-center">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-400/20">
               <ScanLine className="h-5 w-5 text-violet-400" />
-              <span className="text-slate-300 text-sm font-medium">No HomeLedger account needed — anyone can purchase and use verification links</span>
+              <span className="text-slate-300 text-sm font-medium">No account needed — purchase, send the link, get results. It&apos;s that simple.</span>
             </div>
           </div>
         </div>
