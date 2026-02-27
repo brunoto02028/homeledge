@@ -148,21 +148,9 @@ export function LandingPage() {
             {NAV.map(l => <a key={l.href} href={l.href} className="hover:text-amber-400 transition-colors duration-200">{l.label}</a>)}
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <div className="relative">
-              <button onClick={() => setLoginDropdown(!loginDropdown)} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors">
-                Sign In <ChevronDown className={`h-3.5 w-3.5 transition-transform ${loginDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {loginDropdown && (
-                <div className="absolute right-0 mt-2 w-48 glass rounded-xl shadow-2xl shadow-black/40 py-1 z-50">
-                  <Link href="/login" onClick={() => setLoginDropdown(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors">
-                    <Shield className="h-4 w-4 text-amber-400" /> Admin Login
-                  </Link>
-                  <Link href="/login" onClick={() => setLoginDropdown(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:text-cyan-400 hover:bg-white/5 transition-colors">
-                    <Users className="h-4 w-4 text-cyan-400" /> User Login
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+              Sign In
+            </Link>
             <Link href="/register" className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all duration-200">Get Started Free</Link>
           </div>
           <button className="lg:hidden p-2 text-slate-400" onClick={() => setMobileNav(!mobileNav)}>
