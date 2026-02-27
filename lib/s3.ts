@@ -47,6 +47,21 @@ export async function getFileUrl(
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
+export async function getFileBuffer(cloudStoragePath: string): Promise<Buffer> {
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: cloudStoragePath,
+  });
+
+  const response = await s3Client.send(command);
+  const stream = response.Body as any;
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 export async function deleteFile(cloudStoragePath: string): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: bucketName,

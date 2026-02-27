@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Invoice, Category, InvoiceStatus, ExpenseType, EXPENSE_TYPE_LABELS } from '@/lib/types';
-import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings, Camera, Building2, User } from 'lucide-react';
+import { Upload, FileText, Loader2, Pencil, Trash2, Download, Eye, CheckCircle, XCircle, Clock, Plus, FilePlus, Mic, MicOff, Image, X, Save, FolderOpen, Star, Settings, Camera, Building2, User, Send } from 'lucide-react';
 import { ScanUploadButton } from '@/components/scan-upload-button';
 import { useTranslation } from '@/lib/i18n';
 import { useEntityContext } from '@/components/entity-context';
@@ -650,9 +651,16 @@ export default function InvoicesClient() {
           <h1 className="text-2xl font-bold">{t('invoices.title')}</h1>
           <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <FilePlus className="h-4 w-4 mr-2" /> {t('invoices.create')}
-        </Button>
+        <div className="flex gap-2">
+          <Link href="/invoices/submissions">
+            <Button variant="outline">
+              <Send className="h-4 w-4 mr-2" /> Submissions
+            </Button>
+          </Link>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <FilePlus className="h-4 w-4 mr-2" /> {t('invoices.create')}
+          </Button>
+        </div>
       </div>
 
       {/* Entity Context Banner */}

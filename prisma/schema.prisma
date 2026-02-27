@@ -706,6 +706,8 @@ model User {
   categorizationFeedback CategorizationFeedback[] @relation("UserCategorizationFeedback")
   categorizationMode String @default("smart") @map("categorization_mode") // "conservative" | "smart" | "autonomous"
   mustChangePassword Boolean @default(false) @map("must_change_password")
+  submissionProfiles SubmissionProfile[]
+  invoiceSubmissions InvoiceSubmission[]
 
   @@index([email])
   @@index([status])
@@ -1623,6 +1625,77 @@ model SitePageView {
   @@index([path])
   @@index([enteredAt])
   @@map("site_page_views")
+}
+
+// ─── Invoice Submission Automation (UPS/Conduent) ──────────────────────
+
+model SubmissionProfile {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  name            String   // e.g., "UPS Norwich" — human label
+  prefix          String   @default("INVUK1") // invoice prefix (INVUK1, INVUK2, etc.)
+  poNumber        String   @map("po_number") // e.g., OCM45697
+  siteCode        String   @map("site_code") // e.g., "6640"
+  siteName        String   @map("site_name") // e.g., "Norwich"
+  recipientEmail  String   @map("recipient_email") // e.g., europeaccountspayable@conduent.com
+  senderEmail     String   @map("sender_email") // e.g., bruno@mexpress.uk
+  senderName      String   @default("T. Bruno") @map("sender_name")
+  companyName     String   @default("Molina Express") @map("company_name")
+  companyLogo     String?  @map("company_logo") // URL or base64
+  emailSignature  String?  @map("email_signature") // HTML signature block
+  smtpHost        String?  @map("smtp_host") // optional per-profile SMTP override
+  smtpPort        Int?     @map("smtp_port")
+  smtpUser        String?  @map("smtp_user")
+  smtpPass        String?  @map("smtp_pass")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions     InvoiceSubmission[]
+
+  @@index([userId])
+  @@map("submission_profiles")
+}
+
+model InvoiceSubmission {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  profileId       String    @map("profile_id")
+  prefix          String    @default("INVUK1") // denormalised for quick access
+  sequenceNumber  Int       @map("sequence_number") // e.g., 125
+  invoiceCode     String    @map("invoice_code") // e.g., INVUK1:000125
+  fileCode        String    @map("file_code") // e.g., INVUK1000125 (no colon)
+  poNumber        String    @map("po_number")
+  month           String    // e.g., "January"
+  year            Int       // e.g., 2026
+  siteCode        String    @map("site_code")
+  siteName        String    @map("site_name")
+  recipientEmail  String    @map("recipient_email")
+  senderEmail     String    @map("sender_email")
+  pdfPath         String?   @map("pdf_path") // S3/storage path to PDF
+  invoiceId       String?   @map("invoice_id") // optional link to Invoice record
+  amount          Decimal?  @db.Decimal(12, 2)
+  currency        String    @default("GBP")
+  status          String    @default("draft") // draft, sent, success, failed, error
+  sentAt          DateTime? @map("sent_at")
+  responseAt      DateTime? @map("response_at")
+  responseDcn     String?   @map("response_dcn") // e.g., INVUK120260212856001
+  responseRaw     Json?     @map("response_raw")
+  errorMessage    String?   @map("error_message")
+  emailSubject    String?   @map("email_subject") // stored for audit
+  emailBody       String?   @map("email_body") // stored for audit
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         SubmissionProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([prefix, sequenceNumber])
+  @@index([userId])
+  @@index([profileId])
+  @@index([status])
+  @@index([invoiceCode])
+  @@map("invoice_submissions")
 }
 
 model SiteEvent {
