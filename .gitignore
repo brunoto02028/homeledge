@@ -60,3 +60,10 @@ resync-fix.js
 sync-recent.js
 create-user.sh
 vps-setup.sh
+deploy-clean.sh
+diag.sh
+fix-pw*.sh
+fix-pm2*.sh
+reset-pw*.js
+test-*.sh
+send-code.sh
