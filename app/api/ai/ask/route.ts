@@ -155,6 +155,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'user_prompt is required' }, { status: 400 });
     }
 
+    if (typeof user_prompt !== 'string' || user_prompt.trim().length === 0) {
+      return NextResponse.json({ error: 'user_prompt must be a non-empty string' }, { status: 400 });
+    }
+
     const validContexts = ['accounting', 'immigration', 'finance', 'english'];
     const ctx = validContexts.includes(context) ? context : 'finance';
 
@@ -183,7 +187,9 @@ export async function POST(request: Request) {
       const recent = history.slice(-10);
       for (const msg of recent) {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          messages.push({ role: msg.role, content: msg.content });
+          if (typeof msg.content === 'string' && msg.content.trim().length > 0) {
+            messages.push({ role: msg.role, content: msg.content });
+          }
         }
       }
     }
@@ -195,6 +201,10 @@ export async function POST(request: Request) {
       temperature: ctx === 'accounting' ? 0.2 : ctx === 'english' ? 0.5 : 0.4,
     });
 
+    if (!response || !response.content) {
+      throw new Error('Invalid AI response');
+    }
+
     return NextResponse.json({
       answer: response.content,
       context: ctx,
@@ -203,6 +213,9 @@ export async function POST(request: Request) {
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('[Omni-AI] Error:', error);
-    return NextResponse.json({ error: 'Failed to get answer' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message === 'UNAUTHORIZED' ? 'Unauthorized' : 'Failed to get answer',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: error.message === 'UNAUTHORIZED' ? 401 : 500 });
   }
 }

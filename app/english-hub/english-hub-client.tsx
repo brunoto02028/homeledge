@@ -111,7 +111,8 @@ export default function EnglishHubClient() {
     if (!msg || sending) return;
     setInputMessage('');
     const userMsg: ChatMessage = { role: 'user', content: msg };
-    setMessages(prev => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setSending(true);
 
     try {
@@ -129,11 +130,12 @@ export default function EnglishHubClient() {
       if (!res.ok) throw new Error('Failed to get response');
       const data = await res.json();
       const assistantMsg: ChatMessage = { role: 'assistant', content: data.answer };
-      setMessages(prev => [...prev, assistantMsg]);
+      const updatedMessages = [...newMessages, assistantMsg];
+      setMessages(updatedMessages);
       setChatHistory(prev => [...prev, userMsg, assistantMsg]);
 
       if (autoSpeak && ttsSupported) {
-        setSpeakingIdx(messages.length + 1);
+        setSpeakingIdx(updatedMessages.length - 1);
         speakText(data.answer);
       }
     } catch {
@@ -157,7 +159,10 @@ export default function EnglishHubClient() {
       setInputMessage(transcript);
       setIsListening(false);
     };
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (e: any) => {
+      console.error('Speech Recognition Error:', e);
+      setIsListening(false);
+    };
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
     recognition.start();
@@ -185,7 +190,10 @@ export default function EnglishHubClient() {
       || voices.find(v => v.lang.startsWith('en'));
     if (britishVoice) utterance.voice = britishVoice;
     utterance.onend = () => setSpeakingIdx(null);
-    utterance.onerror = () => setSpeakingIdx(null);
+    utterance.onerror = (e) => {
+      console.error('TTS Error:', e);
+      setSpeakingIdx(null);
+    };
     window.speechSynthesis.speak(utterance);
   };
 
@@ -200,7 +208,7 @@ export default function EnglishHubClient() {
   };
 
   const speakWord = (word: string) => {
-    if (!ttsSupported) return;
+    if (!ttsSupported || !word) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(word);
     u.lang = 'en-GB';
@@ -208,6 +216,7 @@ export default function EnglishHubClient() {
     const voices = window.speechSynthesis.getVoices();
     const bv = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
     if (bv) u.voice = bv;
+    u.onerror = (e) => console.error('TTS Word Error:', e);
     window.speechSynthesis.speak(u);
   };
 
@@ -228,9 +237,9 @@ export default function EnglishHubClient() {
 
   const answerLife = (optionIdx: number) => {
     setLifeAnswers(prev => {
-      const n = [...prev];
-      n[lifeIndex] = optionIdx;
-      return n;
+      const newAnswers = [...prev];
+      newAnswers[lifeIndex] = optionIdx;
+      return newAnswers;
     });
   };
 
@@ -240,7 +249,9 @@ export default function EnglishHubClient() {
 
   const lifeScore = () => {
     let correct = 0;
-    lifeQuestions.forEach((q, i) => { if (lifeAnswers[i] === q.correct) correct++; });
+    lifeQuestions.forEach((q, i) => { 
+      if (lifeAnswers[i] !== null && lifeAnswers[i] === q.correct) correct++; 
+    });
     return correct;
   };
 
@@ -250,6 +261,14 @@ export default function EnglishHubClient() {
     setActiveLesson(lesson);
     setGrammarAnswers(new Array(lesson.practiceQuestions.length).fill(null));
     setGrammarShowResults(false);
+  };
+
+  const answerGrammar = (questionIndex: number, optionIdx: number) => {
+    setGrammarAnswers(prev => {
+      const newAnswers = [...prev];
+      newAnswers[questionIndex] = optionIdx;
+      return newAnswers;
+    });
   };
 
   // ─── Render ────────────────────────────────────────────────────────
@@ -657,7 +676,7 @@ export default function EnglishHubClient() {
                               }
                               return (
                                 <button key={oi} className={cls} disabled={answered}
-                                  onClick={() => setGrammarAnswers(prev => { const n = [...prev]; n[pi] = oi; return n; })}>
+                                  onClick={() => answerGrammar(pi, oi)}>
                                   {opt}
                                 </button>
                               );

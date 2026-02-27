@@ -14,6 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    if (!email.includes('@') || email.length < 5) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -52,8 +56,12 @@ export async function POST(request: Request) {
       success: true,
       message: 'If an account exists with that email, a reset code has been sent.',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Forgot password error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Always return success to prevent email enumeration
+    return NextResponse.json({
+      success: true,
+      message: 'If an account exists with that email, a reset code has been sent.',
+    });
   }
 }

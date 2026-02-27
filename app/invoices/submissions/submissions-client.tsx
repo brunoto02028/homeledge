@@ -190,6 +190,17 @@ export default function SubmissionsClient() {
       toast({ title: 'Missing fields', description: 'Name, PO Number, Site Code and Site Name are required', variant: 'destructive' });
       return;
     }
+    
+    if (profileForm.recipientEmail && !profileForm.recipientEmail.includes('@')) {
+      toast({ title: 'Invalid email', description: 'Recipient email format is invalid', variant: 'destructive' });
+      return;
+    }
+    
+    if (profileForm.senderEmail && !profileForm.senderEmail.includes('@')) {
+      toast({ title: 'Invalid email', description: 'Sender email format is invalid', variant: 'destructive' });
+      return;
+    }
+    
     setSavingProfile(true);
     try {
       const payload: any = { ...profileForm };
@@ -200,24 +211,46 @@ export default function SubmissionsClient() {
       const url = editingProfile ? `/api/invoices/ups-profiles/${editingProfile.id}` : '/api/invoices/ups-profiles';
       const method = editingProfile ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save profile');
+      }
+      
       toast({ title: editingProfile ? 'Profile Updated' : 'Profile Created' });
       setShowProfileDialog(false);
       fetchProfiles();
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      console.error('Save Profile Error:', err);
+      toast({ title: 'Error', description: err.message || 'Failed to save profile', variant: 'destructive' });
     } finally {
       setSavingProfile(false);
     }
   };
 
   const deleteProfile = async (id: string) => {
+    if (!id) {
+      toast({ title: 'Error', description: 'Invalid profile ID', variant: 'destructive' });
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to delete this profile? This action cannot be undone.')) {
+      return;
+    }
+    
     try {
-      await fetch(`/api/invoices/ups-profiles/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/invoices/ups-profiles/${id}`, { method: 'DELETE' });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete profile');
+      }
+      
       toast({ title: 'Profile Deleted' });
       fetchProfiles();
-    } catch {
-      toast({ title: 'Delete Failed', variant: 'destructive' });
+    } catch (err: any) {
+      console.error('Delete Profile Error:', err);
+      toast({ title: 'Delete Failed', description: err.message || 'Failed to delete profile', variant: 'destructive' });
     }
   };
 
@@ -239,6 +272,16 @@ export default function SubmissionsClient() {
   };
 
   const handlePdfUpload = async (file: File) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast({ title: 'Invalid file', description: 'Please upload a PDF file', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({ title: 'File too large', description: 'PDF must be smaller than 10MB', variant: 'destructive' });
+      return;
+    }
+
     setUploadingPdf(true);
     try {
       const presignedRes = await fetch('/api/upload/presigned', {
@@ -246,13 +289,29 @@ export default function SubmissionsClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileName: file.name, contentType: file.type, isPublic: false }),
       });
+      
+      if (!presignedRes.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      
       const { uploadUrl, cloudStoragePath } = await presignedRes.json();
-      await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      
+      if (!uploadUrl || !cloudStoragePath) {
+        throw new Error('Invalid upload response');
+      }
+      
+      const uploadRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file');
+      }
+      
       setSubmitPdfPath(cloudStoragePath);
       setSubmitPdfName(file.name);
       toast({ title: 'PDF Uploaded', description: file.name });
-    } catch {
-      toast({ title: 'Upload Failed', variant: 'destructive' });
+    } catch (err: any) {
+      console.error('PDF Upload Error:', err);
+      toast({ title: 'Upload Failed', description: err.message || 'Failed to upload PDF', variant: 'destructive' });
     } finally {
       setUploadingPdf(false);
     }
@@ -260,25 +319,38 @@ export default function SubmissionsClient() {
 
   const createSubmission = async (sendNow: boolean) => {
     if (!selectedProfileId || !submitMonth || !submitYear) {
-      toast({ title: 'Missing fields', variant: 'destructive' });
+      toast({ title: 'Missing fields', description: 'Profile, month, and year are required', variant: 'destructive' });
       return;
     }
+    
+    if (sendNow && !submitPdfPath) {
+      toast({ title: 'PDF required', description: 'Please upload a PDF before sending', variant: 'destructive' });
+      return;
+    }
+    
     setSubmitting(true);
     try {
+      const payload = {
+        profileId: selectedProfileId,
+        month: submitMonth,
+        year: parseInt(submitYear),
+        amount: submitAmount ? parseFloat(submitAmount) : null,
+        notes: submitNotes || null,
+        pdfPath: submitPdfPath || null,
+        sendNow,
+      };
+      
       const res = await fetch('/api/invoices/ups-submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profileId: selectedProfileId,
-          month: submitMonth,
-          year: submitYear,
-          amount: submitAmount || null,
-          notes: submitNotes || null,
-          pdfPath: submitPdfPath || null,
-          sendNow,
-        }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create submission');
+      }
+      
       const sub = await res.json();
       toast({
         title: sendNow ? 'Invoice Sent!' : 'Draft Created',
@@ -287,21 +359,32 @@ export default function SubmissionsClient() {
       setShowSubmitDialog(false);
       fetchSubmissions();
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      console.error('Create Submission Error:', err);
+      toast({ title: 'Error', description: err.message || 'Failed to create submission', variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const sendDraftSubmission = async (id: string) => {
+    if (!id) {
+      toast({ title: 'Error', description: 'Invalid submission ID', variant: 'destructive' });
+      return;
+    }
+    
     try {
       const res = await fetch(`/api/invoices/ups-submissions/${id}/send`, { method: 'POST' });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed to send');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to send');
+      }
+      
       toast({ title: 'Email Sent!', description: 'Invoice submitted to Conduent' });
       fetchSubmissions();
-      setPreviewSubmission(null);
     } catch (err: any) {
-      toast({ title: 'Send Failed', description: err.message, variant: 'destructive' });
+      console.error('Send Draft Error:', err);
+      toast({ title: 'Send Failed', description: err.message || 'Failed to send invoice', variant: 'destructive' });
     }
   };
 

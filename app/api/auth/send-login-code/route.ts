@@ -15,6 +15,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    if (!email.includes('@') || email.length < 5) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -65,10 +73,14 @@ export async function POST(request: Request) {
     if (!emailResult.success) {
       console.error('[Login Code] Email delivery failed for', user.email, emailResult);
       // Invalidate the code we just created so it can't be guessed
-      await prisma.emailVerificationToken.updateMany({
-        where: { userId: user.id, token: code },
-        data: { usedAt: new Date() },
-      });
+      try {
+        await prisma.emailVerificationToken.updateMany({
+          where: { userId: user.id, token: code },
+          data: { usedAt: new Date() },
+        });
+      } catch (cleanupError) {
+        console.error('[Login Code] Failed to cleanup verification code:', cleanupError);
+      }
       return NextResponse.json({
         error: 'Failed to send verification code. Please check your email configuration or try again later.',
       }, { status: 503 });
@@ -79,9 +91,12 @@ export async function POST(request: Request) {
       message: 'Verification code sent to your email',
       maskedEmail: maskEmail(user.email),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send login code error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Don't expose internal error details to client
+    return NextResponse.json({ 
+      error: error.message === 'UNAUTHORIZED' ? 'Unauthorized' : 'Internal server error' 
+    }, { status: error.message === 'UNAUTHORIZED' ? 401 : 500 });
   }
 }
 
