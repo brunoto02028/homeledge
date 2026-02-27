@@ -108,7 +108,7 @@ export async function middleware(request: NextRequest) {
           '/vault': 'vault', '/projections': 'projections', '/transfers': 'transfers',
           '/properties': 'properties', '/product-calculator': 'product_calculator',
           '/tax-timeline': 'tax_timeline', '/learn': 'learn', '/academy': 'academy',
-          '/relocation': 'relocation', '/services': 'services', '/settings': 'settings',
+          '/relocation': 'relocation', '/english-hub': 'english_hub', '/services': 'services', '/settings': 'settings',
         };
         const matchedRoute = Object.keys(routePermMap).find(
           r => pathname === r || pathname.startsWith(r + '/')

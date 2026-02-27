@@ -33,6 +33,7 @@ const navItems = [
   { href: "/learn", labelKey: "nav.learn", icon: BookOpen, permission: 'learn' as PermissionKey },
   { href: "/academy", labelKey: "nav.academy", icon: GraduationCap, permission: 'academy' as PermissionKey },
   { href: "/relocation", labelKey: "nav.relocation", icon: Globe, permission: 'relocation' as PermissionKey },
+  { href: "/english-hub", labelKey: "nav.englishHub", icon: Languages, permission: 'english_hub' as PermissionKey },
   { href: "/services", labelKey: "nav.services", icon: ShoppingBag, permission: 'services' as PermissionKey },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, permission: 'settings' as PermissionKey },
 ]

@@ -29,6 +29,7 @@ export const ALL_PERMISSIONS = [
   'academy',
   'relocation',
   'services',
+  'english_hub',
   'settings',
 ] as const;
 
@@ -59,6 +60,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/academy': 'academy',
   '/relocation': 'relocation',
   '/services': 'services',
+  '/english-hub': 'english_hub',
   '/settings': 'settings',
 };
 
@@ -87,6 +89,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   academy: 'Accounting Academy',
   relocation: 'Relocation Hub',
   services: 'Services',
+  english_hub: 'English Hub',
   settings: 'Settings',
 };
 
@@ -98,8 +101,8 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
  * - `enterprise`: All features
  */
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
-  free: ['dashboard', 'statements', 'categories', 'settings', 'learn', 'academy', 'relocation', 'services'],
-  starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn', 'academy', 'relocation', 'services'],
+  free: ['dashboard', 'statements', 'categories', 'settings', 'learn', 'academy', 'relocation', 'services', 'english_hub'],
+  starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn', 'academy', 'relocation', 'services', 'english_hub'],
   pro: [...ALL_PERMISSIONS] as PermissionKey[],
   enterprise: [...ALL_PERMISSIONS] as PermissionKey[],
 };
