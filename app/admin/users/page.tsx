@@ -22,6 +22,7 @@ interface UserItem {
   emailVerified: boolean;
   plan: string;
   permissions: string[];
+  mustChangePassword: boolean;
   createdAt: string;
   lastLoginAt: string | null;
   _count: { invoices: number; bills: number; bankStatements: number; events: number };
@@ -42,7 +43,10 @@ export default function AdminUsersPage() {
   const [newFullName, setNewFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('user');
+  const [newPlan, setNewPlan] = useState('free');
+  const [newPermissions, setNewPermissions] = useState<string[]>([]);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPerms, setShowNewPerms] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
 
@@ -87,7 +91,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newEmail, fullName: newFullName, password: newPassword, role: newRole }),
+        body: JSON.stringify({ email: newEmail, fullName: newFullName, password: newPassword, role: newRole, plan: newPlan, permissions: newPermissions }),
       });
 
       const data = await res.json();
@@ -98,6 +102,8 @@ export default function AdminUsersPage() {
         setNewFullName('');
         setNewPassword('');
         setNewRole('user');
+        setNewPlan('free');
+        setNewPermissions([]);
         fetchUsers();
       } else {
         setCreateError(data.error || 'Failed to create user');
@@ -273,6 +279,57 @@ export default function AdminUsersPage() {
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              <div className="space-y-2">
+                <Label>Plan</Label>
+                <select
+                  value={newPlan}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setNewPlan(p);
+                    setNewPermissions(PLAN_PERMISSIONS[p] ? [...PLAN_PERMISSIONS[p]] : []);
+                  }}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="free">Free</option>
+                  <option value="starter">Starter</option>
+                  <option value="pro">Pro</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewPerms(!showNewPerms)}
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <Lock className="h-3 w-3" />
+                  {showNewPerms ? 'Hide' : 'Customise'} Permissions ({newPermissions.length === 0 ? 'All access' : `${newPermissions.length}/${ALL_PERMISSIONS.length}`})
+                </button>
+                {showNewPerms && (
+                  <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1.5">
+                    <div className="col-span-full flex gap-1 mb-1">
+                      <button type="button" onClick={() => setNewPermissions([])} className="text-[10px] px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200">All Access</button>
+                      {Object.keys(PLAN_PERMISSIONS).map(plan => (
+                        <button key={plan} type="button" onClick={() => { setNewPermissions([...PLAN_PERMISSIONS[plan]]); setNewPlan(plan); }} className={`text-[10px] px-2 py-0.5 rounded capitalize ${newPlan === plan && newPermissions.length > 0 ? 'bg-blue-600 text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>{plan}</button>
+                      ))}
+                    </div>
+                    {ALL_PERMISSIONS.map(perm => {
+                      const checked = newPermissions.length === 0 || newPermissions.includes(perm);
+                      const isRestricted = newPermissions.length > 0 && !newPermissions.includes(perm);
+                      return (
+                        <label key={perm} className={`flex items-center gap-1.5 text-[11px] rounded px-2 py-1 cursor-pointer transition-colors ${isRestricted ? 'bg-red-50 dark:bg-red-950/20 text-red-500 line-through' : 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400'}`}>
+                          <input type="checkbox" checked={checked} onChange={() => {
+                            if (newPermissions.length === 0) { setNewPermissions(ALL_PERMISSIONS.filter(p => p !== perm) as string[]); }
+                            else if (newPermissions.includes(perm)) { setNewPermissions(newPermissions.filter(p => p !== perm)); }
+                            else { setNewPermissions([...newPermissions, perm]); }
+                          }} className="h-3 w-3 rounded" />
+                          {PERMISSION_LABELS[perm]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <div className="sm:col-span-2 flex gap-2 justify-end">
                 <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
                   Cancel
@@ -314,6 +371,12 @@ export default function AdminUsersPage() {
                       <h3 className="font-semibold text-foreground">{user.fullName}</h3>
                       {roleBadge(user.role)}
                       {statusBadge(user.status)}
+                      {user.mustChangePassword && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                          <Lock className="h-3 w-3 mr-0.5" />
+                          Must change pw
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
                     <div className="flex gap-4 mt-2 text-xs text-muted-foreground">

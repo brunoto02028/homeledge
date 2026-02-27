@@ -326,7 +326,11 @@ export async function sendLoginAlertEmail(
   return sendEmail(email, 'New login detected on your HomeLedger account', html);
 }
 
-export async function sendAdminCreatedAccountEmail(email: string, name: string, role: string) {
+export async function sendAdminCreatedAccountEmail(email: string, name: string, role: string, tempPassword?: string) {
+  const passwordRow = tempPassword
+    ? `<tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Temporary Password</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;font-family:monospace;font-weight:bold;">${tempPassword}</td></tr>`
+    : '';
+
   const html = baseTemplate(`
     <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to HomeLedger!</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
@@ -334,10 +338,11 @@ export async function sendAdminCreatedAccountEmail(email: string, name: string, 
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
       <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Email</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${email}</td></tr>
-      <tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Role</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;">${role}</td></tr>
+      <tr><td style="padding:10px 16px;${tempPassword ? 'border-bottom:1px solid #e2e8f0;' : ''}font-size:14px;color:#64748b;">Role</td><td style="padding:10px 16px;${tempPassword ? 'border-bottom:1px solid #e2e8f0;' : ''}font-size:14px;color:#1e293b;">${role}</td></tr>
+      ${passwordRow}
     </table>
-    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      Your temporary password has been set by the administrator. Please sign in and change it as soon as possible.
+    <p style="margin:16px 0;padding:12px 16px;background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">
+      <strong>Important:</strong> You will be asked to change your password on first login. Do not share your credentials with anyone.
     </p>
     ${buttonHtml('Sign In to HomeLedger', `${BASE_URL}/login`)}
   `, `Your HomeLedger account has been created`);

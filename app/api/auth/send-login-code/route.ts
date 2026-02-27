@@ -60,7 +60,19 @@ export async function POST(request: Request) {
     });
 
     // Send OTP email
-    await sendVerificationCodeEmail(user.email, user.fullName, code);
+    const emailResult = await sendVerificationCodeEmail(user.email, user.fullName, code);
+
+    if (!emailResult.success) {
+      console.error('[Login Code] Email delivery failed for', user.email, emailResult);
+      // Invalidate the code we just created so it can't be guessed
+      await prisma.emailVerificationToken.updateMany({
+        where: { userId: user.id, token: code },
+        data: { usedAt: new Date() },
+      });
+      return NextResponse.json({
+        error: 'Failed to send verification code. Please check your email configuration or try again later.',
+      }, { status: 503 });
+    }
 
     return NextResponse.json({
       success: true,

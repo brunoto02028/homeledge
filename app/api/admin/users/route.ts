@@ -4,6 +4,8 @@ import { requireUserId } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { sendAdminCreatedAccountEmail } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 async function requireAdmin() {
   const userId = await requireUserId();
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
@@ -18,7 +20,7 @@ export async function GET() {
   try {
     await requireAdmin();
 
-    const users = await prisma.user.findMany({
+    const users = await (prisma as any).user.findMany({
       select: {
         id: true,
         email: true,
@@ -28,6 +30,7 @@ export async function GET() {
         emailVerified: true,
         plan: true,
         permissions: true,
+        mustChangePassword: true,
         createdAt: true,
         lastLoginAt: true,
         _count: {
@@ -60,7 +63,7 @@ export async function POST(request: Request) {
   try {
     await requireAdmin();
 
-    const { email, fullName, password, role = 'user' } = await request.json();
+    const { email, fullName, password, role = 'user', permissions = [], plan = 'free' } = await request.json();
 
     if (!email || !fullName || !password) {
       return NextResponse.json({ error: 'Email, full name, and password are required' }, { status: 400 });
@@ -87,7 +90,10 @@ export async function POST(request: Request) {
           role,
           status: 'active',
           emailVerified: true,
-        },
+          plan,
+          permissions,
+          mustChangePassword: true,
+        } as any,
       });
 
       // Create household or business based on role
@@ -120,9 +126,11 @@ export async function POST(request: Request) {
       return newUser;
     });
 
-    // Send welcome email — NO plain password, just login link
+    // Send welcome email with temp password + must-change notice
+    let emailSent = false;
     try {
-      await sendAdminCreatedAccountEmail(email, fullName, role);
+      const result = await sendAdminCreatedAccountEmail(email, fullName, role, password);
+      emailSent = result?.success ?? false;
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
     }

@@ -85,6 +85,7 @@ export const authOptions: NextAuthOptions = {
           permissions: (user as any).permissions || [],
           plan: (user as any).plan || 'free',
           onboardingCompleted: (user as any).onboardingCompleted ?? true,
+          mustChangePassword: (user as any).mustChangePassword ?? false,
         };
       },
     }),
@@ -105,13 +106,14 @@ export const authOptions: NextAuthOptions = {
         token.permissions = (user as any).permissions || [];
         token.plan = (user as any).plan || 'free';
         token.onboardingCompleted = (user as any).onboardingCompleted ?? true;
+        token.mustChangePassword = (user as any).mustChangePassword ?? false;
       }
       // Refresh user data when session is updated
       if (trigger === 'update') {
         try {
-          const dbUser = await prisma.user.findUnique({
+          const dbUser: any = await (prisma as any).user.findUnique({
             where: { id: token.id as string },
-            select: { onboardingCompleted: true, fullName: true, permissions: true, plan: true, role: true },
+            select: { onboardingCompleted: true, fullName: true, permissions: true, plan: true, role: true, mustChangePassword: true },
           });
           if (dbUser) {
             token.onboardingCompleted = dbUser.onboardingCompleted;
@@ -119,6 +121,7 @@ export const authOptions: NextAuthOptions = {
             token.permissions = dbUser.permissions || [];
             token.plan = dbUser.plan || 'free';
             token.role = dbUser.role;
+            token.mustChangePassword = dbUser.mustChangePassword ?? false;
           }
         } catch {}
       }
@@ -130,6 +133,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).permissions = token.permissions || [];
         (session.user as any).plan = token.plan || 'free';
+        (session.user as any).mustChangePassword = token.mustChangePassword ?? false;
       }
       return session;
     },

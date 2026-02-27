@@ -3,7 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/change-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies'];
 
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
@@ -67,8 +67,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+  // Force password change for admin-created accounts
+  if (token && !pathname.startsWith('/api/') && pathname !== '/change-password') {
+    const mustChange = (token as any).mustChangePassword;
+    if (mustChange === true) {
+      return NextResponse.redirect(new URL('/change-password', request.url));
+    }
+  }
+
   // Redirect non-onboarded users to onboarding (skip API routes and onboarding itself)
-  if (token && !pathname.startsWith('/api/') && pathname !== '/onboarding') {
+  if (token && !pathname.startsWith('/api/') && pathname !== '/onboarding' && pathname !== '/change-password') {
     const onboarded = (token as any).onboardingCompleted;
     if (onboarded === false) {
       return NextResponse.redirect(new URL('/onboarding', request.url));
