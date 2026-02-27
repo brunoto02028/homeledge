@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
     const prefix = profile.prefix || 'INVUK1';
+    const yearNum = parseInt(year);
 
     // Get next sequence number for this prefix
     const lastSubmission = await (prisma as any).invoiceSubmission.findFirst({
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     const emailBody = buildEmailBody({
       poNumber: profile.poNumber,
       month,
-      year,
+      year: yearNum,
       siteCode: profile.siteCode,
       siteName: profile.siteName,
       invoiceCode,
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
         fileCode,
         poNumber: profile.poNumber,
         month,
-        year: parseInt(year),
+        year: yearNum,
         siteCode: profile.siteCode,
         siteName: profile.siteName,
         recipientEmail: profile.recipientEmail,
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
     });
 
     // If sendNow, trigger email sending
-    if (sendNow && pdfPath) {
+    if (sendNow) {
       try {
         await sendSubmissionEmail(submission, profile);
         await (prisma as any).invoiceSubmission.update({

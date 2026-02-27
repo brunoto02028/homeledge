@@ -11,9 +11,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let id: string = '';
   try {
     const userId = await requireUserId();
-    const { id } = await params;
+    ({ id } = await params);
 
     const submission = await (prisma as any).invoiceSubmission.findFirst({
       where: { id, userId },
@@ -94,8 +95,7 @@ export async function POST(
 
     // Try to record the error on the submission
     try {
-      const { id } = await params;
-      await (prisma as any).invoiceSubmission.update({
+      if (id) await (prisma as any).invoiceSubmission.update({
         where: { id },
         data: { status: 'error', errorMessage: error.message },
       });

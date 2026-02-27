@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,7 +125,7 @@ export default function EnglishHubClient() {
 
   // Speech
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [ttsSupported, setTtsSupported] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
@@ -149,6 +149,11 @@ export default function EnglishHubClient() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSpeechSupported(!!SpeechRecognition);
     setTtsSupported('speechSynthesis' in window);
+    // Pre-load TTS voices (some browsers need voiceschanged event)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+    }
   }, []);
 
   useEffect(() => {
@@ -184,8 +189,10 @@ export default function EnglishHubClient() {
       setMessages(prev => [...prev, assistantMsg]);
       setChatHistory(prev => [...prev, userMsg, assistantMsg]);
 
-      // Auto-speak response
+      // Auto-speak response (new message will be at current messages.length + 1 index, since user msg was already added)
       if (autoSpeak && ttsSupported) {
+        // The assistant message is the last one added
+        setSpeakingIdx(messages.length + 1);
         speakText(data.answer);
       }
     } catch {
@@ -255,16 +262,21 @@ export default function EnglishHubClient() {
       || voices.find(v => v.lang.startsWith('en'));
     if (britishVoice) utterance.voice = britishVoice;
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onstart = () => {};
+    utterance.onend = () => setSpeakingIdx(null);
+    utterance.onerror = () => setSpeakingIdx(null);
 
     window.speechSynthesis.speak(utterance);
   };
 
   const stopSpeaking = () => {
     window.speechSynthesis.cancel();
-    setIsSpeaking(false);
+    setSpeakingIdx(null);
+  };
+
+  const speakMessage = (text: string, idx: number) => {
+    setSpeakingIdx(idx);
+    speakText(text);
   };
 
   // ─── Quiz ──────────────────────────────────────────────────────────
@@ -417,10 +429,10 @@ export default function EnglishHubClient() {
                               size="sm"
                               variant="ghost"
                               className="h-6 text-xs gap-1 px-2"
-                              onClick={() => isSpeaking ? stopSpeaking() : speakText(msg.content)}
+                              onClick={() => speakingIdx === i ? stopSpeaking() : speakMessage(msg.content, i)}
                             >
-                              {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-                              {isSpeaking ? 'Stop' : 'Listen'}
+                              {speakingIdx === i ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                              {speakingIdx === i ? 'Stop' : 'Listen'}
                             </Button>
                           </div>
                         )}
@@ -515,7 +527,7 @@ export default function EnglishHubClient() {
             <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-300 via-green-300 to-purple-300 hidden md:block" />
 
             <div className="space-y-4">
-              {CEFR_LEVELS.map((level, idx) => (
+              {CEFR_LEVELS.map((level) => (
                 <Card key={level.level} className="relative overflow-hidden">
                   <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${level.color}`} />
                   <CardContent className="pt-5 pb-5 pl-6">
