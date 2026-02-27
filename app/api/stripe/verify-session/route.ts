@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { sendVerificationLinksEmail } from '@/lib/email';
 import Stripe from 'stripe';
 import crypto from 'crypto';
 
@@ -81,7 +82,12 @@ export async function GET(req: Request) {
       });
     }
 
-    // TODO: Send email with links to customerEmail (integrate with email service)
+    // Send email with verification links
+    if (customerEmail) {
+      await sendVerificationLinksEmail(customerEmail, customerName, links, metadata.planId).catch(
+        (err) => console.error('[Stripe Verify] Failed to send email:', err.message)
+      );
+    }
 
     return NextResponse.json({
       success: true,

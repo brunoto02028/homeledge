@@ -66,6 +66,20 @@ export async function POST(req: Request) {
           break;
         }
 
+        // Handle service purchases (one-time payments)
+        if (session.metadata?.purchaseId) {
+          await (prisma as any).userPurchase.update({
+            where: { id: session.metadata.purchaseId },
+            data: {
+              status: 'paid',
+              stripeSessionId: session.id,
+              paidAt: new Date(),
+            },
+          });
+          console.log(`[Stripe Webhook] Service purchase ${session.metadata.purchaseId} marked as paid`);
+          break;
+        }
+
         // Handle subscription plan upgrades
         if (userId && plan) {
           const permissions = getPermissionsForPlan(plan);

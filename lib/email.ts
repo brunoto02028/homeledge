@@ -367,6 +367,38 @@ function parseUserAgent(userAgent: string): { browser: string; device: string } 
   return { browser, device };
 }
 
+export async function sendVerificationLinksEmail(
+  email: string,
+  name: string,
+  links: { url: string; token: string; expiresAt: Date | string }[],
+  planName?: string,
+) {
+  const linksHtml = links.map((l, i) => `
+    <tr>
+      <td style="padding:8px 16px;font-size:14px;color:#64748b;">Link ${i + 1}</td>
+      <td style="padding:8px 16px;">
+        <a href="${l.url}" style="color:#2563eb;text-decoration:none;font-size:14px;font-weight:600;word-break:break-all;">${l.url}</a>
+        <br><span style="font-size:12px;color:#94a3b8;">Expires: ${new Date(l.expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+      </td>
+    </tr>`).join('');
+
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Your Verification Links Are Ready</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, your payment has been confirmed${planName ? ` for the <strong>${planName}</strong> plan` : ''}. 
+      Here ${links.length === 1 ? 'is your verification link' : `are your ${links.length} verification links`}:
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;border:1px solid #e2e8f0;border-radius:8px;">
+      ${linksHtml}
+    </table>
+    <p style="margin:16px 0 0;font-size:13px;color:#94a3b8;line-height:1.5;">
+      Share each link with the person who needs to verify their identity. Each link can only be used once.
+    </p>
+  `);
+
+  return sendEmail(email, `Your HomeLedger Verification Links (${links.length})`, html);
+}
+
 // ─── Send Helper ─────────────────────────────────────────────────────────
 
 async function sendEmail(to: string, subject: string, html: string) {

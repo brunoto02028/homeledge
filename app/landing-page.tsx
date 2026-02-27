@@ -92,7 +92,6 @@ export function LandingPage() {
   const [cms, setCms] = useState<CmsSection[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileNav, setMobileNav] = useState(false);
-  const [loginDropdown, setLoginDropdown] = useState(false);
   const [featureTab, setFeatureTab] = useState('all');
 
   useEffect(() => {
