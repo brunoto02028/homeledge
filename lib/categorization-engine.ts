@@ -648,7 +648,7 @@ async function loadCategories(options: CategorizationOptions): Promise<any[]> {
     where.userId = null;
   }
 
-  return prisma.category.findMany({
+  return (prisma as any).category.findMany({
     where: Object.keys(where).length > 0 ? where : undefined,
     orderBy: [{ type: 'asc' }, { name: 'asc' }],
     select: { id: true, name: true, type: true, taxRegime: true, parentId: true, taxNature: true },

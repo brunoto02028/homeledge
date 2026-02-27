@@ -10,7 +10,7 @@ export async function POST() {
     const userId = await requireUserId();
 
     // Check if user already has a pending or completed verification
-    const existing = await prisma.identityCheck.findFirst({
+    const existing = await (prisma as any).identityCheck.findFirst({
       where: {
         userId,
         type: 'idv',
@@ -34,7 +34,7 @@ export async function POST() {
         });
       }
       // Mark old session as expired
-      await prisma.identityCheck.update({
+      await (prisma as any).identityCheck.update({
         where: { id: existing.id },
         data: { status: 'expired' },
       });
@@ -47,7 +47,7 @@ export async function POST() {
     });
 
     // Save to DB
-    await prisma.identityCheck.create({
+    await (prisma as any).identityCheck.create({
       data: {
         userId,
         type: 'idv',
