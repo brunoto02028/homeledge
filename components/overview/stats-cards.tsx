@@ -80,6 +80,7 @@ export function StatsCards({
       icon: ArrowUpCircle,
       color: "text-emerald-600 dark:text-emerald-400",
       bgColor: "bg-emerald-50 dark:bg-emerald-500/10",
+      iconGradient: "bg-gradient-to-br from-emerald-500 to-green-600",
       format: "currency",
       description: "Sum of all credit transactions from your uploaded bank statements",
       source: "Bank Statements → Credit Transactions",
@@ -93,6 +94,7 @@ export function StatsCards({
       icon: ArrowDownCircle,
       color: "text-rose-600 dark:text-rose-400",
       bgColor: "bg-rose-50 dark:bg-rose-500/10",
+      iconGradient: "bg-gradient-to-br from-rose-500 to-red-600",
       format: "currency",
       description: "Sum of all debit transactions from your uploaded bank statements",
       source: "Bank Statements → Debit Transactions",
@@ -106,6 +108,7 @@ export function StatsCards({
       icon: Receipt,
       color: "text-blue-600 dark:text-blue-400",
       bgColor: "bg-blue-50 dark:bg-blue-500/10",
+      iconGradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
       format: "number",
       description: "Total number of transactions imported from all your bank statements",
       source: "Bank Statements → All Transactions",
@@ -119,6 +122,7 @@ export function StatsCards({
       icon: FileText,
       color: "text-violet-600 dark:text-violet-400",
       bgColor: "bg-violet-50 dark:bg-violet-500/10",
+      iconGradient: "bg-gradient-to-br from-violet-500 to-purple-600",
       format: "number",
       description: "Total number of invoices created or uploaded in the system",
       source: "Invoices Module",
@@ -142,8 +146,8 @@ export function StatsCards({
             >
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div className={`p-2 sm:p-3 rounded-xl ${stat.bgColor}`}>
-                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
+                  <div className={`p-2.5 sm:p-3 rounded-xl ${stat.iconGradient} shadow-lg ring-1 ring-white/20`}>
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1">

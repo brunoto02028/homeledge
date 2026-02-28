@@ -919,7 +919,7 @@ export default function SubmissionsClient() {
                     )}
                     {sub.status === 'sent' && (
                       <>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => updateSubmissionStatus(sub.id, 'success')}>
+                        <Button size="sm" variant="success" onClick={() => updateSubmissionStatus(sub.id, 'success')}>
                           <CheckCircle2 className="h-4 w-4 mr-1" /> Mark Success
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => updateSubmissionStatus(sub.id, 'failed')}>

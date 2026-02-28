@@ -3409,7 +3409,7 @@ export default function ReportsClient() {
                 <div className="mt-6 pt-6 border-t">
                   <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Generate &amp; Review</h4>
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <Button onClick={generateCT600Report} className="bg-blue-700 hover:bg-blue-800">
+                    <Button onClick={generateCT600Report} className="bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 shadow-sm">
                       <FileDown className="h-4 w-4 mr-2" /> Full Statutory Accounts (PDF)
                     </Button>
                     <Button variant="outline" onClick={() => handleExport('all', 'json')} disabled={exporting}>
@@ -3421,10 +3421,10 @@ export default function ReportsClient() {
                   </div>
                   <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">File to Companies House &amp; HMRC</h4>
                   <div className="flex flex-wrap gap-3 mb-3">
-                    <Button className="bg-emerald-700 hover:bg-emerald-800" onClick={() => toast({ title: 'Coming Soon', description: 'Companies House annual accounts filing will be available when our software authorisation is approved. Your data is ready.' })}>
+                    <Button className="bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 shadow-sm" onClick={() => toast({ title: 'Coming Soon', description: 'Companies House annual accounts filing will be available when our software authorisation is approved. Your data is ready.' })}>
                       <Upload className="h-4 w-4 mr-2" /> Submit Annual Accounts (CH)
                     </Button>
-                    <Button className="bg-indigo-700 hover:bg-indigo-800" onClick={() => toast({ title: 'Coming Soon', description: 'CT600 Corporation Tax filing via HMRC API will be available soon. Your CT600 data is ready.' })}>
+                    <Button className="bg-gradient-to-r from-indigo-700 to-indigo-500 hover:from-indigo-600 hover:to-indigo-400 shadow-sm" onClick={() => toast({ title: 'Coming Soon', description: 'CT600 Corporation Tax filing via HMRC API will be available soon. Your CT600 data is ready.' })}>
                       <Upload className="h-4 w-4 mr-2" /> Submit CT600 (HMRC)
                     </Button>
                     <Button variant="outline" onClick={() => toast({ title: 'Coming Soon', description: 'Confirmation Statement filing will be available when authorised.' })}>
@@ -3497,7 +3497,7 @@ export default function ReportsClient() {
               <div className="mt-6 pt-6 border-t">
                 <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Generate &amp; Review</h4>
                 <div className="flex flex-wrap gap-3 mb-4">
-                  <Button onClick={generateHMRCReport} className="bg-blue-700 hover:bg-blue-800">
+                  <Button onClick={generateHMRCReport} className="bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 shadow-sm">
                     <FileDown className="h-4 w-4 mr-2" /> SA103 Self Assessment (PDF)
                   </Button>
                   <Button variant="outline" onClick={() => handleExport('all', 'json')} disabled={exporting}>
@@ -3509,11 +3509,11 @@ export default function ReportsClient() {
                 </div>
                 <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">File to HMRC</h4>
                 <div className="flex flex-wrap gap-3 mb-3">
-                  <Button className="bg-emerald-700 hover:bg-emerald-800" onClick={() => toast({ title: 'Coming Soon', description: 'SA100/SA103 Self Assessment filing via HMRC MTD API will be available soon. Your tax return data is ready.' })}>
+                  <Button className="bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 shadow-sm" onClick={() => toast({ title: 'Coming Soon', description: 'SA100/SA103 Self Assessment filing via HMRC MTD API will be available soon. Your tax return data is ready.' })}>
                     <Send className="h-4 w-4 mr-2" /> Submit Self Assessment (HMRC)
                   </Button>
                   {taxpayerProfile.isVatRegistered && (
-                    <Button className="bg-purple-700 hover:bg-purple-800" onClick={() => toast({ title: 'Coming Soon', description: 'VAT Return MTD submission will be available via HMRC MTD API. Your VAT100 data is ready.' })}>
+                    <Button className="bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 shadow-sm" onClick={() => toast({ title: 'Coming Soon', description: 'VAT Return MTD submission will be available via HMRC MTD API. Your VAT100 data is ready.' })}>
                       <Send className="h-4 w-4 mr-2" /> Submit VAT Return (MTD)
                     </Button>
                   )}
@@ -3832,7 +3832,7 @@ export default function ReportsClient() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-3">
-                <Button onClick={() => generateExcel('summary', {})} className="bg-green-700 hover:bg-green-800">
+                <Button onClick={() => generateExcel('summary', {})} className="bg-gradient-to-r from-green-700 to-green-500 hover:from-green-600 hover:to-green-400 shadow-sm">
                   <FileSpreadsheet className="h-4 w-4 mr-2" /> Full Workbook (Excel)
                 </Button>
                 <Button variant="outline" onClick={() => {

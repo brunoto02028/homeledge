@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import {
   Brain, Plus, Search, Filter, Trash2, Edit2, Save, X, RefreshCw,
-  CheckCircle2, Zap, BookOpen, Bot, TrendingUp, AlertTriangle, ChevronDown
+  CheckCircle2, Zap, BookOpen, Bot, TrendingUp, AlertTriangle, ChevronDown,
+  ChevronUp, HelpCircle, Info, ArrowRight, Shield, Lightbulb, MessageSquare, RotateCcw
 } from 'lucide-react';
 
 interface Rule {
@@ -63,6 +64,7 @@ export default function CategorizationRulesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ keyword: '', matchType: 'contains', categoryId: '', patternField: 'description', transactionType: '', description: '', priority: 5 });
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -209,6 +211,149 @@ export default function CategorizationRulesPage() {
           </div>
         </div>
       )}
+
+      {/* How It Works Guide */}
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <button
+          onClick={() => setShowGuide(!showGuide)}
+          className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-purple-500" />
+            <span className="font-semibold text-sm">How does Categorisation Intelligence work?</span>
+          </div>
+          {showGuide ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </button>
+
+        {showGuide && (
+          <div className="px-4 pb-5 space-y-5 border-t">
+            {/* Overview */}
+            <div className="pt-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Every time a bank transaction is imported, it passes through a <strong>4-layer intelligent engine</strong> that automatically assigns a category. The system gets smarter over time as you correct categories.
+              </p>
+            </div>
+
+            {/* 4 Layers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Layer 1 */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                    <Zap className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Layer 1 — Deterministic Rules</p>
+                    <p className="text-[11px] text-green-500 font-medium">100% confidence</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Keyword-based rules (contains, exact, starts with, regex) checked against each transaction. System rules cover 96+ common UK merchants. You can also create your own.
+                </p>
+              </div>
+
+              {/* Layer 2 */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm">
+                    <RotateCcw className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Layer 2 — Smart Patterns</p>
+                    <p className="text-[11px] text-amber-500 font-medium">70-95% confidence</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Compares the transaction text with your past corrections using fuzzy matching (≥50% word overlap). The more you correct, the smarter it gets.
+                </p>
+              </div>
+
+              {/* Layer 3 */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
+                    <Brain className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Layer 3 — AI Classification</p>
+                    <p className="text-[11px] text-purple-500 font-medium">Variable confidence</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  If no rule or pattern matches, AI analyses the description with your full category list. It returns a confidence score and justification for each suggestion.
+                </p>
+              </div>
+
+              {/* Layer 4 */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                    <Lightbulb className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Layer 4 — Feedback Loop</p>
+                    <p className="text-[11px] text-green-500 font-medium">Auto-learning</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  When you correct a category, the system records it. After <strong>3+ identical corrections</strong> for the same merchant, a new auto-learned rule is created automatically.
+                </p>
+              </div>
+            </div>
+
+            {/* Modes */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="text-sm font-semibold flex items-center gap-2"><Shield className="h-4 w-4 text-blue-500" /> Categorisation Modes</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-amber-500">Conservative</p>
+                  <p className="text-muted-foreground">Nothing auto-approved. Every transaction requires your manual review.</p>
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-blue-500">Smart (default)</p>
+                  <p className="text-muted-foreground">Auto-approve ≥90% confidence. Suggest 70-90%. Review &lt;70%.</p>
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-green-500">Autonomous</p>
+                  <p className="text-muted-foreground">AI governs all. Only flags very low confidence (&lt;50%) for review.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Rule Sources */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="text-sm font-semibold flex items-center gap-2"><Info className="h-4 w-4 text-purple-500" /> Rule Sources</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-blue-500 bg-blue-500/10 border-blue-500/20"><Zap className="h-3 w-3" /> System</span>
+                  <p className="text-xs text-muted-foreground">96+ pre-built UK rules (TESCO, AMAZON, HMRC, NETFLIX, etc). Cannot be deleted, but can be disabled.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-purple-500 bg-purple-500/10 border-purple-500/20"><BookOpen className="h-3 w-3" /> Manual</span>
+                  <p className="text-xs text-muted-foreground">Rules you create manually via the "+ New Rule" button. Full control over keyword, match type, and category.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-green-500 bg-green-500/10 border-green-500/20"><Bot className="h-3 w-3" /> Auto-Learned</span>
+                  <p className="text-xs text-muted-foreground">Created automatically when you correct the same merchant 3+ times. 95% confidence. These prove the system is learning.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Practical tips */}
+            <div className="rounded-lg bg-purple-500/5 border border-purple-500/20 p-4">
+              <p className="text-sm font-semibold flex items-center gap-2 text-purple-500 mb-2"><MessageSquare className="h-4 w-4" /> Practical Tips</p>
+              <ul className="text-xs text-muted-foreground space-y-1.5">
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Correct categories on the Statements page — the engine learns from every correction.</li>
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />After 3 corrections for the same merchant, an auto-rule appears in the table above with a green "Auto-Learned" badge.</li>
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Use "+ New Rule" to manually add rules for merchants the system hasn't learned yet.</li>
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />The "Most Corrected Transactions" section above shows which merchants need attention — create rules for them.</li>
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Disable rules you don't need instead of deleting them — you can re-enable later.</li>
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Change your categorisation mode in Settings → Preferences to control how aggressively the system auto-approves.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Actions Bar */}
       <div className="flex flex-wrap items-center gap-3">

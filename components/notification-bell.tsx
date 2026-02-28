@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, FileText, Receipt, Upload, ListTodo, Calendar, ArrowLeftRight, Shield } from 'lucide-react';
+import { Bell, Check, FileText, Receipt, Upload, ListTodo, Calendar, ArrowLeftRight, Shield, Building, MapPin, UserPlus, UserMinus, CheckCircle2, AlertTriangle, Send, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NotifEvent {
@@ -22,14 +22,56 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
   'action': ListTodo,
   'life_event': Calendar,
   'transfer': ArrowLeftRight,
+  'government_filing': Send,
+  'government_connection': Building,
 };
 
-function getIcon(entityType: string) {
+const GOV_EVENT_ICONS: Record<string, React.ElementType> = {
+  'gov.ch_filing_submitted': Send,
+  'gov.ch_filing_rejected': AlertTriangle,
+  'gov.ch_connected': CheckCircle2,
+  'gov.ch_filing_accepted': CheckCircle2,
+  'gov.oauth_started': Link2,
+  'gov.hmrc_connected': CheckCircle2,
+};
+
+function getIcon(entityType: string, eventType?: string) {
+  if (eventType && GOV_EVENT_ICONS[eventType]) return GOV_EVENT_ICONS[eventType];
   const key = Object.keys(EVENT_ICONS).find(k => entityType.toLowerCase().includes(k));
   return key ? EVENT_ICONS[key] : Shield;
 }
 
+const GOV_EVENT_TITLES: Record<string, string> = {
+  'gov.ch_filing_submitted': 'CH Filing Submitted',
+  'gov.ch_filing_rejected': 'CH Filing Rejected',
+  'gov.ch_filing_accepted': 'CH Filing Accepted',
+  'gov.ch_connected': 'Companies House Connected',
+  'gov.hmrc_connected': 'HMRC Connected',
+  'gov.oauth_started': 'Gov Connection Started',
+};
+
+const FILING_TYPE_LABELS: Record<string, string> = {
+  'change_registered_office': 'Change Registered Office (AD01)',
+  'appoint_director': 'Appoint Director (AP01)',
+  'terminate_director': 'Terminate Director (TM01)',
+  'confirmation_statement': 'Confirmation Statement (CS01)',
+  'change_officer_details': 'Change Officer Details (CH01)',
+  'appoint_secretary': 'Appoint Secretary (AP02)',
+  'strike_off': 'Apply to Strike Off (DS01)',
+};
+
 function formatEventTitle(e: NotifEvent): string {
+  // Government events — friendly titles
+  if (e.eventType.startsWith('gov.')) {
+    const base = GOV_EVENT_TITLES[e.eventType] || e.eventType.replace(/\./g, ' ').replace(/_/g, ' ');
+    const p = e.payload as any;
+    const filingLabel = p?.filingType ? FILING_TYPE_LABELS[p.filingType] || p.filingType : '';
+    const companyNum = p?.companyNumber ? ` (${p.companyNumber})` : '';
+    if (filingLabel) return `${base}: ${filingLabel}${companyNum}`;
+    if (companyNum) return `${base}${companyNum}`;
+    return base;
+  }
+  // Default
   const type = e.eventType.replace(/\./g, ' ').replace(/_/g, ' ');
   const name = (e.payload as any)?.name || (e.payload as any)?.billName || (e.payload as any)?.title || '';
   return name ? `${type}: ${name}` : type;
@@ -126,7 +168,7 @@ export function NotificationBell() {
               </div>
             ) : (
               events.map((e) => {
-                const Icon = getIcon(e.entityType);
+                const Icon = getIcon(e.entityType, e.eventType);
                 return (
                   <div
                     key={e.id}
@@ -135,8 +177,15 @@ export function NotificationBell() {
                       !e.readAt && 'bg-primary/5'
                     )}
                   >
-                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
+                    <div className={cn(
+                      'h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5',
+                      e.eventType === 'gov.ch_filing_submitted' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm' :
+                      e.eventType === 'gov.ch_filing_rejected' ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-sm' :
+                      e.eventType === 'gov.ch_filing_accepted' ? 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-sm' :
+                      e.eventType.startsWith('gov.') ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm' :
+                      'bg-muted'
+                    )}>
+                      <Icon className={cn('h-4 w-4', e.eventType.startsWith('gov.') ? 'text-white' : 'text-muted-foreground')} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={cn('text-sm leading-snug', !e.readAt && 'font-medium')}>

@@ -129,14 +129,14 @@ export function SettingsClient() {
   if (!profile) return null;
 
   const stats = [
-    { label: t('settings.statsEntities'), value: profile._count.entities, icon: Landmark },
-    { label: t('settings.statsStatements'), value: profile._count.bankStatements, icon: FileText },
-    { label: t('settings.statsInvoices'), value: profile._count.invoices, icon: FileText },
-    { label: t('settings.statsBills'), value: profile._count.bills, icon: Receipt },
-    { label: t('settings.statsVault'), value: profile._count.vaultEntries, icon: KeyRound },
-    { label: t('settings.statsTransfers'), value: profile._count.recurringTransfers, icon: ArrowLeftRight },
-    { label: t('settings.statsShared'), value: profile._count.sharedLinks, icon: Link2 },
-    { label: t('settings.statsLifeEvents'), value: profile._count.lifeEvents, icon: Calendar },
+    { label: t('settings.statsEntities'), value: profile._count.entities, icon: Landmark, gradient: 'bg-gradient-to-br from-blue-500 to-indigo-600' },
+    { label: t('settings.statsStatements'), value: profile._count.bankStatements, icon: FileText, gradient: 'bg-gradient-to-br from-emerald-500 to-green-600' },
+    { label: t('settings.statsInvoices'), value: profile._count.invoices, icon: FileText, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
+    { label: t('settings.statsBills'), value: profile._count.bills, icon: Receipt, gradient: 'bg-gradient-to-br from-amber-500 to-orange-600' },
+    { label: t('settings.statsVault'), value: profile._count.vaultEntries, icon: KeyRound, gradient: 'bg-gradient-to-br from-slate-600 to-slate-800' },
+    { label: t('settings.statsTransfers'), value: profile._count.recurringTransfers, icon: ArrowLeftRight, gradient: 'bg-gradient-to-br from-cyan-500 to-blue-600' },
+    { label: t('settings.statsShared'), value: profile._count.sharedLinks, icon: Link2, gradient: 'bg-gradient-to-br from-pink-500 to-rose-600' },
+    { label: t('settings.statsLifeEvents'), value: profile._count.lifeEvents, icon: Calendar, gradient: 'bg-gradient-to-br from-teal-500 to-emerald-600' },
   ];
 
   return (
@@ -579,7 +579,9 @@ export function SettingsClient() {
               const Icon = s.icon;
               return (
                 <div key={s.label} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 text-center">
-                  <Icon className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                  <div className={`h-8 w-8 rounded-lg ${s.gradient} shadow-md ring-1 ring-white/20 flex items-center justify-center mx-auto mb-1.5`}>
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
                   <p className="text-xl font-bold">{s.value}</p>
                   <p className="text-[11px] text-muted-foreground">{s.label}</p>
                 </div>

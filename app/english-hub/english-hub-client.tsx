@@ -14,10 +14,11 @@ import {
   Brain, Headphones, PenTool, MapPin, ExternalLink, Star, Trophy,
   Languages, School, FileText, Clock, Target, Sparkles,
   RefreshCw, ChevronDown, ChevronUp, RotateCcw, Play, Award,
-  BookMarked, Landmark, Library, PoundSterling, ScrollText,
+  BookMarked, Landmark, Library, PoundSterling, ScrollText, Zap,
+  Lightbulb, Eye, EyeOff, Speech,
 } from 'lucide-react';
 
-import { CEFR_LEVELS, QUICK_TOPICS, UK_EXAMS, ESOL_INFO, VOCABULARY_SETS, LIFE_IN_UK_FACTS, CONVERSATION_SCENARIOS, IELTS_WRITING_TEMPLATES, type ChatMessage, type CEFRLevel } from './data/constants';
+import { CEFR_LEVELS, QUICK_TOPICS, UK_EXAMS, ESOL_INFO, VOCABULARY_SETS, LIFE_IN_UK_FACTS, CONVERSATION_SCENARIOS, IELTS_WRITING_TEMPLATES, PHRASAL_VERBS, PRONUNCIATION_GUIDE, DAILY_CHALLENGES, type ChatMessage, type CEFRLevel } from './data/constants';
 import { LIFE_IN_UK_QUESTIONS, LIFE_IN_UK_CHAPTERS, type LifeInUKQuestion } from './data/life-in-uk-questions';
 import { GRAMMAR_LESSONS, type GrammarLesson } from './data/grammar-lessons';
 
@@ -84,6 +85,17 @@ export default function EnglishHubClient() {
 
   // Exam Prep
   const [examExpanded, setExamExpanded] = useState<number | null>(null);
+
+  // Phrasal Verbs
+  const [pvRevealed, setPvRevealed] = useState<Set<number>>(new Set());
+  const [pvFilter, setPvFilter] = useState<string>('all');
+
+  // Pronunciation
+  const [pronRevealed, setPronRevealed] = useState<Set<number>>(new Set());
+
+  // Daily Challenge
+  const [challengeIdx, setChallengeIdx] = useState(() => new Date().getDate() % DAILY_CHALLENGES.length);
+  const [challengeRevealed, setChallengeRevealed] = useState(false);
 
   // Chat history for AI context
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -291,7 +303,9 @@ export default function EnglishHubClient() {
             <Badge className="bg-white/20 text-white border-0">Grammar A1-C2</Badge>
             <Badge className="bg-white/20 text-white border-0">IELTS Prep</Badge>
             <Badge className="bg-white/20 text-white border-0">Vocabulary</Badge>
-            <Badge className="bg-white/20 text-white border-0">Voice Practice</Badge>
+            <Badge className="bg-white/20 text-white border-0">Phrasal Verbs</Badge>
+            <Badge className="bg-white/20 text-white border-0">Pronunciation</Badge>
+            <Badge className="bg-white/20 text-white border-0">Daily Challenge</Badge>
           </div>
         </div>
       </div>
@@ -303,8 +317,11 @@ export default function EnglishHubClient() {
           <TabsTrigger value="life-uk" className="gap-1.5 text-xs sm:text-sm"><Landmark className="h-3.5 w-3.5" />Life in the UK</TabsTrigger>
           <TabsTrigger value="grammar" className="gap-1.5 text-xs sm:text-sm"><BookMarked className="h-3.5 w-3.5" />Grammar</TabsTrigger>
           <TabsTrigger value="vocabulary" className="gap-1.5 text-xs sm:text-sm"><Library className="h-3.5 w-3.5" />Vocabulary</TabsTrigger>
+          <TabsTrigger value="phrasal" className="gap-1.5 text-xs sm:text-sm"><ScrollText className="h-3.5 w-3.5" />Phrasal Verbs</TabsTrigger>
+          <TabsTrigger value="pronunciation" className="gap-1.5 text-xs sm:text-sm"><Headphones className="h-3.5 w-3.5" />Pronunciation</TabsTrigger>
           <TabsTrigger value="exams" className="gap-1.5 text-xs sm:text-sm"><Award className="h-3.5 w-3.5" />Exam Prep</TabsTrigger>
           <TabsTrigger value="cefr" className="gap-1.5 text-xs sm:text-sm"><Target className="h-3.5 w-3.5" />CEFR Levels</TabsTrigger>
+          <TabsTrigger value="challenge" className="gap-1.5 text-xs sm:text-sm"><Zap className="h-3.5 w-3.5" />Daily Challenge</TabsTrigger>
           <TabsTrigger value="resources" className="gap-1.5 text-xs sm:text-sm"><BookOpen className="h-3.5 w-3.5" />Resources</TabsTrigger>
         </TabsList>
 
@@ -467,7 +484,7 @@ export default function EnglishHubClient() {
                     <h3 className="font-bold flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" />Full Mock Exam</h3>
                     <p className="text-sm text-muted-foreground mt-1">24 random questions from all chapters — just like the real test!</p>
                   </div>
-                  <Button onClick={() => startLifePractice(0)} className="bg-amber-600 hover:bg-amber-700">
+                  <Button onClick={() => startLifePractice(0)} className="bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 shadow-sm">
                     <Play className="h-4 w-4 mr-2" />Start Mock Exam
                   </Button>
                 </CardContent>
@@ -598,7 +615,7 @@ export default function EnglishHubClient() {
                       {lifeIndex < lifeQuestions.length - 1 ? (
                         <Button onClick={() => setLifeIndex(i => i + 1)} disabled={lifeMockMode ? false : lifeAnswers[lifeIndex] === null}>Next</Button>
                       ) : (
-                        <Button onClick={submitLifeMock} className="bg-green-600 hover:bg-green-700" disabled={lifeMockMode && lifeAnswers.some(a => a === null)}>
+                        <Button onClick={submitLifeMock} variant="success" disabled={lifeMockMode && lifeAnswers.some(a => a === null)}>
                           <Trophy className="h-4 w-4 mr-2" />Finish & See Results
                         </Button>
                       )}
@@ -647,7 +664,7 @@ export default function EnglishHubClient() {
                   <div className="space-y-2">
                     {activeLesson.examples.map((ex, i) => (
                       <div key={i} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/30">
-                        <button onClick={() => speakWord(ex.sentence)} className="flex-shrink-0 mt-0.5"><Volume2 className="h-4 w-4 text-blue-500 hover:text-blue-700" /></button>
+                        <button onClick={() => speakWord(ex.sentence)} className="flex-shrink-0 mt-0.5 p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"><Volume2 className="h-4 w-4 text-blue-500" /></button>
                         <div>
                           <p className="text-sm font-medium">{ex.sentence}</p>
                           {ex.note && <p className="text-xs text-muted-foreground">{ex.note}</p>}
@@ -769,7 +786,7 @@ export default function EnglishHubClient() {
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-lg">{w.word}</h4>
                         {ttsSupported && (
-                          <button onClick={() => speakWord(w.word)} className="text-blue-500 hover:text-blue-700">
+                          <button onClick={() => speakWord(w.word)} className="p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500">
                             <Volume2 className="h-4 w-4" />
                           </button>
                         )}
@@ -779,7 +796,7 @@ export default function EnglishHubClient() {
                           <p className="text-sm text-muted-foreground mt-1">{w.meaning}</p>
                           <p className="text-xs italic mt-1 text-foreground/80">"{w.example}"</p>
                           {ttsSupported && (
-                            <button onClick={() => speakWord(w.example)} className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1">
+                            <button onClick={() => speakWord(w.example)} className="text-xs text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-md px-1.5 py-0.5 flex items-center gap-1 mt-1 transition-colors">
                               <Volume2 className="h-3 w-3" />Listen to example
                             </button>
                           )}
@@ -798,6 +815,154 @@ export default function EnglishHubClient() {
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => setVocabRevealed(new Set(VOCABULARY_SETS[vocabSet]?.words.map((_, i) => i)))}>
               Reveal All
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TAB: Phrasal Verbs                                             */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="phrasal" className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-xl font-bold">Phrasal Verbs</h2>
+            <p className="text-sm text-muted-foreground">Essential multi-word verbs used in everyday UK English</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {['all', 'A2', 'B1', 'B2'].map(level => (
+              <Button key={level} variant={pvFilter === level ? 'default' : 'outline'} size="sm" className="text-xs"
+                onClick={() => setPvFilter(level)}>
+                {level === 'all' ? 'All Levels' : level}
+              </Button>
+            ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {PHRASAL_VERBS.filter(pv => pvFilter === 'all' || pv.level === pvFilter).map((pv, i) => {
+              const globalIdx = PHRASAL_VERBS.indexOf(pv);
+              return (
+                <Card key={i} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-4 pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-lg text-primary">{pv.verb}</h4>
+                          <Badge variant="outline" className="text-[10px]">{pv.level}</Badge>
+                          {ttsSupported && (
+                            <button onClick={() => speakWord(pv.verb)} className="p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500">
+                              <Volume2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        {pvRevealed.has(globalIdx) ? (
+                          <>
+                            <p className="text-sm text-muted-foreground mt-1">{pv.meaning}</p>
+                            <p className="text-xs italic mt-1.5 text-foreground/80 bg-muted/50 rounded-md px-2 py-1">"{pv.example}"</p>
+                            {ttsSupported && (
+                              <button onClick={() => speakWord(pv.example)} className="text-xs text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-md px-1.5 py-0.5 flex items-center gap-1 mt-1.5 transition-colors">
+                                <Volume2 className="h-3 w-3" />Listen to example
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <Button size="sm" variant="ghost" className="text-xs mt-1 px-0" onClick={() => setPvRevealed(prev => new Set(prev).add(globalIdx))}>
+                            <Eye className="h-3 w-3 mr-1" />Show meaning
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => setPvRevealed(new Set(PHRASAL_VERBS.map((_, i) => i)))}>
+              Reveal All
+            </Button>
+            <Button variant="outline" onClick={() => setPvRevealed(new Set())}>
+              <EyeOff className="h-4 w-4 mr-1" />Hide All
+            </Button>
+          </div>
+          <Card className="border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+            <CardContent className="pt-5 pb-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-bold flex items-center gap-2"><Brain className="h-5 w-5 text-indigo-500" />Practice phrasal verbs with AI</h3>
+                <p className="text-sm text-muted-foreground mt-1">Ask the AI Tutor for fill-in-the-blank exercises using these phrasal verbs.</p>
+              </div>
+              <Button variant="outline"
+                onClick={() => {
+                  sendMessage(`Give me 10 fill-in-the-blank exercises using common English phrasal verbs (like "look after", "sort out", "turn up", etc.). After I answer, correct me and explain why. My level is ${selectedLevel}.`);
+                  const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                  tabEl?.click();
+                }}>
+                <MessageCircle className="h-4 w-4 mr-2" />Practice with AI
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TAB: Pronunciation                                             */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="pronunciation" className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold mb-1">UK Pronunciation Guide</h2>
+            <p className="text-sm text-muted-foreground mb-4">Tricky words that even advanced learners mispronounce. Master these to sound more natural!</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {PRONUNCIATION_GUIDE.map((item, i) => (
+              <Card key={i} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-4 pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-bold text-xl">{item.word}</h4>
+                        <span className="text-xs text-muted-foreground font-mono">{item.phonetic}</span>
+                        {ttsSupported && (
+                          <button onClick={() => speakWord(item.word)} className="p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500">
+                            <Volume2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      {pronRevealed.has(i) ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                                <span className="text-sm text-red-600 dark:text-red-400 line-through">{item.common_mistake}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                                <span className="text-sm text-green-700 dark:text-green-400 font-semibold">{item.correct}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-2 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 text-xs">
+                            <p className="flex items-start gap-1.5"><Lightbulb className="h-3.5 w-3.5 text-amber-500 flex-shrink-0 mt-0.5" />{item.tip}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="text-xs px-0" onClick={() => setPronRevealed(prev => new Set(prev).add(i))}>
+                          <Eye className="h-3 w-3 mr-1" />Show pronunciation
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => setPronRevealed(new Set(PRONUNCIATION_GUIDE.map((_, i) => i)))}>
+              Reveal All
+            </Button>
+            <Button variant="outline"
+              onClick={() => {
+                sendMessage(`I want to practice British English pronunciation. Give me 10 commonly mispronounced words with: the correct UK pronunciation using phonetic spelling, common mistakes, and tips. Focus on words immigrants often struggle with. My level is ${selectedLevel}.`);
+                const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                tabEl?.click();
+              }}>
+              <Brain className="h-4 w-4 mr-2" />More with AI
             </Button>
           </div>
         </TabsContent>
@@ -915,28 +1080,58 @@ export default function EnglishHubClient() {
           </div>
 
           <div className="relative">
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-300 via-green-300 to-purple-300 hidden md:block" />
-            <div className="space-y-4">
+            <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-300 via-green-300 to-purple-300 hidden lg:block" />
+            <div className="space-y-5">
               {CEFR_LEVELS.map((level) => (
-                <Card key={level.level} className="relative overflow-hidden">
+                <Card key={level.level} className="relative overflow-hidden hover:shadow-lg transition-shadow">
                   <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${level.color}`} />
                   <CardContent className="pt-5 pb-5 pl-6">
-                    <div className="flex flex-col md:flex-row md:items-start gap-4">
-                      <div className={`flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br ${level.color} text-white flex flex-col items-center justify-center shadow-lg`}>
-                        <span className="text-lg font-bold">{level.level}</span>
-                        <span className="text-[9px] uppercase tracking-wider opacity-80">{level.name.split(' ')[0]}</span>
+                    <div className="flex flex-col md:flex-row md:items-start gap-5">
+                      {/* Level Icon — large gradient square */}
+                      <div className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br ${level.iconBg} text-white flex flex-col items-center justify-center shadow-xl ring-2 ring-white/20 overflow-hidden`}>
+                        <span className="text-2xl font-extrabold leading-none">{level.level}</span>
+                        <span className="text-[8px] uppercase tracking-tight opacity-90 mt-0.5 font-semibold max-w-[72px] text-center truncate">{level.name.split(' ')[0]}</span>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{level.level} — {level.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="font-bold text-lg">{level.level} — {level.name}</h3>
+                          <Badge variant="outline" className="text-xs gap-1"><Clock className="h-3 w-3" />{level.studyHours}</Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">{level.description}</p>
-                        <div className="flex flex-wrap gap-1.5 mt-2">
+
+                        {/* Skills */}
+                        <div className="flex flex-wrap gap-1.5 mt-2.5">
                           {level.skills.map(skill => (
                             <Badge key={skill} variant="outline" className="text-xs">{skill}</Badge>
                           ))}
                         </div>
-                        <div className="mt-2 p-2 bg-muted/50 rounded-lg text-xs flex items-start gap-2">
+
+                        {/* UK Relevance */}
+                        <div className="mt-3 p-2.5 bg-muted/50 rounded-lg text-xs flex items-start gap-2">
                           <Landmark className="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-                          <span>{level.ukRelevance}</span>
+                          <span className="font-medium">{level.ukRelevance}</span>
+                        </div>
+
+                        {/* Exam Equivalents */}
+                        <div className="mt-2.5">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1"><Award className="h-3 w-3" />Exam Equivalents:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {level.examEquivalents.map(exam => (
+                              <Badge key={exam} className="text-[10px] bg-primary/5 text-primary border-primary/20 dark:bg-primary/10 border font-normal">{exam}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Study Tips */}
+                        <div className="mt-2.5 p-2.5 bg-amber-50/60 dark:bg-amber-950/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5 flex items-center gap-1"><Lightbulb className="h-3 w-3" />Study Tips:</p>
+                          <ul className="text-xs text-amber-700 dark:text-amber-400 space-y-0.5">
+                            {level.studyTips.map((tip, ti) => (
+                              <li key={ti} className="flex items-start gap-1.5">
+                                <ChevronRight className="h-3 w-3 flex-shrink-0 mt-0.5 opacity-60" />{tip}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -960,6 +1155,84 @@ export default function EnglishHubClient() {
                   tabEl?.click();
                 }}>
                 <Target className="h-4 w-4 mr-2" />Take Assessment
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TAB: Daily Challenge                                           */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="challenge" className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold mb-1 flex items-center gap-2"><Zap className="h-6 w-6 text-amber-500" />Daily English Challenge</h2>
+            <p className="text-sm text-muted-foreground mb-4">A new mini-exercise every day to keep your English sharp!</p>
+          </div>
+
+          <Card className="border-2 border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10">
+            <CardContent className="pt-6 pb-6">
+              <div className="text-center mb-4">
+                <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-0 text-sm px-3 py-1">
+                  Challenge #{challengeIdx + 1} — {DAILY_CHALLENGES[challengeIdx]?.type.toUpperCase()}
+                </Badge>
+              </div>
+
+              <div className="max-w-lg mx-auto space-y-4">
+                <p className="text-sm font-medium text-muted-foreground">{DAILY_CHALLENGES[challengeIdx]?.instruction}</p>
+                <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border-2 text-center">
+                  <p className="text-lg font-semibold">{DAILY_CHALLENGES[challengeIdx]?.prompt}</p>
+                </div>
+
+                {challengeRevealed ? (
+                  <div className="space-y-3">
+                    {DAILY_CHALLENGES[challengeIdx]?.answer && (
+                      <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <p className="text-sm font-medium text-green-800 dark:text-green-200 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4" />Answer:
+                        </p>
+                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">{DAILY_CHALLENGES[challengeIdx].answer}</p>
+                      </div>
+                    )}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm flex items-start gap-1.5">
+                        <Lightbulb className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-blue-700 dark:text-blue-300">{DAILY_CHALLENGES[challengeIdx]?.hint}</span>
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <Button onClick={() => setChallengeRevealed(true)} className="bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 shadow-sm">
+                      <Eye className="h-4 w-4 mr-2" />Reveal Answer
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-center pt-2">
+                  <Button variant="outline" size="sm" onClick={() => { setChallengeIdx(prev => prev === 0 ? DAILY_CHALLENGES.length - 1 : prev - 1); setChallengeRevealed(false); }}>
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { setChallengeIdx(prev => (prev + 1) % DAILY_CHALLENGES.length); setChallengeRevealed(false); }}>
+                    Next Challenge
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+            <CardContent className="pt-5 pb-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-bold flex items-center gap-2"><Brain className="h-5 w-5 text-indigo-500" />Want a personalised challenge?</h3>
+                <p className="text-sm text-muted-foreground mt-1">Ask the AI Tutor for exercises tailored to your level and weak areas.</p>
+              </div>
+              <Button variant="outline"
+                onClick={() => {
+                  sendMessage(`Give me a quick English challenge suitable for ${selectedLevel} level. It should test grammar, vocabulary, or comprehension. Give me the exercise first, let me try, then correct me.`);
+                  const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                  tabEl?.click();
+                }}>
+                <Zap className="h-4 w-4 mr-2" />Get AI Challenge
               </Button>
             </CardContent>
           </Card>

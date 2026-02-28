@@ -1208,7 +1208,7 @@ export default function EntityDetailClient() {
                 <Button
                   onClick={() => submitFiling('change_registered_office', filingForm)}
                   disabled={filingSubmitting}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 shadow-sm"
                 >
                   {filingSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                   Confirm &amp; Submit to CH

@@ -59,12 +59,12 @@ function useGreeting(): string {
   return t('overview.goodEvening')
 }
 
-const ENTITY_TYPE_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  limited_company: { label: 'Ltd', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800', icon: Building2 },
-  llp: { label: 'LLP', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800', icon: Building2 },
-  sole_trader: { label: 'Sole Trader', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800', icon: User },
-  partnership: { label: 'Partnership', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800', icon: Building2 },
-  individual: { label: 'Personal', color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700', icon: User },
+const ENTITY_TYPE_CONFIG: Record<string, { label: string; color: string; gradient: string; icon: any }> = {
+  limited_company: { label: 'Ltd', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800', gradient: 'bg-gradient-to-br from-blue-500 to-indigo-600', icon: Building2 },
+  llp: { label: 'LLP', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800', gradient: 'bg-gradient-to-br from-violet-500 to-purple-600', icon: Building2 },
+  sole_trader: { label: 'Sole Trader', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800', gradient: 'bg-gradient-to-br from-amber-500 to-orange-600', icon: User },
+  partnership: { label: 'Partnership', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800', gradient: 'bg-gradient-to-br from-emerald-500 to-green-600', icon: Building2 },
+  individual: { label: 'Personal', color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700', gradient: 'bg-gradient-to-br from-slate-500 to-slate-700', icon: User },
 }
 
 function EntityCards({ entities }: { entities: Entity[] }) {
@@ -93,8 +93,8 @@ function EntityCards({ entities }: { entities: Entity[] }) {
             <Card className="hover:shadow-md transition-all group cursor-pointer h-full">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`p-2 rounded-lg ${config.color} border`}>
-                    <Icon className="h-4 w-4" />
+                  <div className={`p-2 rounded-lg ${config.gradient} shadow-md ring-1 ring-white/20`}>
+                    <Icon className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex items-center gap-1.5">
                     {entity.isDefault && (
@@ -128,11 +128,11 @@ function EntityCards({ entities }: { entities: Entity[] }) {
 function QuickActions() {
   const { t } = useTranslation()
   const actions = [
-    { href: '/statements?action=upload', icon: Upload, label: t('overview.uploadStatement'), color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
-    { href: '/documents?action=scan', icon: Camera, label: t('overview.scanDocument'), color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    { href: '/invoices?action=new', icon: FileText, label: t('overview.newInvoice'), color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
-    { href: '/bills?action=new', icon: Receipt, label: t('overview.addBill'), color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { href: '/household?action=invite', icon: UserPlus, label: t('overview.inviteTeam'), color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400' },
+    { href: '/statements?action=upload', icon: Upload, label: t('overview.uploadStatement'), gradient: 'bg-gradient-to-br from-blue-500 to-indigo-600' },
+    { href: '/documents?action=scan', icon: Camera, label: t('overview.scanDocument'), gradient: 'bg-gradient-to-br from-emerald-500 to-green-600' },
+    { href: '/invoices?action=new', icon: FileText, label: t('overview.newInvoice'), gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
+    { href: '/bills?action=new', icon: Receipt, label: t('overview.addBill'), gradient: 'bg-gradient-to-br from-amber-500 to-orange-600' },
+    { href: '/household?action=invite', icon: UserPlus, label: t('overview.inviteTeam'), gradient: 'bg-gradient-to-br from-pink-500 to-rose-600' },
   ]
 
   return (
@@ -143,8 +143,8 @@ function QuickActions() {
           <Link key={action.href} href={action.href}>
             <Card className="hover:shadow-md transition-all cursor-pointer group h-full">
               <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
-                <div className={`p-2.5 rounded-xl ${action.color}`}>
-                  <Icon className="h-5 w-5" />
+                <div className={`p-2.5 rounded-xl ${action.gradient} shadow-lg ring-1 ring-white/20`}>
+                  <Icon className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{action.label}</span>
               </CardContent>

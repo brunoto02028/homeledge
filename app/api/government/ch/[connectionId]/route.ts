@@ -14,6 +14,7 @@ import {
   closeCHTransaction,
   getROAEtag,
 } from '@/lib/government-api';
+import { sendFilingSubmittedEmail, sendFilingRejectedEmail } from '@/lib/email';
 
 // GET /api/government/ch/[connectionId] — Get company data from CH
 export async function GET(
@@ -275,6 +276,29 @@ export async function POST(
         },
       },
     });
+
+    // Send email notification (non-blocking)
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, fullName: true } });
+      const entity = connection.entityId
+        ? await (prisma as any).entity.findUnique({ where: { id: connection.entityId }, select: { name: true } })
+        : null;
+      const companyName = entity?.name || companyNumber;
+      const userName = user?.fullName || 'User';
+
+      if (user?.email) {
+        if (status === 'submitted') {
+          const formSummary = filingType === 'change_registered_office'
+            ? [formData.premises, formData.addressLine1, formData.addressLine2, formData.city, formData.region, formData.postcode, formData.country].filter(Boolean).join(', ')
+            : '';
+          sendFilingSubmittedEmail(user.email, userName, companyNumber, companyName, filingType, reference, formSummary).catch(() => {});
+        } else if (status === 'rejected') {
+          sendFilingRejectedEmail(user.email, userName, companyNumber, companyName, filingType, responseData?.error || 'Unknown reason').catch(() => {});
+        }
+      }
+    } catch (emailErr) {
+      console.error('[CH Filing] Email notification failed (non-critical):', emailErr);
+    }
 
     return NextResponse.json({
       filing: {

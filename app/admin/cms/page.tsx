@@ -360,7 +360,7 @@ export default function AdminCmsPage() {
                       onClick={() => handleGenerate(key)}
                       disabled={generating === key || !aiPrompt.trim()}
                       size="sm"
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                      className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-sm"
                     >
                       {generating === key ? (
                         <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>

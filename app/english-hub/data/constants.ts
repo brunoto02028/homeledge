@@ -7,13 +7,13 @@ export interface ChatMessage {
   content: string;
 }
 
-export const CEFR_LEVELS: { level: CEFRLevel; name: string; description: string; color: string; skills: string[]; ukRelevance: string }[] = [
-  { level: 'A1', name: 'Beginner', description: 'Can understand and use familiar everyday expressions and very basic phrases.', color: 'from-red-500 to-red-600', skills: ['Basic greetings', 'Simple questions', 'Numbers & dates', 'Introduce yourself'], ukRelevance: 'IELTS Life Skills A1 — Required for some family visas' },
-  { level: 'A2', name: 'Elementary', description: 'Can communicate in simple and routine tasks on familiar topics.', color: 'from-orange-500 to-orange-600', skills: ['Shopping & ordering', 'Directions', 'Daily routines', 'Simple past events'], ukRelevance: 'Foundation for ESOL Entry Level 2' },
-  { level: 'B1', name: 'Intermediate', description: 'Can deal with most situations likely to arise whilst travelling or living in the UK.', color: 'from-yellow-500 to-yellow-600', skills: ['Express opinions', 'Describe experiences', 'Write simple texts', 'Understand main points'], ukRelevance: '⭐ Required for ILR (Indefinite Leave to Remain) & British Citizenship' },
-  { level: 'B2', name: 'Upper Intermediate', description: 'Can interact with a degree of fluency and spontaneity with native speakers.', color: 'from-green-500 to-green-600', skills: ['Complex discussions', 'News & articles', 'Workplace English', 'Academic writing'], ukRelevance: 'IELTS 5.5-6.5 — Required for many UK university courses' },
-  { level: 'C1', name: 'Advanced', description: 'Can express ideas fluently and spontaneously. Can use language flexibly for social, academic and professional purposes.', color: 'from-blue-500 to-blue-600', skills: ['Professional presentations', 'Academic essays', 'Nuanced expression', 'Implicit meaning'], ukRelevance: 'IELTS 7.0+ — Required for postgraduate study & regulated professions' },
-  { level: 'C2', name: 'Proficiency', description: 'Can understand with ease virtually everything heard or read. Near-native fluency.', color: 'from-purple-500 to-purple-600', skills: ['Idiomatic expression', 'Cultural subtlety', 'Academic research', 'Professional mastery'], ukRelevance: 'IELTS 8.0-9.0 — Top-level academic and professional English' },
+export const CEFR_LEVELS: { level: CEFRLevel; name: string; description: string; color: string; iconBg: string; skills: string[]; ukRelevance: string; studyHours: string; examEquivalents: string[]; studyTips: string[] }[] = [
+  { level: 'A1', name: 'Beginner', description: 'Can understand and use familiar everyday expressions and very basic phrases.', color: 'from-red-500 to-red-600', iconBg: 'from-red-500 to-rose-600', skills: ['Basic greetings', 'Simple questions', 'Numbers & dates', 'Introduce yourself'], ukRelevance: 'IELTS Life Skills A1 — Required for some family visas', studyHours: '80–100 hours', examEquivalents: ['IELTS Life Skills A1', 'Trinity GESE Grade 2', 'Cambridge Pre-A1 Starters'], studyTips: ['Learn the 100 most common English words', 'Practice introducing yourself every day', 'Use flashcard apps (Anki, Quizlet) for vocabulary', 'Watch children\'s TV shows in English with subtitles'] },
+  { level: 'A2', name: 'Elementary', description: 'Can communicate in simple and routine tasks on familiar topics.', color: 'from-orange-500 to-orange-600', iconBg: 'from-orange-500 to-amber-600', skills: ['Shopping & ordering', 'Directions', 'Daily routines', 'Simple past events'], ukRelevance: 'Foundation for ESOL Entry Level 2', studyHours: '180–200 hours', examEquivalents: ['Cambridge A2 Key (KET)', 'Trinity GESE Grades 3–4', 'IELTS 3.0–3.5'], studyTips: ['Start reading simple graded readers (Oxford Bookworms Level 1)', 'Practice ordering food and shopping in English', 'Learn past tense of the 50 most common verbs', 'Listen to slow English podcasts (BBC Learning English)'] },
+  { level: 'B1', name: 'Intermediate', description: 'Can deal with most situations likely to arise whilst travelling or living in the UK.', color: 'from-yellow-500 to-yellow-600', iconBg: 'from-amber-500 to-yellow-600', skills: ['Express opinions', 'Describe experiences', 'Write simple texts', 'Understand main points'], ukRelevance: '⭐ Required for ILR (Indefinite Leave to Remain) & British Citizenship', studyHours: '350–400 hours', examEquivalents: ['IELTS Life Skills B1', 'IELTS 4.0–5.0', 'Cambridge B1 Preliminary (PET)', 'Trinity GESE Grades 5–6', 'Trinity ISE I'], studyTips: ['This is the KEY level for UK settlement — focus here', 'Practice the Life in the UK Test alongside English study', 'Read BBC News Simple English articles daily', 'Start writing a daily diary in English (just 5 sentences)', 'Practice phone calls and GP appointments in English'] },
+  { level: 'B2', name: 'Upper Intermediate', description: 'Can interact with a degree of fluency and spontaneity with native speakers.', color: 'from-green-500 to-green-600', iconBg: 'from-emerald-500 to-green-600', skills: ['Complex discussions', 'News & articles', 'Workplace English', 'Academic writing'], ukRelevance: 'IELTS 5.5-6.5 — Required for many UK university courses', studyHours: '500–600 hours', examEquivalents: ['IELTS 5.5–6.5', 'Cambridge B2 First (FCE)', 'Trinity GESE Grades 7–9', 'Trinity ISE II', 'PTE Academic 43–58'], studyTips: ['Read The Guardian and BBC News daily', 'Watch UK TV series without subtitles', 'Join English conversation groups (Meetup, library events)', 'Start writing formal emails for real situations', 'Practice IELTS Writing Task 2 essays weekly'] },
+  { level: 'C1', name: 'Advanced', description: 'Can express ideas fluently and spontaneously. Can use language flexibly for social, academic and professional purposes.', color: 'from-blue-500 to-blue-600', iconBg: 'from-blue-500 to-indigo-600', skills: ['Professional presentations', 'Academic essays', 'Nuanced expression', 'Implicit meaning'], ukRelevance: 'IELTS 7.0+ — Required for postgraduate study & regulated professions', studyHours: '700–800 hours', examEquivalents: ['IELTS 7.0–8.0', 'Cambridge C1 Advanced (CAE)', 'Trinity GESE Grades 10–11', 'Trinity ISE III', 'PTE Academic 59–75'], studyTips: ['Read academic papers and professional publications', 'Practice giving presentations in English', 'Learn to use hedging language and formal register', 'Listen to podcasts on complex topics (politics, science, philosophy)', 'Write essays arguing both sides of controversial topics'] },
+  { level: 'C2', name: 'Proficiency', description: 'Can understand with ease virtually everything heard or read. Near-native fluency.', color: 'from-purple-500 to-purple-600', iconBg: 'from-violet-500 to-purple-600', skills: ['Idiomatic expression', 'Cultural subtlety', 'Academic research', 'Professional mastery'], ukRelevance: 'IELTS 8.0-9.0 — Top-level academic and professional English', studyHours: '1000+ hours', examEquivalents: ['IELTS 8.5–9.0', 'Cambridge C2 Proficiency (CPE)', 'Trinity GESE Grade 12', 'Trinity ISE IV', 'PTE Academic 76–90'], studyTips: ['Immerse yourself completely — think in English', 'Read literature, poetry, and philosophy in English', 'Debate complex topics with native speakers', 'Write professionally — articles, reports, research', 'Master British humour, sarcasm, and cultural nuances'] },
 ];
 
 export const QUICK_TOPICS = [
@@ -197,6 +197,48 @@ export const CONVERSATION_SCENARIOS = [
   { id: 'emergency', title: 'Calling 999', level: 'A2-B1', description: 'Practice giving essential information in an emergency: location, type of emergency, details.', aiRole: '999 operator', userRole: 'caller' },
   { id: 'restaurant', title: 'Ordering at a Restaurant', level: 'A2', description: 'Practice reading a menu, ordering food, asking about ingredients, and paying the bill.', aiRole: 'waiter/waitress', userRole: 'customer' },
   { id: 'shopping', title: 'Returning an Item', level: 'B1', description: 'Practice explaining a problem with a purchase and requesting a refund or exchange.', aiRole: 'shop assistant', userRole: 'customer' },
+];
+
+export const PHRASAL_VERBS = [
+  { verb: 'look after', meaning: 'To take care of', example: 'Can you look after my cat while I\'m away?', level: 'A2' },
+  { verb: 'get on with', meaning: 'To have a good relationship with', example: 'I get on well with my neighbours.', level: 'A2' },
+  { verb: 'fill in', meaning: 'To complete a form or document', example: 'Please fill in this application form.', level: 'A2' },
+  { verb: 'sort out', meaning: 'To organise or resolve', example: 'I need to sort out my council tax bill.', level: 'B1' },
+  { verb: 'put up with', meaning: 'To tolerate something unpleasant', example: 'I can\'t put up with the noise any longer.', level: 'B1' },
+  { verb: 'come across', meaning: 'To find by chance / to appear', example: 'She comes across as very confident.', level: 'B1' },
+  { verb: 'carry on', meaning: 'To continue doing something', example: 'Carry on walking until you reach the roundabout.', level: 'A2' },
+  { verb: 'turn up', meaning: 'To arrive / to appear', example: 'He turned up late for the interview.', level: 'B1' },
+  { verb: 'break down', meaning: 'To stop working (machine) / to lose control of emotions', example: 'My car broke down on the motorway.', level: 'B1' },
+  { verb: 'set up', meaning: 'To establish or start', example: 'She set up her own business last year.', level: 'B1' },
+  { verb: 'take on', meaning: 'To accept responsibility / to hire', example: 'The company is taking on new staff.', level: 'B2' },
+  { verb: 'bring up', meaning: 'To raise (children) / to mention a topic', example: 'She was brought up in London.', level: 'B1' },
+  { verb: 'figure out', meaning: 'To understand or solve', example: 'I can\'t figure out how to use this app.', level: 'B1' },
+  { verb: 'give up', meaning: 'To stop trying', example: 'Don\'t give up — keep practising your English!', level: 'A2' },
+  { verb: 'pick up', meaning: 'To learn informally / to collect', example: 'I picked up some Spanish while living in Madrid.', level: 'B1' },
+  { verb: 'run out of', meaning: 'To have no more of something', example: 'We\'ve run out of milk — can you pop to the shop?', level: 'B1' },
+];
+
+export const PRONUNCIATION_GUIDE = [
+  { word: 'Leicester', phonetic: '/ˈlɛstər/', common_mistake: 'Lie-chester', correct: 'LESS-ter', tip: 'Many UK place names have silent letters! Worcester = WUSS-ter, Gloucester = GLOSS-ter.' },
+  { word: 'schedule', phonetic: '/ˈʃɛdjuːl/', common_mistake: 'SKED-yool (US)', correct: 'SHED-yool (UK)', tip: 'UK English uses "sh" sound at the start, unlike American English.' },
+  { word: 'aluminium', phonetic: '/ˌæljʊˈmɪniəm/', common_mistake: 'a-LOO-mi-num', correct: 'al-yoo-MIN-ee-um', tip: 'UK spelling has an extra "i" — aluminium (5 syllables) vs aluminum (4 syllables).' },
+  { word: 'herb', phonetic: '/hɜːb/', common_mistake: 'erb (US — silent h)', correct: 'HERB (UK — h is pronounced)', tip: 'In British English, the "h" is always pronounced.' },
+  { word: 'thought', phonetic: '/θɔːt/', common_mistake: 'tought / fought', correct: 'THAWT', tip: 'The "th" sound /θ/ doesn\'t exist in many languages. Place tongue between teeth and blow air.' },
+  { word: 'comfortable', phonetic: '/ˈkʌmftəbl/', common_mistake: 'com-FOR-ta-ble (4 syllables)', correct: 'KUMF-tuh-bl (3 syllables)', tip: 'Native speakers drop the "or" — it\'s only 3 syllables in practice.' },
+  { word: 'Wednesday', phonetic: '/ˈwɛnzdeɪ/', common_mistake: 'Wed-nes-day', correct: 'WENZ-day', tip: 'The "d" and first "e" are silent. Same pattern: February = FEB-yoo-ree.' },
+  { word: 'receipt', phonetic: '/rɪˈsiːt/', common_mistake: 're-SEEP-t', correct: 'ri-SEET', tip: 'The "p" is silent. Like "debt" (silent b) and "doubt" (silent b).' },
+  { word: 'queue', phonetic: '/kjuː/', common_mistake: 'kway-way', correct: 'KYOO', tip: 'Only the first letter is pronounced! The "ueue" is silent. Very British word!' },
+  { word: 'clothes', phonetic: '/kləʊðz/', common_mistake: 'clo-THES (2 syllables)', correct: 'KLOHZ (1 syllable)', tip: 'In natural speech, it sounds almost like "close" with a "z" sound.' },
+];
+
+export const DAILY_CHALLENGES = [
+  { type: 'translate', instruction: 'Translate to English:', prompt: 'Excuse me, where is the nearest bus stop?', hint: 'Practice asking for directions politely.' },
+  { type: 'correct', instruction: 'Find and correct the mistake:', prompt: 'I have been living in UK for three years.', answer: 'I have been living in THE UK for three years.', hint: 'Articles are tricky! Countries with "Kingdom", "States", or "Republic" need "the".' },
+  { type: 'fill', instruction: 'Fill in the blank:', prompt: 'Could you ___ (repeat/tell) that again, please?', answer: 'repeat', hint: 'Polite way to ask someone to say something again.' },
+  { type: 'correct', instruction: 'Find and correct the mistake:', prompt: 'She don\'t like coffee.', answer: 'She doesn\'t like coffee.', hint: 'Third person singular (he/she/it) uses "doesn\'t" not "don\'t".' },
+  { type: 'idiom', instruction: 'What does this British expression mean?', prompt: '"It\'s not my cup of tea"', answer: 'It means "I don\'t really like it" — a very British way to politely say no!', hint: 'The British love tea references in their idioms.' },
+  { type: 'correct', instruction: 'Find and correct the mistake:', prompt: 'I am agree with you.', answer: 'I agree with you.', hint: '"Agree" is already a verb — you don\'t need "am" before it.' },
+  { type: 'fill', instruction: 'Fill in the blank:', prompt: 'I ___ (look/am looking) forward to hearing from you.', answer: 'look', hint: 'This is a fixed phrase used in formal emails. Always: "I look forward to..."' },
 ];
 
 export const LIFE_IN_UK_FACTS = [

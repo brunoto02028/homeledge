@@ -744,7 +744,7 @@ export function ExamClient() {
             Next <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (
-          <Button onClick={() => handleSubmit()} disabled={submitting} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={() => handleSubmit()} disabled={submitting} variant="success">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
             Submit Exam
           </Button>

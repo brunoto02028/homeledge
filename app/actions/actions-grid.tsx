@@ -300,7 +300,7 @@ export function ActionsGrid({ groupedActions, allActions, viewMode = 'board', on
                 if (deleteId) onDelete(deleteId)
                 setDeleteId(null)
               }}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 shadow-sm"
             >
               Delete
             </AlertDialogAction>

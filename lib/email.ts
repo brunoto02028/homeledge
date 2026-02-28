@@ -399,6 +399,81 @@ export async function sendVerificationLinksEmail(
   return sendEmail(email, `Your HomeLedger Verification Links (${links.length})`, html);
 }
 
+// ─── Government Filing Emails ────────────────────────────────────────────
+
+const FILING_TYPE_LABELS: Record<string, string> = {
+  change_registered_office: 'Change of Registered Office Address (AD01)',
+  appoint_director: 'Appoint Director (AP01)',
+  terminate_director: 'Terminate Director (TM01)',
+  confirmation_statement: 'Confirmation Statement (CS01)',
+  change_officer_details: 'Change Officer Details (CH01)',
+  appoint_secretary: 'Appoint Secretary (AP02)',
+  strike_off: 'Apply to Strike Off (DS01)',
+};
+
+export async function sendFilingSubmittedEmail(
+  email: string,
+  name: string,
+  companyNumber: string,
+  companyName: string,
+  filingType: string,
+  reference: string | null,
+  formSummary: string,
+) {
+  const label = FILING_TYPE_LABELS[filingType] || filingType;
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Filing Submitted to Companies House</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, your filing has been <strong>submitted successfully</strong> to Companies House.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Company</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:600;">${companyName} (${companyNumber})</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Filing Type</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${label}</td></tr>
+      ${reference ? `<tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Reference</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-family:monospace;">${reference}</td></tr>` : ''}
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Status</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:600;color:#059669;background-color:#d1fae5;">SUBMITTED</span></td></tr>
+      <tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Date</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;">${new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })}</td></tr>
+    </table>
+    ${formSummary ? `<div style="margin:16px 0;padding:12px 16px;background-color:#f1f5f9;border-radius:8px;font-size:13px;color:#475569;"><strong>Details:</strong><br>${formSummary}</div>` : ''}
+    <p style="margin:16px 0;padding:12px 16px;background-color:#dbeafe;border:1px solid #93c5fd;border-radius:8px;font-size:13px;color:#1e40af;">
+      <strong>What happens next:</strong> Companies House typically processes this change immediately. 
+      You will also receive a confirmation directly from Companies House. The public register is updated within minutes.
+    </p>
+    ${buttonHtml('View Entity', `${BASE_URL}/entities`)}
+  `, `Filing submitted: ${label} for ${companyName}`);
+
+  return sendEmail(email, `CH Filing Submitted: ${label} — ${companyName}`, html);
+}
+
+export async function sendFilingRejectedEmail(
+  email: string,
+  name: string,
+  companyNumber: string,
+  companyName: string,
+  filingType: string,
+  reason: string,
+) {
+  const label = FILING_TYPE_LABELS[filingType] || filingType;
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Filing Rejected by Companies House</h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi ${name}, your filing was <strong>rejected</strong> by Companies House.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Company</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:600;">${companyName} (${companyNumber})</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Filing Type</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${label}</td></tr>
+      <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Status</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:600;color:#dc2626;background-color:#fee2e2;">REJECTED</span></td></tr>
+      <tr><td style="padding:10px 16px;font-size:14px;color:#64748b;">Reason</td><td style="padding:10px 16px;font-size:14px;color:#dc2626;">${reason}</td></tr>
+    </table>
+    <p style="margin:16px 0;padding:12px 16px;background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">
+      <strong>What to do:</strong> Review the rejection reason, correct the information, and try again. 
+      You can also submit directly via <a href="https://www.gov.uk/file-changes-to-a-company-with-companies-house" style="color:#1e40af;">GOV.UK WebFiling</a>.
+    </p>
+    ${buttonHtml('View Entity', `${BASE_URL}/entities`)}
+  `, `Filing rejected: ${label} for ${companyName}`);
+
+  return sendEmail(email, `CH Filing Rejected: ${label} — ${companyName}`, html);
+}
+
 // ─── Send Helper ─────────────────────────────────────────────────────────
 
 async function sendEmail(to: string, subject: string, html: string) {
