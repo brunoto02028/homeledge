@@ -17,6 +17,7 @@ import {
   Banknote, MapPin, Building2, Percent,
 } from 'lucide-react';
 import { FirstHomeGuide } from '@/components/first-home-guide';
+import { PropertyIntelligence } from '@/components/property-intelligence';
 
 interface Property {
   id: string;
@@ -158,6 +159,9 @@ export function PropertiesClient() {
 
       {/* First Home Buying Guide */}
       <FirstHomeGuide />
+
+      {/* Property Purchase Intelligence */}
+      <PropertyIntelligence />
 
       {/* Portfolio Summary */}
       {active.length > 0 && (
