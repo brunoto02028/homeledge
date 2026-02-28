@@ -5,14 +5,15 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   FileSpreadsheet, FileText, Receipt, BarChart3, KeyRound, Camera,
-  TrendingUp, Home, Check, ChevronDown, ChevronUp, ArrowRight,
+  TrendingUp, Home, Check, ChevronDown, ChevronUp, ArrowRight, Banknote,
   PoundSterling, Shield, Zap, Users, CalendarClock, Briefcase,
   Building2, Eye, UserPlus, Menu, X, Link2, Tag, FolderOpen, Landmark,
   ArrowLeftRight, MessageSquare, GraduationCap, Sparkles, Lock, Brain,
   Github, Twitter, Linkedin, Send, Wifi, Building, Globe, ShoppingBag,
   HeartPulse, Smartphone, BookOpen, Plane, Fingerprint, CreditCard,
   BadgeCheck, ScanLine, FileCheck, UserCheck, ShieldCheck, Scale,
-  AlertTriangle, Clock, Scan, CircleCheck, ChevronRight,
+  AlertTriangle, Clock, Scan, CircleCheck, ChevronRight, Calculator,
+  LineChart, PiggyBank, Target,
 } from 'lucide-react';
 
 const FEATURE_CATEGORIES = [
@@ -21,6 +22,7 @@ const FEATURE_CATEGORIES = [
   { key: 'ai', label: 'AI & Automation', icon: Brain },
   { key: 'compliance', label: 'Compliance & Gov', icon: Shield },
   { key: 'learning', label: 'Learning & Services', icon: GraduationCap },
+  { key: 'property', label: 'Property & Mortgage', icon: Home },
   { key: 'tools', label: 'Tools & Integrations', icon: Zap },
 ];
 
@@ -51,6 +53,14 @@ const ALL_FEATURES = [
   { icon: Home, title: 'UK Life Events', desc: 'Track life milestones — buying a home, marriage, starting a business. Personalised financial checklists.', color: 'from-pink-500/20 to-rose-500/10', ic: 'text-pink-400', cat: 'tools' },
   { icon: Smartphone, title: 'Install as App (PWA)', desc: 'Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'tools' },
   { icon: Link2, title: 'Accountant Portal', desc: 'Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400', cat: 'tools' },
+  { icon: Home, title: 'Property Purchase Intelligence', desc: '9 purchase modes compared — personal, joint tenants, Ltd company, trust, charity, pension, shared ownership, right to buy. Full tax implications (SDLT, IHT, CGT, Corp Tax, ATED) sourced from GOV.UK.', color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400', cat: 'property' },
+  { icon: Calculator, title: 'SDLT Calculator', desc: 'Stamp Duty Land Tax calculator with 6 buyer types — first-time, additional property, company, non-resident, corporate. Official 2025/26 tax bands with detailed breakdowns.', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'property' },
+  { icon: Banknote, title: 'Mortgage Approval Simulator', desc: 'Estimate your mortgage chances based on age, employment type, income, debts, credit score, deposit, and property type. Probability gauge, stress test, red flags, and lender suitability.', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'property' },
+  { icon: Brain, title: 'Property Purchase Planner', desc: 'AI-powered plan using your real financial data. Reads accounts, entities, transactions, debts, and savings goals. Cross-entity strategy for personal vs company purchase.', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'property' },
+  { icon: LineChart, title: 'Investment Projections', desc: 'Compound interest engine for ISAs, stocks, pensions, bonds, company retained profits. Tracks dividends, reinvestment, and monthly contributions towards your deposit target.', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'property' },
+  { icon: Target, title: 'Savings Plan Generator', desc: 'Personalised savings plan based on your real income and expenses. Scenario modelling — see how expense cuts or partner income changes your timeline to deposit.', color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400', cat: 'property' },
+  { icon: PiggyBank, title: 'Mortgage Affordability', desc: 'Calculate max borrowing at 4x and 4.5x salary. Monthly payment breakdown with total interest paid over the mortgage term.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'property' },
+  { icon: Shield, title: 'Credit Score Hub', desc: 'Understand UK credit scoring across Experian, Equifax and TransUnion. Score bands, impact factors, 8 improvement tips with timelines, and Experian API integration info.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'property' },
 ];
 
 const HOW_IT_WORKS = [
@@ -73,6 +83,8 @@ const FAQ_ITEMS = [
   { q: 'Can my accountant access my data?', a: 'Yes. Invite your accountant via email. They get a dedicated dashboard to view your data with read-only permissions — no credential sharing needed.' },
   { q: 'What file formats do you support?', a: 'We accept CSV, PDF, Excel (.xlsx), and image files (JPG, PNG) for bank statements, invoices, and documents. Our AI processes them all.' },
   { q: 'Can I install HomeLedger as a desktop app?', a: 'Yes! HomeLedger is a Progressive Web App (PWA). Click "Install" in your browser to add it to your desktop or mobile home screen.' },
+  { q: 'What property tools are included?', a: 'Our Property section includes: 9 purchase mode comparisons (personal, joint, Ltd company, trust, charity, pension, shared ownership, right to buy), SDLT calculator, Mortgage Approval Simulator, AI Purchase Planner with real data, compound interest investment projections, cross-entity strategy (personal vs company), savings plan generator, and a Credit Score Hub — all sourced from GOV.UK.' },
+  { q: 'Can it help me plan a property purchase?', a: 'Yes! The Property Purchase Planner reads your real financial data — accounts, entities, transactions, savings goals, and debts — to calculate a Mortgage Readiness Score, project your savings timeline, and suggest smart strategies like dividend extraction from your company or ISA optimisation. You can add investments (ISAs, stocks, pensions) and see compound interest growth projections towards your deposit.' },
   { q: 'How does the AI Assistant work?', a: 'Our AI understands the context of the page you\'re on. Ask it about your statements, tax obligations, or spending patterns and it gives personalised answers.' },
   { q: 'What is the Accounting Academy?', a: 'A built-in exam practice platform for AAT (Levels 2–4) and ACCA (Levels 5–6). Features timed exams, study mode with explanations, an AI tutor, and a visual career roadmap with salary ranges. Perfect for aspiring accountants or anyone wanting to understand UK bookkeeping.' },
   { q: 'Do you offer relocation support for newcomers?', a: 'Yes! Our UK Relocation Hub is an AI-powered guide that helps newcomers with visa advice, National Insurance numbers, opening bank accounts, GP registration, council tax, and more. All advice is OISC compliant. We also offer professional relocation services through our marketplace.' },
@@ -117,6 +129,7 @@ export function LandingPage() {
     { href: '#business', label: 'For Business' },
     { href: '#accountants', label: 'For Accountants' },
     { href: '#verify-id', label: 'Verify ID' },
+    { href: '#property', label: 'Property' },
     { href: '#new-arrivals', label: 'New to UK' },
     { href: '#pricing', label: 'Pricing' },
     { href: '#faq', label: 'FAQ' },
@@ -239,7 +252,7 @@ export function LandingPage() {
         <div className="neon-line w-full mb-10" />
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { n: '22+', l: 'Financial Modules', Icon: Zap },
+            { n: '30+', l: 'Financial Modules', Icon: Zap },
             { n: 'AI', l: 'Powered Automation', Icon: Sparkles },
             { n: 'HMRC', l: 'Compliant Reports', Icon: BarChart3 },
             { n: '256-bit', l: 'AES Encryption', Icon: Lock },
@@ -259,7 +272,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || 'Everything You Need in One Place'}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '26 powerful modules designed specifically for UK personal and business finance.'}</p>
+            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '30+ powerful modules designed specifically for UK personal and business finance.'}</p>
           </div>
 
           {/* Category Tabs — scrollable on mobile */}
@@ -372,6 +385,100 @@ export function LandingPage() {
                     <div className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">Active</div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Property Intelligence ─────────────────────────────────────── */}
+      <section id="property" className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-950/30 via-slate-950 to-rose-950/30" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 text-xs font-semibold mb-6">
+                <Home className="h-3.5 w-3.5" /> {getCms('propertyIntelligence')?.subtitle || 'Property Purchase Intelligence'}
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                {getCms('propertyIntelligence')?.title || 'Plan Your Property Purchase with AI-Powered Intelligence'}
+              </h2>
+              <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+                {getCms('propertyIntelligence')?.content?.description || 'From first-time buyers to seasoned investors — our suite of property tools analyses your real financial data, projects investment growth with compound interest, and maps cross-entity strategies for the smartest route to homeownership.'}
+              </p>
+              <div className="mt-8 space-y-4">
+                {[
+                  { icon: Home, text: '9 purchase modes compared — personal, joint, Ltd company, trust, charity, pension, shared ownership, right to buy' },
+                  { icon: Calculator, text: 'SDLT Calculator with 6 buyer types and official 2025/26 GOV.UK tax bands' },
+                  { icon: Banknote, text: 'Mortgage Approval Simulator — age, employment, income, debts, credit score, deposit analysis' },
+                  { icon: Brain, text: 'AI Purchase Planner — reads your real accounts, entities, transactions and savings goals' },
+                  { icon: LineChart, text: 'Compound interest projections — ISAs, stocks, pensions, bonds, company retained profits' },
+                  { icon: Building2, text: 'Cross-entity strategy — salary vs dividends, SPV purchase, director\'s loan, tax optimisation' },
+                  { icon: Target, text: 'Personalised savings plan with milestones and timeline to your deposit target' },
+                  { icon: Shield, text: 'Credit Score Hub — Experian, Equifax, TransUnion scoring explained with improvement tips' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 group">
+                    <div className="h-8 w-8 rounded-lg bg-orange-400/10 border border-orange-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-orange-400/30 transition-colors">
+                      <item.icon className="h-4 w-4 text-orange-400" />
+                    </div>
+                    <span className="text-slate-400 text-sm leading-relaxed pt-1 group-hover:text-slate-300 transition-colors">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-10 flex flex-wrap gap-4">
+                <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-rose-500 text-white font-semibold text-sm hover:from-orange-300 hover:to-rose-400 shadow-lg shadow-orange-500/20">
+                  Plan Your Purchase <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">View Pricing</a>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <div className="neon-card p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-2"><Brain className="h-5 w-5 text-orange-400" /><span className="font-semibold text-white">Property Purchase Planner</span></div>
+                {/* Readiness Score Mock */}
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-slate-400">Mortgage Readiness Score</span>
+                    <span className="text-lg font-bold text-emerald-400">72/100</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10"><div className="h-full w-[72%] rounded-full bg-gradient-to-r from-emerald-400 to-green-500" /></div>
+                  <span className="text-[10px] text-emerald-400 mt-1 block">Nearly Ready</span>
+                </div>
+                {/* Key Metrics Mock */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Deposit Target', val: '£30,000', color: 'text-orange-400' },
+                    { label: 'Current Savings', val: '£18,500', color: 'text-emerald-400' },
+                    { label: 'Monthly Capacity', val: '£850/mo', color: 'text-cyan-400' },
+                    { label: 'ETA to Deposit', val: 'Mar 2027', color: 'text-amber-400' },
+                  ].map((m, i) => (
+                    <div key={i} className="bg-white/5 rounded-lg p-3 border border-white/5">
+                      <p className="text-[10px] text-slate-500">{m.label}</p>
+                      <p className={`text-sm font-bold ${m.color}`}>{m.val}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Investment Projection Mock */}
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <span className="text-xs text-slate-400">Investment Growth (36 months)</span>
+                  <div className="flex items-end gap-1 mt-2 h-12">
+                    {[20, 28, 35, 40, 48, 55, 60, 65, 72, 78, 85, 92].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-orange-400/60 to-amber-400/40" style={{ height: `${h}%` }} />
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-2 text-[10px] text-slate-500">
+                    <span>Today: £12,000</span>
+                    <span className="text-emerald-400 font-medium">Projected: £19,400</span>
+                  </div>
+                </div>
+                {/* Entity Strategy Mock */}
+                <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-violet-400/20 flex items-center justify-center"><Building2 className="h-4 w-4 text-violet-400" /></div>
+                  <div>
+                    <p className="text-xs text-white font-medium">Tech Solutions Ltd</p>
+                    <p className="text-[10px] text-slate-500">£22k retained — dividend extraction strategy available</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1105,6 +1212,7 @@ export function LandingPage() {
               <div className="space-y-2.5 text-sm text-slate-500">
                 <a href="#business" className="block hover:text-amber-400 transition-colors">For Business</a>
                 <a href="#accountants" className="block hover:text-amber-400 transition-colors">For Accountants</a>
+                <a href="#property" className="block hover:text-amber-400 transition-colors">Property Intelligence</a>
                 <a href="#features" className="block hover:text-amber-400 transition-colors">Personal Finance</a>
               </div>
             </div>
