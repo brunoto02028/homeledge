@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import {
   FileSpreadsheet, FileText, Receipt, BarChart3, KeyRound, Camera,
   TrendingUp, Home, Check, ChevronDown, ChevronUp, ArrowRight, Banknote,
@@ -100,6 +101,7 @@ interface CmsSection { sectionKey: string; title?: string; subtitle?: string; co
 
 export function LandingPage() {
   const { status } = useSession();
+  const { t, locale, setLocale } = useTranslation();
   const [dbPlans, setDbPlans] = useState<any[]>([]);
   const [cms, setCms] = useState<CmsSection[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -124,15 +126,15 @@ export function LandingPage() {
   }
 
   const NAV = [
-    { href: '#features', label: 'Features' },
-    { href: '#how-it-works', label: 'How It Works' },
-    { href: '#business', label: 'For Business' },
-    { href: '#accountants', label: 'For Accountants' },
-    { href: '#verify-id', label: 'Verify ID' },
-    { href: '#property', label: 'Property' },
-    { href: '#new-arrivals', label: 'New to UK' },
-    { href: '#pricing', label: 'Pricing' },
-    { href: '#faq', label: 'FAQ' },
+    { href: '#features', label: t('landing.nav.features') },
+    { href: '#how-it-works', label: t('landing.nav.howItWorks') },
+    { href: '#business', label: t('landing.nav.forBusiness') },
+    { href: '#accountants', label: t('landing.nav.forAccountants') },
+    { href: '#verify-id', label: t('landing.nav.verifyId') },
+    { href: '#property', label: t('landing.nav.property') },
+    { href: '#new-arrivals', label: t('landing.nav.newToUk') },
+    { href: '#pricing', label: t('landing.nav.pricing') },
+    { href: '#faq', label: t('landing.nav.faq') },
   ];
 
   const plans = dbPlans.length > 0
@@ -156,27 +158,42 @@ export function LandingPage() {
             </div>
             <span className="text-xl font-bold text-white">HomeLedger</span>
           </Link>
-          <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-400">
+          <div className="hidden xl:flex items-center gap-3 text-[13px] font-medium text-slate-400">
             {NAV.map(l => <a key={l.href} href={l.href} className="hover:text-amber-400 transition-colors duration-200">{l.label}</a>)}
           </div>
           <div className="hidden sm:flex items-center gap-3">
+            <button
+              onClick={() => setLocale(locale === 'en' ? 'pt-BR' : 'en')}
+              title={locale === 'en' ? 'Português (BR)' : 'English (UK)'}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
+            >
+              <span className="text-base leading-none">{locale === 'en' ? '🇧🇷' : '🇬🇧'}</span>
+              <span className="hidden lg:inline">{locale === 'en' ? 'PT' : 'EN'}</span>
+            </button>
             <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-              Sign In
+              {t('landing.nav.signIn')}
             </Link>
-            <Link href="/register" className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all duration-200">Get Started Free</Link>
+            <Link href="/register" className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all duration-200">{t('landing.nav.getStartedFree')}</Link>
           </div>
-          <button className="lg:hidden p-2 text-slate-400" onClick={() => setMobileNav(!mobileNav)}>
+          <button className="xl:hidden p-2 text-slate-400" onClick={() => setMobileNav(!mobileNav)}>
             {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
         {mobileNav && (
-          <div className="lg:hidden border-t border-white/5 bg-slate-900/95 backdrop-blur-xl px-4 pb-4 space-y-2">
+          <div className="xl:hidden border-t border-white/5 bg-slate-900/95 backdrop-blur-xl px-4 pb-4 space-y-2">
             {NAV.map(l => <a key={l.href} href={l.href} onClick={() => setMobileNav(false)} className="block py-2 text-sm font-medium text-slate-400 hover:text-amber-400">{l.label}</a>)}
+            <button
+              onClick={() => { setLocale(locale === 'en' ? 'pt-BR' : 'en'); }}
+              className="flex items-center gap-2 py-2 text-sm font-medium text-slate-400 hover:text-amber-400"
+            >
+              <span className="text-base leading-none">{locale === 'en' ? '🇧🇷' : '🇬🇧'}</span>
+              {locale === 'en' ? 'Português (BR)' : 'English (UK)'}
+            </button>
             <div className="pt-2 border-t border-white/5 flex flex-col gap-2">
               <Link href="/login" onClick={() => setMobileNav(false)} className="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-white/10 text-sm font-medium text-slate-300">
-                Sign In
+                {t('landing.nav.signIn')}
               </Link>
-              <Link href="/register" onClick={() => setMobileNav(false)} className="block text-center py-2.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold">Get Started Free</Link>
+              <Link href="/register" onClick={() => setMobileNav(false)} className="block text-center py-2.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold">{t('landing.nav.getStartedFree')}</Link>
             </div>
           </div>
         )}
@@ -192,30 +209,30 @@ export function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-28 sm:pt-32 sm:pb-36">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-semibold mb-8">
-              <Sparkles className="h-3.5 w-3.5" /> AI-Powered UK Finance Platform
+              <Sparkles className="h-3.5 w-3.5" /> {t('landing.hero.badge')}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
               {getCms('hero')?.content?.headline || (
                 <>
-                  <span className="text-white">Your UK Finances,</span><br />
+                  <span className="text-white">{t('landing.hero.titleLine1')}</span><br />
                   <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400 bg-clip-text text-transparent neon-text-amber">
-                    Finally Simplified
+                    {t('landing.hero.titleLine2')}
                   </span>
                 </>
               )}
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-              {getCms('hero')?.content?.subheadline || 'Bank statements, invoices, HMRC reports, tax deadlines, secure vault and AI assistant — all in one platform built for UK individuals and businesses.'}
+              {getCms('hero')?.content?.subheadline || t('landing.hero.subtitle')}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register" className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-bold text-base hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:shadow-amber-500/40 hover:scale-[1.02]">
-                Start Free <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                {t('landing.hero.ctaPrimary')} <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl glass text-slate-300 font-semibold text-base hover:text-white hover:bg-white/10 transition-all duration-200">
-                See How It Works
+                {t('landing.hero.ctaSecondary')}
               </a>
             </div>
-            <p className="mt-5 text-sm text-slate-500">No credit card required · Free forever plan</p>
+            <p className="mt-5 text-sm text-slate-500">{t('landing.hero.noCreditCard')}</p>
           </div>
 
           {/* Hero visual — floating dashboard mock */}
@@ -252,10 +269,10 @@ export function LandingPage() {
         <div className="neon-line w-full mb-10" />
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { n: '30+', l: 'Financial Modules', Icon: Zap },
-            { n: 'AI', l: 'Powered Automation', Icon: Sparkles },
-            { n: 'HMRC', l: 'Compliant Reports', Icon: BarChart3 },
-            { n: '256-bit', l: 'AES Encryption', Icon: Lock },
+            { n: '30+', l: t('landing.stats.modules'), Icon: Zap },
+            { n: 'AI', l: t('landing.stats.aiPowered'), Icon: Sparkles },
+            { n: 'HMRC', l: t('landing.stats.hmrc'), Icon: BarChart3 },
+            { n: '256-bit', l: t('landing.stats.encryption'), Icon: Lock },
           ].map((s, i) => (
             <div key={i} className="stat-glow rounded-xl p-5">
               <s.Icon className="h-5 w-5 text-amber-400 mx-auto mb-2" />
@@ -271,8 +288,8 @@ export function LandingPage() {
       <section id="features" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || 'Everything You Need in One Place'}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || '30+ powerful modules designed specifically for UK personal and business finance.'}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || t('landing.features.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || t('landing.features.subtitle')}</p>
           </div>
 
           {/* Category Tabs — scrollable on mobile */}
@@ -398,24 +415,24 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 text-xs font-semibold mb-6">
-                <Home className="h-3.5 w-3.5" /> {getCms('propertyIntelligence')?.subtitle || 'Property Purchase Intelligence'}
+                <Home className="h-3.5 w-3.5" /> {getCms('propertyIntelligence')?.subtitle || t('landing.property.badge')}
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-                {getCms('propertyIntelligence')?.title || 'Plan Your Property Purchase with AI-Powered Intelligence'}
+                {getCms('propertyIntelligence')?.title || t('landing.property.title')}
               </h2>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                {getCms('propertyIntelligence')?.content?.description || 'From first-time buyers to seasoned investors — our suite of property tools analyses your real financial data, projects investment growth with compound interest, and maps cross-entity strategies for the smartest route to homeownership.'}
+                {getCms('propertyIntelligence')?.content?.description || t('landing.property.description')}
               </p>
               <div className="mt-8 space-y-4">
                 {[
-                  { icon: Home, text: '9 purchase modes compared — personal, joint, Ltd company, trust, charity, pension, shared ownership, right to buy' },
-                  { icon: Calculator, text: 'SDLT Calculator with 6 buyer types and official 2025/26 GOV.UK tax bands' },
-                  { icon: Banknote, text: 'Mortgage Approval Simulator — age, employment, income, debts, credit score, deposit analysis' },
-                  { icon: Brain, text: 'AI Purchase Planner — reads your real accounts, entities, transactions and savings goals' },
-                  { icon: LineChart, text: 'Compound interest projections — ISAs, stocks, pensions, bonds, company retained profits' },
-                  { icon: Building2, text: 'Cross-entity strategy — salary vs dividends, SPV purchase, director\'s loan, tax optimisation' },
-                  { icon: Target, text: 'Personalised savings plan with milestones and timeline to your deposit target' },
-                  { icon: Shield, text: 'Credit Score Hub — Experian, Equifax, TransUnion scoring explained with improvement tips' },
+                  { icon: Home, text: t('landing.property.feature1') },
+                  { icon: Calculator, text: t('landing.property.feature2') },
+                  { icon: Banknote, text: t('landing.property.feature3') },
+                  { icon: Brain, text: t('landing.property.feature4') },
+                  { icon: LineChart, text: t('landing.property.feature5') },
+                  { icon: Building2, text: t('landing.property.feature6') },
+                  { icon: Target, text: t('landing.property.feature7') },
+                  { icon: Shield, text: t('landing.property.feature8') },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 group">
                     <div className="h-8 w-8 rounded-lg bg-orange-400/10 border border-orange-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-orange-400/30 transition-colors">
@@ -427,30 +444,30 @@ export function LandingPage() {
               </div>
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-rose-500 text-white font-semibold text-sm hover:from-orange-300 hover:to-rose-400 shadow-lg shadow-orange-500/20">
-                  Plan Your Purchase <ArrowRight className="h-4 w-4" />
+                  {t('landing.property.ctaPrimary')} <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">View Pricing</a>
+                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">{t('landing.property.ctaSecondary')}</a>
               </div>
             </div>
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
-                <div className="flex items-center gap-3 mb-2"><Brain className="h-5 w-5 text-orange-400" /><span className="font-semibold text-white">Property Purchase Planner</span></div>
+                <div className="flex items-center gap-3 mb-2"><Brain className="h-5 w-5 text-orange-400" /><span className="font-semibold text-white">{t('landing.property.mockTitle')}</span></div>
                 {/* Readiness Score Mock */}
                 <div className="bg-white/5 rounded-xl p-4 border border-white/5">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-slate-400">Mortgage Readiness Score</span>
+                    <span className="text-xs text-slate-400">{t('landing.property.readinessScore')}</span>
                     <span className="text-lg font-bold text-emerald-400">72/100</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10"><div className="h-full w-[72%] rounded-full bg-gradient-to-r from-emerald-400 to-green-500" /></div>
-                  <span className="text-[10px] text-emerald-400 mt-1 block">Nearly Ready</span>
+                  <span className="text-[10px] text-emerald-400 mt-1 block">{t('landing.property.nearlyReady')}</span>
                 </div>
                 {/* Key Metrics Mock */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Deposit Target', val: '£30,000', color: 'text-orange-400' },
-                    { label: 'Current Savings', val: '£18,500', color: 'text-emerald-400' },
-                    { label: 'Monthly Capacity', val: '£850/mo', color: 'text-cyan-400' },
-                    { label: 'ETA to Deposit', val: 'Mar 2027', color: 'text-amber-400' },
+                    { label: t('landing.property.depositTarget'), val: '£30,000', color: 'text-orange-400' },
+                    { label: t('landing.property.currentSavings'), val: '£18,500', color: 'text-emerald-400' },
+                    { label: t('landing.property.monthlyCapacity'), val: '£850/mo', color: 'text-cyan-400' },
+                    { label: t('landing.property.etaDeposit'), val: 'Mar 2027', color: 'text-amber-400' },
                   ].map((m, i) => (
                     <div key={i} className="bg-white/5 rounded-lg p-3 border border-white/5">
                       <p className="text-[10px] text-slate-500">{m.label}</p>
@@ -460,15 +477,15 @@ export function LandingPage() {
                 </div>
                 {/* Investment Projection Mock */}
                 <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                  <span className="text-xs text-slate-400">Investment Growth (36 months)</span>
+                  <span className="text-xs text-slate-400">{t('landing.property.investmentGrowth')}</span>
                   <div className="flex items-end gap-1 mt-2 h-12">
                     {[20, 28, 35, 40, 48, 55, 60, 65, 72, 78, 85, 92].map((h, i) => (
                       <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-orange-400/60 to-amber-400/40" style={{ height: `${h}%` }} />
                     ))}
                   </div>
                   <div className="flex justify-between mt-2 text-[10px] text-slate-500">
-                    <span>Today: £12,000</span>
-                    <span className="text-emerald-400 font-medium">Projected: £19,400</span>
+                    <span>{t('landing.property.today')}: £12,000</span>
+                    <span className="text-emerald-400 font-medium">{t('landing.property.projected')}: £19,400</span>
                   </div>
                 </div>
                 {/* Entity Strategy Mock */}
@@ -489,8 +506,8 @@ export function LandingPage() {
       <section id="how-it-works" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('howItWorks')?.title || 'Up and Running in Minutes'}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('howItWorks')?.subtitle || 'Three simple steps to take control of your finances'}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('howItWorks')?.title || t('landing.howItWorks.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{getCms('howItWorks')?.subtitle || t('landing.howItWorks.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {HOW_IT_WORKS.map((s, i) => (
@@ -1122,13 +1139,13 @@ export function LandingPage() {
       <section id="pricing" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Simple, Transparent Pricing</h2>
-            <p className="mt-4 text-lg text-slate-400">Start free. Upgrade when you need more power.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.pricing.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.pricing.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plans.map((p: any) => (
               <div key={p.key} className={`relative neon-card p-8 transition-all ${p.highlighted ? 'pricing-glow neon-pulse scale-[1.03]' : ''}`}>
-                {p.highlighted && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-amber-500/20">Most Popular</div>}
+                {p.highlighted && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-amber-500/20">{t('landing.pricing.popular')}</div>}
                 <h3 className="text-xl font-bold text-white">{p.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold bg-gradient-to-r from-amber-400 to-cyan-400 bg-clip-text text-transparent">{p.price}</span>
@@ -1149,7 +1166,7 @@ export function LandingPage() {
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section id="faq" className="py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('faq')?.title || 'Frequently Asked Questions'}</h2></div>
+          <div className="text-center mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('faq')?.title || t('landing.faq.title')}</h2></div>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} className="neon-card overflow-hidden">
@@ -1169,12 +1186,12 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px]" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('cta')?.content?.headline || 'Ready to Take Control of Your Finances?'}</h2>
-          <p className="mt-4 text-lg text-slate-400">{getCms('cta')?.content?.subheadline || 'Join UK individuals, sole traders and businesses already using HomeLedger.'}</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('cta')?.content?.headline || t('landing.cta.title')}</h2>
+          <p className="mt-4 text-lg text-slate-400">{getCms('cta')?.content?.subheadline || t('landing.cta.subtitle')}</p>
           <Link href="/register" className="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-bold text-base hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:shadow-amber-500/40 hover:scale-[1.02]">
-            Create Your Free Account <ArrowRight className="h-4 w-4" />
+            {t('landing.cta.ctaPrimary')} <ArrowRight className="h-4 w-4" />
           </Link>
-          <p className="mt-3 text-sm text-slate-500">No credit card required · Free forever plan</p>
+          <p className="mt-3 text-sm text-slate-500">{t('landing.cta.noCreditCard')}</p>
         </div>
       </section>
 
@@ -1190,7 +1207,7 @@ export function LandingPage() {
                 </div>
                 <span className="text-lg font-bold text-white">HomeLedger</span>
               </div>
-              <p className="text-sm text-slate-500 leading-relaxed">AI-powered UK finance platform for individuals and businesses.</p>
+              <p className="text-sm text-slate-500 leading-relaxed">{t('landing.footer.description')}</p>
               <div className="flex items-center gap-3 mt-4">
                 {[Twitter, Linkedin, Github].map((Icon, i) => (
                   <a key={i} href="#" className="h-8 w-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center hover:border-amber-400/30 hover:bg-amber-400/5 transition-colors">
@@ -1200,29 +1217,29 @@ export function LandingPage() {
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white mb-3">Product</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">{t('landing.footer.product')}</h4>
               <div className="space-y-2.5 text-sm text-slate-500">
-                <a href="#features" className="block hover:text-amber-400 transition-colors">Features</a>
-                <a href="#pricing" className="block hover:text-amber-400 transition-colors">Pricing</a>
-                <a href="#faq" className="block hover:text-amber-400 transition-colors">FAQ</a>
+                <a href="#features" className="block hover:text-amber-400 transition-colors">{t('landing.nav.features')}</a>
+                <a href="#pricing" className="block hover:text-amber-400 transition-colors">{t('landing.nav.pricing')}</a>
+                <a href="#faq" className="block hover:text-amber-400 transition-colors">{t('landing.nav.faq')}</a>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white mb-3">Solutions</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">{t('landing.footer.solutions')}</h4>
               <div className="space-y-2.5 text-sm text-slate-500">
-                <a href="#business" className="block hover:text-amber-400 transition-colors">For Business</a>
-                <a href="#accountants" className="block hover:text-amber-400 transition-colors">For Accountants</a>
-                <a href="#property" className="block hover:text-amber-400 transition-colors">Property Intelligence</a>
-                <a href="#features" className="block hover:text-amber-400 transition-colors">Personal Finance</a>
+                <a href="#business" className="block hover:text-amber-400 transition-colors">{t('landing.footer.forBusiness')}</a>
+                <a href="#accountants" className="block hover:text-amber-400 transition-colors">{t('landing.footer.forAccountants')}</a>
+                <a href="#property" className="block hover:text-amber-400 transition-colors">{t('landing.footer.propertyIntelligence')}</a>
+                <a href="#features" className="block hover:text-amber-400 transition-colors">{t('landing.footer.personalFinance')}</a>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white mb-3">Legal</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">{t('landing.footer.legal')}</h4>
               <div className="space-y-2.5 text-sm text-slate-500">
-                <Link href="/privacy" className="block hover:text-slate-300 transition-colors">Privacy Policy</Link>
-                <Link href="/terms" className="block hover:text-slate-300 transition-colors">Terms of Service</Link>
-                <Link href="/cookies" className="block hover:text-slate-300 transition-colors">Cookie Policy</Link>
-                <button onClick={() => { if (typeof window !== 'undefined' && (window as any).__hlOpenCookiePrefs) (window as any).__hlOpenCookiePrefs(); }} className="block text-left hover:text-amber-400 transition-colors">Manage Cookies</button>
+                <Link href="/privacy" className="block hover:text-slate-300 transition-colors">{t('landing.footer.privacyPolicy')}</Link>
+                <Link href="/terms" className="block hover:text-slate-300 transition-colors">{t('landing.footer.termsOfService')}</Link>
+                <Link href="/cookies" className="block hover:text-slate-300 transition-colors">{t('landing.footer.cookiePolicy')}</Link>
+                <button onClick={() => { if (typeof window !== 'undefined' && (window as any).__hlOpenCookiePrefs) (window as any).__hlOpenCookiePrefs(); }} className="block text-left hover:text-amber-400 transition-colors">{t('landing.footer.manageCookies')}</button>
               </div>
             </div>
             <div>
@@ -1238,7 +1255,7 @@ export function LandingPage() {
           </div>
           <div className="neon-line w-full mb-8" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} HomeLedger. All rights reserved.</p>
+            <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} HomeLedger. {t('landing.footer.allRightsReserved')}</p>
             <div className="flex items-center gap-4 text-sm text-slate-600">
               <Link href="/login" className="hover:text-amber-400 transition-colors">Sign In</Link>
               <Link href="/register" className="hover:text-amber-400 transition-colors">Create Account</Link>
