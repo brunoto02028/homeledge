@@ -19,6 +19,7 @@ import {
 import { FirstHomeGuide } from '@/components/first-home-guide';
 import { PropertyIntelligence } from '@/components/property-intelligence';
 import { MortgageSimulator } from '@/components/mortgage-simulator';
+import { PropertyPurchasePlanner } from '@/components/property-purchase-planner';
 
 interface Property {
   id: string;
@@ -166,6 +167,9 @@ export function PropertiesClient() {
 
       {/* Mortgage Approval Simulator */}
       <MortgageSimulator />
+
+      {/* Property Purchase Planner */}
+      <PropertyPurchasePlanner />
 
       {/* Portfolio Summary */}
       {active.length > 0 && (
