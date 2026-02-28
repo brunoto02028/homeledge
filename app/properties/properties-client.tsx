@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { FirstHomeGuide } from '@/components/first-home-guide';
 import { PropertyIntelligence } from '@/components/property-intelligence';
+import { MortgageSimulator } from '@/components/mortgage-simulator';
 
 interface Property {
   id: string;
@@ -162,6 +163,9 @@ export function PropertiesClient() {
 
       {/* Property Purchase Intelligence */}
       <PropertyIntelligence />
+
+      {/* Mortgage Approval Simulator */}
+      <MortgageSimulator />
 
       {/* Portfolio Summary */}
       {active.length > 0 && (
