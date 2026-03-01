@@ -83,6 +83,27 @@ export function LandingPage() {
     fetch('/api/cms').then(r => r.json()).then(d => { if (Array.isArray(d)) setCms(d); }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const el = document.getElementById('landing-map-preview');
+    if (!el || (window as any).__landingMapInit) return;
+    (window as any).__landingMapInit = true;
+    const loadMap = () => {
+      const L = (window as any).L; if (!L || !el) return;
+      const map = L.map(el, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, keyboard: false, boxZoom: false }).setView([20, 15], 2);
+      L.tileLayer('https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    };
+    if ((window as any).L) { loadMap(); return; }
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(css);
+    }
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = loadMap;
+    document.head.appendChild(script);
+  }, [status]);
+
   const getCms = (key: string) => cms.find(s => s.sectionKey === key);
 
   if (status === 'loading') {
@@ -555,53 +576,10 @@ export function LandingPage() {
 
               {/* Map area with animated dots */}
               <div className="relative h-[280px] sm:h-[360px] overflow-hidden" style={{ background: '#0d1520' }}>
-                {/* World map outline SVG */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <radialGradient id="glow1" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.15"/><stop offset="100%" stopColor="#0ea5e9" stopOpacity="0"/></radialGradient>
-                  </defs>
-                  {/* Ocean grid */}
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,180,255,0.06)" strokeWidth="0.5"/></pattern>
-                  <rect width="1000" height="500" fill="url(#grid)"/>
-                  {/* Simplified continent outlines */}
-                  <g fill="rgba(15,35,55,0.9)" stroke="rgba(0,200,255,0.35)" strokeWidth="1">
-                    {/* North America */}
-                    <path d="M120,60 L160,55 180,70 200,65 220,80 230,95 225,120 240,130 250,145 240,160 230,170 220,175 200,180 180,185 160,190 140,195 130,200 125,210 135,225 140,235 145,250 120,230 100,200 95,175 85,150 80,120 90,95 100,75Z"/>
-                    {/* South America */}
-                    <path d="M220,260 L230,250 245,255 260,265 270,280 275,300 280,320 278,345 270,365 260,380 245,390 230,385 220,370 215,350 210,330 208,310 210,290 215,275Z"/>
-                    {/* Europe */}
-                    <path d="M460,70 L480,65 500,60 510,65 520,70 530,80 520,90 530,100 525,115 515,120 500,125 490,130 480,125 470,118 465,105 455,95 450,80Z"/>
-                    {/* Africa */}
-                    <path d="M460,175 L475,170 495,165 510,170 525,175 540,185 550,200 555,220 560,245 555,270 548,295 540,320 530,340 515,355 500,360 485,350 475,335 465,315 455,290 450,265 448,240 450,215 452,195Z"/>
-                    {/* Asia */}
-                    <path d="M540,55 L570,50 600,48 640,50 680,55 720,60 750,65 770,70 790,80 810,75 830,85 840,100 830,110 810,105 790,115 770,120 760,135 740,140 720,135 700,140 680,145 660,150 640,155 620,160 600,155 580,145 560,130 550,115 540,100 535,85 538,70Z"/>
-                    {/* India */}
-                    <path d="M660,160 L675,155 690,165 695,185 690,210 680,230 665,235 655,220 650,200 652,180Z"/>
-                    {/* Southeast Asia */}
-                    <path d="M740,155 L760,150 780,155 790,170 785,185 775,195 760,190 750,180 745,168Z"/>
-                    {/* Australia */}
-                    <path d="M760,300 L790,290 820,295 845,305 855,320 850,340 840,355 820,365 795,368 775,360 760,345 755,325Z"/>
-                    {/* UK/Ireland */}
-                    <path d="M453,82 L458,78 462,82 460,88 455,90 452,86Z"/>
-                    {/* Japan */}
-                    <path d="M825,95 L830,88 835,95 833,108 828,115 823,108Z"/>
-                    {/* Indonesia */}
-                    <path d="M750,230 L770,225 790,228 810,232 820,238 810,245 790,242 770,240 755,237Z"/>
-                    {/* Greenland */}
-                    <path d="M290,25 L310,20 330,22 345,30 340,45 330,55 315,58 300,52 290,40Z"/>
-                  </g>
-                  {/* Glow effects */}
-                  <circle cx="500" cy="200" r="200" fill="url(#glow1)"/>
-                </svg>
-                {/* Grid overlay */}
-                <div className="absolute inset-0 opacity-[0.04]"
-                  style={{
-                    backgroundImage: 'linear-gradient(rgba(0,180,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,180,255,0.4) 1px, transparent 1px)',
-                    backgroundSize: '50px 50px',
-                  }}
-                />
-                {/* Day/night gradient mock */}
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%)' }} />
+                {/* Real Leaflet map rendered directly */}
+                <div id="landing-map-preview" className="absolute inset-0 w-full h-full" style={{ filter: 'brightness(1.4) saturate(1.3)' }} />
+                {/* Subtle vignette */}
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 50%, rgba(10,10,26,0.6) 100%)' }} />
 
                 {/* Animated blinking dots representing news/events */}
                 {[
