@@ -403,6 +403,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : pathname.startsWith('/entities') ? 'general'
     : 'general';
 
+  const isFullscreen = pathname === '/intelligence';
+
   return (
     <PWAProvider>
       <EntityProvider>
@@ -411,11 +413,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <div className="flex flex-1 flex-col overflow-hidden">
               <MobileTopBar />
-              <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
-                <div className="mx-auto max-w-7xl">
+              {isFullscreen ? (
+                <main className="relative flex-1 overflow-hidden bg-[#050510]">
                   {children}
-                </div>
-              </main>
+                </main>
+              ) : (
+                <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
+                  <div className="mx-auto max-w-7xl">
+                    {children}
+                  </div>
+                </main>
+              )}
             </div>
           </div>
           <AiChat section={aiSection} />
