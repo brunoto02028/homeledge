@@ -31,23 +31,29 @@ export async function GET() {
   }
 
   try {
+    // Include active AND expired connections that have a refresh token (attempt recovery)
     const connections = await (prisma as any).bankConnection.findMany({
-      where: { status: 'active' },
+      where: {
+        status: { in: ['active', 'expired', 'error'] },
+        refreshToken: { not: null },
+      },
     });
 
-    console.log(`[CronSyncBanks] Found ${connections.length} active connections to sync`);
+    const activeCount = connections.filter((c: any) => c.status === 'active').length;
+    const expiredCount = connections.filter((c: any) => c.status !== 'active').length;
+    console.log(`[CronSyncBanks] Found ${connections.length} connections (${activeCount} active, ${expiredCount} expired/error) to process`);
 
     for (const conn of connections) {
       try {
         let accessToken = conn.accessToken;
 
-        // Proactive token refresh: refresh if expired OR about to expire within buffer
+        // Always refresh if: expired status, OR token about to expire, OR no token expiry recorded
         const expiresAt = conn.tokenExpiresAt ? new Date(conn.tokenExpiresAt).getTime() : 0;
-        const needsRefresh = expiresAt > 0 && expiresAt < (Date.now() + REFRESH_BUFFER_MS);
+        const needsRefresh = conn.status !== 'active' || expiresAt === 0 || expiresAt < (Date.now() + REFRESH_BUFFER_MS);
 
         if (needsRefresh) {
-          const timeLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
-          console.log(`[CronSyncBanks] ${conn.bankName || conn.id}: Token ${timeLeft > 0 ? `expires in ${timeLeft}s` : 'expired'}, refreshing...`);
+          const label = conn.bankName || conn.id;
+          console.log(`[CronSyncBanks] ${label}: Status=${conn.status}, attempting token refresh...`);
           try {
             const refreshed = await refreshWithRetry(conn.refreshToken);
             accessToken = refreshed.access_token;
@@ -57,18 +63,25 @@ export async function GET() {
                 accessToken: refreshed.access_token,
                 refreshToken: refreshed.refresh_token,
                 tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+                status: 'active',
                 lastSyncError: null,
               },
             });
-            console.log(`[CronSyncBanks] ${conn.bankName || conn.id}: Token refreshed OK, new expiry in ${refreshed.expires_in}s`);
+            console.log(`[CronSyncBanks] ${label}: Token refreshed OK → active, new expiry in ${refreshed.expires_in}s`);
           } catch (err: any) {
             const errorMsg = err.message?.substring(0, 200) || 'Token refresh failed';
-            console.error(`[CronSyncBanks] ${conn.bankName || conn.id}: Token refresh FAILED:`, errorMsg);
+            const isPermanent = errorMsg.includes('invalid_grant') || errorMsg.includes('consent') || errorMsg.includes('revoked');
+            console.error(`[CronSyncBanks] ${conn.bankName || conn.id}: Token refresh FAILED (${isPermanent ? 'PERMANENT' : 'temporary'}):`, errorMsg);
             await (prisma as any).bankConnection.update({
               where: { id: conn.id },
-              data: { status: 'expired', lastSyncError: `Token refresh failed — please reconnect your bank` },
+              data: {
+                status: 'expired',
+                lastSyncError: isPermanent
+                  ? 'Bank consent expired (90-day limit) — please reconnect your bank'
+                  : 'Token refresh failed — will retry next sync cycle',
+              },
             });
-            results.push({ connectionId: conn.id, bank: conn.bankName || '?', synced: 0, skipped: 0, error: 'Token expired — reconnect required' });
+            results.push({ connectionId: conn.id, bank: conn.bankName || '?', synced: 0, skipped: 0, error: isPermanent ? 'Consent expired — reconnect required' : 'Token refresh failed — will retry' });
             continue;
           }
         }
