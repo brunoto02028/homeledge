@@ -589,7 +589,7 @@ export default function IntelligenceClient() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#050510]">
+    <div className="absolute inset-0 overflow-hidden bg-[#050510]">
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
       {/* ═══ HUD CORNER BRACKETS ═══ */}

@@ -414,7 +414,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex flex-1 flex-col overflow-hidden">
               <MobileTopBar />
               {isFullscreen ? (
-                <main className="flex-1 overflow-hidden bg-[#050510]">
+                <main className="relative flex-1 overflow-hidden bg-[#050510]">
                   {children}
                 </main>
               ) : (
