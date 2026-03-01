@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireUserId } from '@/lib/auth';
 import Stripe from 'stripe';
+import bcrypt from 'bcryptjs';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getPermissionsForPlan } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,30 +13,92 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' as any });
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const userId = await requireUserId();
     const stripe = getStripe();
+    const body = await req.json().catch(() => ({}));
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true, fullName: true, stripeCustomerId: true, plan: true } as any,
-    });
+    let userId: string;
+    let userEmail: string;
+    let userName: string;
 
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    // ── Flow 1: Logged-in user ──────────────────────────────────────
+    const session = await getServerSession(authOptions);
+    const sessionUserId = (session?.user as any)?.id;
 
-    // Already subscribed to intelligence or higher plan
-    const activePlans = ['intelligence', 'starter', 'pro', 'business', 'managed'];
-    if (activePlans.includes((user as any).plan)) {
-      return NextResponse.json({ error: 'Already subscribed', redirect: '/intelligence' }, { status: 400 });
+    if (sessionUserId) {
+      const user = await prisma.user.findUnique({
+        where: { id: sessionUserId },
+        select: { id: true, email: true, fullName: true, stripeCustomerId: true, plan: true } as any,
+      });
+      if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+      const activePlans = ['intelligence', 'starter', 'pro', 'business', 'managed'];
+      if (activePlans.includes((user as any).plan)) {
+        return NextResponse.json({ error: 'Already subscribed', redirect: '/intelligence' }, { status: 400 });
+      }
+
+      userId = (user as any).id;
+      userEmail = (user as any).email;
+      userName = (user as any).fullName;
+
+    // ── Flow 2: New user — inline registration ──────────────────────
+    } else {
+      const { email, fullName, password } = body;
+      if (!email || !fullName || !password) {
+        return NextResponse.json({ error: 'Name, email and password are required' }, { status: 400 });
+      }
+      if (password.length < 8) {
+        return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+      }
+
+      const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+      if (existing) {
+        return NextResponse.json({ error: 'Email already registered. Please sign in first.', loginRequired: true }, { status: 409 });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      const permissions = getPermissionsForPlan('intelligence');
+
+      const newUser = await prisma.$transaction(async (tx) => {
+        const u = await tx.user.create({
+          data: {
+            email: email.toLowerCase(),
+            passwordHash,
+            fullName,
+            role: 'user',
+            status: 'active',
+            emailVerified: true,
+            plan: 'none',
+            permissions,
+            onboardingCompleted: true,
+          } as any,
+        });
+        const household = await tx.household.create({
+          data: { name: `${fullName}'s Household`, ownerId: u.id },
+        });
+        await tx.membership.create({
+          data: { userId: u.id, householdId: household.id, role: 'owner' },
+        });
+        return u;
+      });
+
+      userId = newUser.id;
+      userEmail = newUser.email;
+      userName = newUser.fullName;
     }
 
-    // Get or create Stripe customer
-    let customerId = (user as any).stripeCustomerId;
+    // ── Create Stripe customer + checkout ────────────────────────────
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true } as any,
+    });
+
+    let customerId = (dbUser as any)?.stripeCustomerId;
     if (!customerId) {
       const customer = await (stripe.customers as any).create({
-        email: user.email,
-        name: user.fullName,
+        email: userEmail,
+        name: userName,
         metadata: { userId },
       });
       customerId = customer.id;
@@ -43,9 +108,7 @@ export async function POST() {
       });
     }
 
-    // Use STRIPE_PRICE_INTELLIGENCE if available, otherwise create price inline
     const priceId = process.env.STRIPE_PRICE_INTELLIGENCE;
-
     const lineItems = priceId
       ? [{ price: priceId, quantity: 1 }]
       : [{
@@ -55,13 +118,13 @@ export async function POST() {
               name: 'HomeLedger Intelligence',
               description: 'Real-time global intelligence dashboard — news, military tracking, earthquakes, economic data',
             },
-            unit_amount: 299, // £2.99
+            unit_amount: 299,
             recurring: { interval: 'month' as const },
           },
           quantity: 1,
         }];
 
-    const session = await stripe.checkout.sessions.create({
+    const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: lineItems,
@@ -74,11 +137,8 @@ export async function POST() {
       metadata: { userId, plan: 'intelligence' },
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: checkoutSession.url, newAccount: !sessionUserId });
   } catch (error: any) {
-    if (error.message === 'UNAUTHORIZED') {
-      return NextResponse.json({ error: 'Login required', loginRequired: true }, { status: 401 });
-    }
     console.error('[Intelligence Checkout] Error:', error);
     return NextResponse.json({ error: error.message || 'Checkout failed' }, { status: 500 });
   }

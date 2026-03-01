@@ -80,11 +80,13 @@ export default function IntelligenceClient() {
   // Subscription gate
   const [accessChecked, setAccessChecked] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
+  const [userPlan, setUserPlan] = useState('');
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
     fetch('/api/intelligence/check-access')
       .then(r => r.json())
-      .then(d => { setHasAccess(d.hasAccess); setAccessChecked(true); })
+      .then(d => { setHasAccess(d.hasAccess); setUserPlan(d.plan || ''); setAccessChecked(true); })
       .catch(() => { setHasAccess(false); setAccessChecked(true); });
   }, []);
 
@@ -1184,6 +1186,50 @@ export default function IntelligenceClient() {
           );
         })()}
       </AnimatePresence>
+
+      {/* ═══════════ UPGRADE BANNER (intelligence-only users) ═══════════ */}
+      {userPlan === 'intelligence' && (
+        <>
+          {!showUpgrade ? (
+            <button
+              onClick={() => setShowUpgrade(true)}
+              className="fixed bottom-4 right-4 z-[60] flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono backdrop-blur-xl hover:bg-amber-500/20 transition-all shadow-lg shadow-black/40"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unlock Full Platform
+            </button>
+          ) : (
+            <div className="fixed bottom-4 right-4 z-[60] w-72 rounded-2xl border border-amber-500/20 bg-[#0a0a1a]/95 backdrop-blur-xl shadow-2xl shadow-black/60 overflow-hidden">
+              <div className="h-0.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500" />
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-amber-400 font-mono text-[10px] font-bold tracking-wider">FULL PLATFORM</span>
+                  <button onClick={() => setShowUpgrade(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
+                </div>
+                <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                  Upgrade to manage bank statements, invoices, bills, tax timeline, secure vault, and more.
+                </p>
+                <div className="grid grid-cols-2 gap-1.5 mb-3 text-[10px] text-slate-500">
+                  <span>📊 Bank Statements</span>
+                  <span>🧾 Invoices & Bills</span>
+                  <span>🏦 Open Banking</span>
+                  <span>🔒 Secure Vault</span>
+                  <span>📅 Tax Timeline</span>
+                  <span>🏢 Business Tools</span>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href="/settings?upgrade=1"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-bold text-center hover:from-amber-400 hover:to-orange-400 transition-all"
+                  >
+                    Upgrade from £7.99/mo
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* ═══════════ CSS ═══════════ */}
       <style jsx global>{`
