@@ -250,64 +250,78 @@ const CONTINENT_MAP: Record<string, string> = {
   uy: 'Americas',
 };
 
-// ─── GDELT country name → code mapping ──────────────────────────────────────
-const GDELT_COUNTRY: Record<string, string> = {
-  'united states': 'us', 'united kingdom': 'gb', 'canada': 'ca', 'australia': 'au',
-  'germany': 'de', 'france': 'fr', 'italy': 'it', 'spain': 'es', 'portugal': 'pt',
-  'netherlands': 'nl', 'belgium': 'be', 'switzerland': 'ch', 'austria': 'at',
-  'sweden': 'se', 'norway': 'no', 'denmark': 'dk', 'finland': 'fi',
-  'poland': 'pl', 'czech republic': 'cz', 'romania': 'ro', 'greece': 'gr',
-  'hungary': 'hu', 'bulgaria': 'bg', 'ukraine': 'ua', 'russia': 'ru', 'turkey': 'tr',
-  'ireland': 'ie', 'india': 'in', 'china': 'cn', 'japan': 'jp', 'south korea': 'kr',
-  'taiwan': 'tw', 'hong kong': 'hk', 'singapore': 'sg', 'malaysia': 'my',
-  'thailand': 'th', 'indonesia': 'id', 'philippines': 'ph', 'vietnam': 'vn',
-  'pakistan': 'pk', 'bangladesh': 'bd', 'sri lanka': 'lk', 'nepal': 'np',
-  'israel': 'il', 'iran': 'ir', 'iraq': 'iq', 'saudi arabia': 'sa',
-  'united arab emirates': 'ae', 'qatar': 'qa', 'kuwait': 'kw', 'egypt': 'eg',
-  'syria': 'sy', 'lebanon': 'lb', 'jordan': 'jo', 'yemen': 'ye',
-  'brazil': 'br', 'argentina': 'ar', 'mexico': 'mx', 'colombia': 'co',
-  'chile': 'cl', 'peru': 'pe', 'venezuela': 've', 'cuba': 'cu', 'ecuador': 'ec',
-  'south africa': 'za', 'nigeria': 'ng', 'kenya': 'ke', 'ethiopia': 'et',
-  'ghana': 'gh', 'tanzania': 'tz', 'morocco': 'ma', 'algeria': 'dz',
-  'libya': 'ly', 'sudan': 'sd', 'south sudan': 'ss', 'somalia': 'so',
-  'new zealand': 'nz', 'afghanistan': 'af', 'myanmar': 'mm', 'cambodia': 'kh',
-  'kazakhstan': 'kz', 'uzbekistan': 'uz', 'palestine': 'ps',
-};
-
-function gdeltCountryToCode(name: string): string | null {
-  if (!name) return null;
-  const lower = name.toLowerCase().trim();
-  return GDELT_COUNTRY[lower] || null;
+// ─── RSS Feed Parser (no npm dep needed) ─────────────────────────────────────
+function parseRSSItems(xml: string): Array<{ title: string; link: string; description: string; pubDate: string; imageUrl: string | null }> {
+  const items: Array<{ title: string; link: string; description: string; pubDate: string; imageUrl: string | null }> = [];
+  const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
+  let match;
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const block = match[1];
+    const getTag = (tag: string) => {
+      const m = block.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+      return (m ? (m[1] || m[2] || '') : '').trim();
+    };
+    const title = getTag('title').replace(/<[^>]+>/g, '');
+    const link = getTag('link') || getTag('guid');
+    const description = getTag('description').replace(/<[^>]+>/g, '').slice(0, 300);
+    const pubDate = getTag('pubDate') || getTag('dc:date');
+    // Try multiple image patterns
+    let imageUrl: string | null = null;
+    const mediaMatch = block.match(/url="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp|gif)[^"]*)"/i)
+      || block.match(/<enclosure[^>]+url="(https?:\/\/[^"]+)"/i)
+      || block.match(/<media:thumbnail[^>]+url="(https?:\/\/[^"]+)"/i);
+    if (mediaMatch) imageUrl = mediaMatch[1];
+    if (title && link) items.push({ title, link, description, pubDate, imageUrl });
+  }
+  return items;
 }
+
+// ─── Global RSS Feeds ────────────────────────────────────────────────────────
+const RSS_FEEDS = [
+  // UK
+  { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', source: 'BBC News', country: 'gb', cat: 'general' },
+  { url: 'https://feeds.bbci.co.uk/news/business/rss.xml', source: 'BBC Business', country: 'gb', cat: 'business' },
+  { url: 'https://www.theguardian.com/world/rss', source: 'The Guardian', country: 'gb', cat: 'general' },
+  // US
+  { url: 'http://rss.cnn.com/rss/edition_world.rss', source: 'CNN', country: 'us', cat: 'general' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', source: 'New York Times', country: 'us', cat: 'general' },
+  { url: 'https://feeds.npr.org/1004/rss.xml', source: 'NPR', country: 'us', cat: 'general' },
+  // Middle East
+  { url: 'https://www.aljazeera.com/xml/rss/all.xml', source: 'Al Jazeera', country: 'qa', cat: 'general' },
+  // Europe
+  { url: 'https://www.france24.com/en/rss', source: 'France 24', country: 'fr', cat: 'general' },
+  { url: 'https://rss.dw.com/xml/rss-en-world', source: 'DW News', country: 'de', cat: 'general' },
+  // Asia
+  { url: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml', source: 'CNA', country: 'sg', cat: 'general' },
+  // Oceania
+  { url: 'https://www.abc.net.au/news/feed/2942460/rss.xml', source: 'ABC Australia', country: 'au', cat: 'general' },
+  // Science & Tech
+  { url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', source: 'BBC Science', country: 'gb', cat: 'science' },
+  { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', source: 'BBC Tech', country: 'gb', cat: 'technology' },
+  // Business
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml', source: 'NYT Business', country: 'us', cat: 'business' },
+];
 
 // ─── Source fetchers ─────────────────────────────────────────────────────────
 
-async function fetchGDELT(): Promise<any[]> {
-  const queries = [
-    { q: 'sourcelang:english', max: 75, label: 'general' },
-    { q: '(war OR military OR missile OR airstrike) sourcelang:english', max: 50, label: 'general' },
-    { q: '(economy OR trade OR "central bank" OR inflation) sourcelang:english', max: 30, label: 'business' },
-    { q: '(earthquake OR tsunami OR hurricane OR disaster) sourcelang:english', max: 20, label: 'science' },
-  ];
+async function fetchRSSFeeds(): Promise<any[]> {
   const results: any[] = [];
-  await Promise.all(queries.map(async ({ q, max, label }) => {
+  await Promise.all(RSS_FEEDS.map(async (feed) => {
     try {
-      const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=${max}&format=json&sort=DateDesc&timespan=24h`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(feed.url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) return;
-      const data = await res.json();
-      if (!data.articles) return;
-      for (const a of data.articles) {
-        const cc = gdeltCountryToCode(a.sourcecountry || '');
+      const xml = await res.text();
+      const items = parseRSSItems(xml);
+      for (const item of items.slice(0, 15)) {
         results.push({
-          title: a.title, description: null, url: a.url,
-          urlToImage: a.socialimage || null,
-          publishedAt: a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/, '$1-$2-$3T$4:$5:$6Z')).toISOString() : new Date().toISOString(),
-          source: { id: '', name: a.domain || 'GDELT', country: cc || '' },
-          newsCategory: label, _src: 'gdelt',
+          title: item.title, description: item.description || null, url: item.link,
+          urlToImage: item.imageUrl,
+          publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          source: { id: '', name: feed.source, country: feed.country },
+          newsCategory: feed.cat, _src: 'rss',
         });
       }
-    } catch (e: any) { console.error('[GDELT]', e.message); }
+    } catch (e: any) { console.error(`[RSS] ${feed.source}: ${e.message}`); }
   }));
   return results;
 }
@@ -435,20 +449,23 @@ export async function GET(req: NextRequest) {
 
   try {
     // Fetch from all 3 sources in parallel
-    const [gdeltArticles, currentsArticles, newsApiArticles] = await Promise.all([
-      category || query ? Promise.resolve([]) : fetchGDELT(),
+    const [rssArticles, currentsArticles, newsApiArticles] = await Promise.all([
+      category || query ? Promise.resolve([]) : fetchRSSFeeds(),
       category || query ? Promise.resolve([]) : fetchCurrentsAPI(),
       newsApiKey ? fetchNewsAPI(newsApiKey, category, query) : Promise.resolve([]),
     ]);
 
-    const allArticles = [...newsApiArticles, ...currentsArticles, ...gdeltArticles];
+    const allArticles = [...newsApiArticles, ...currentsArticles, ...rssArticles];
 
-    console.log(`[News] Sources: NewsAPI=${newsApiArticles.length}, Currents=${currentsArticles.length}, GDELT=${gdeltArticles.length}, Total raw=${allArticles.length}`);
+    console.log(`[News] Sources: NewsAPI=${newsApiArticles.length}, Currents=${currentsArticles.length}, RSS=${rssArticles.length}, Total raw=${allArticles.length}`);
 
-    // Deduplicate by normalized title
+    // Filter out stale articles (older than 48h) and deduplicate by normalized title
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
     const seen = new Set<string>();
     const unique = allArticles.filter(a => {
       if (!a.title || a.title === '[Removed]') return false;
+      // Drop articles with bad/old dates
+      try { if (new Date(a.publishedAt).getTime() < cutoff) return false; } catch {}
       const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
       if (seen.has(key)) return false;
       seen.add(key);
@@ -499,7 +516,7 @@ export async function GET(req: NextRequest) {
       sources: {
         newsapi: newsApiArticles.length,
         currents: currentsArticles.length,
-        gdelt: gdeltArticles.length,
+        rss: rssArticles.length,
       },
       fetchedAt: new Date().toISOString(),
     };
