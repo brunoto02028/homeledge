@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { PoundSterling, LogOut, User, PanelLeftClose, PanelLeft, Menu, X, Moon, Sun, Landmark, Building2, ChevronDown, Download } from "lucide-react"
 import { Navigation } from "./navigation"
+import { IntelligenceAlertBell } from "./intelligence-alerts"
 import { AiChat } from "./ai-chat"
 import { PWAInstallPrompt, PWAProvider, PWASidebarButton } from "./pwa-install"
 import { EntityProvider, useEntityContext } from "./entity-context"
@@ -130,8 +131,8 @@ function SidebarLogo() {
   }
 
   return (
-    <div className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-500/20">
-      <PoundSterling className="h-5 w-5 text-slate-900" />
+    <div className="flex-shrink-0 h-9 w-9 rounded-lg overflow-hidden shadow-lg">
+      <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
     </div>
   )
 }
@@ -334,12 +335,15 @@ export function MobileTopBar() {
         <Menu className="h-5 w-5 text-muted-foreground" />
       </button>
       <div className="flex items-center gap-2 flex-1">
-        <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500">
-          <PoundSterling className="h-4 w-4 text-slate-900" />
+        <div className="h-7 w-7 rounded-lg overflow-hidden">
+          <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
         </div>
         <span className="font-bold">HomeLedger</span>
       </div>
-      <NotificationBell />
+      <div className="relative flex items-center gap-1">
+        <IntelligenceAlertBell />
+        <NotificationBell />
+      </div>
     </header>
   )
 }
@@ -377,8 +381,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-500/20">
-            <PoundSterling className="h-7 w-7 text-slate-900 animate-pulse" />
+          <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20 animate-pulse">
+            <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>

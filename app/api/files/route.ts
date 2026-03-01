@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Fetch invoices with files
-    const invoicesWhere: any = { userId, cloudStoragePath: { not: null } };
+    // Fetch invoices with files (NOT at top level for Prisma compatibility)
+    const invoicesWhere: any = { userId, NOT: { cloudStoragePath: null } };
     if (entityId) invoicesWhere.entityId = entityId;
     const invoices = await prisma.invoice.findMany({
       where: invoicesWhere,

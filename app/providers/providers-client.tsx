@@ -751,15 +751,23 @@ export default function ProvidersClient() {
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {conn.status === 'active' && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => handleRefreshConnection(conn.id)} disabled={syncingId === conn.id}>
-                              {syncingId === conn.id ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Refreshing...</> : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh</>}
-                            </Button>
-                            <Button size="sm" variant="outline" className="border-amber-500 text-amber-500 hover:bg-amber-950/20" onClick={() => handleReconnectBank(conn)} disabled={connectingBank}>
-                              {connectingBank ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
-                              Reconnect & Sync Full History
-                            </Button>
-                          </>
+                          <Button size="sm" variant="outline" onClick={() => handleRefreshConnection(conn.id)} disabled={syncingId === conn.id}>
+                            {syncingId === conn.id ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Refreshing...</> : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh</>}
+                          </Button>
+                        )}
+                        {['active', 'expired', 'error'].includes(conn.status) && (
+                          <Button
+                            size="sm"
+                            variant={conn.status === 'expired' || conn.status === 'error' ? 'default' : 'outline'}
+                            className={conn.status === 'expired' || conn.status === 'error'
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                              : 'border-amber-500 text-amber-500 hover:bg-amber-950/20'}
+                            onClick={() => handleReconnectBank(conn)}
+                            disabled={connectingBank}
+                          >
+                            {connectingBank ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
+                            {conn.status === 'expired' || conn.status === 'error' ? 'Reconnect Bank' : 'Reconnect & Sync Full History'}
+                          </Button>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

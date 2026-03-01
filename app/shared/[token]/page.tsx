@@ -77,8 +77,8 @@ export default function SharedPortalPage() {
       <div className="bg-slate-900 text-white py-6 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
-              <PoundSterling className="h-5 w-5 text-slate-900" />
+            <div className="h-10 w-10 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
+              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold">HomeLedger</h1>

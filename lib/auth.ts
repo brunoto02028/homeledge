@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from './db';
 import bcrypt from 'bcryptjs';
@@ -7,6 +8,14 @@ import bcrypt from 'bcryptjs';
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
+    // Google OAuth — only active if env vars are set
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
+      }),
+    ] : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -36,29 +45,34 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials');
         }
 
-        // Verify login OTP code
-        if (!credentials.loginCode) {
-          throw new Error('Login code required');
+        // Verify login OTP code (skip if SMTP not configured — bypass mode)
+        const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+        const isBypass = !smtpConfigured && credentials.loginCode === 'SMTP_BYPASS';
+
+        if (!isBypass) {
+          if (!credentials.loginCode) {
+            throw new Error('Login code required');
+          }
+
+          const validCode = await prisma.emailVerificationToken.findFirst({
+            where: {
+              userId: user.id,
+              token: credentials.loginCode,
+              expiresAt: { gt: new Date() },
+              usedAt: null,
+            },
+          });
+
+          if (!validCode) {
+            throw new Error('Invalid or expired verification code');
+          }
+
+          // Mark code as used
+          await prisma.emailVerificationToken.update({
+            where: { id: validCode.id },
+            data: { usedAt: new Date() },
+          });
         }
-
-        const validCode = await prisma.emailVerificationToken.findFirst({
-          where: {
-            userId: user.id,
-            token: credentials.loginCode,
-            expiresAt: { gt: new Date() },
-            usedAt: null,
-          },
-        });
-
-        if (!validCode) {
-          throw new Error('Invalid or expired verification code');
-        }
-
-        // Mark code as used
-        await prisma.emailVerificationToken.update({
-          where: { id: validCode.id },
-          data: { usedAt: new Date() },
-        });
 
         // Update last login
         await prisma.user.update({

@@ -113,6 +113,12 @@ export function ServicesClient() {
       }
       if (!res.ok) throw new Error(data.error);
 
+      // If Stripe checkout URL returned, redirect to payment
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       toast({ title: 'Purchase created!', description: 'Our team will be in touch shortly.' });
       setPurchases(prev => [data.purchase, ...prev]);
       setActiveTab('purchases');

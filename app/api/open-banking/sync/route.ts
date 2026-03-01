@@ -4,6 +4,21 @@ import { requireUserId } from '@/lib/auth';
 import { refreshAccessToken } from '@/lib/truelayer';
 import { syncConnectionTransactions } from '@/lib/open-banking-sync';
 
+const REFRESH_BUFFER_MS = 10 * 60 * 1000; // 10 min buffer
+
+async function refreshWithRetry(refreshToken: string, retries = 2) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await refreshAccessToken(refreshToken);
+    } catch (err: any) {
+      const isPermanent = err.message?.includes('invalid_grant') || err.message?.includes('401') || err.message?.includes('403');
+      if (isPermanent || attempt === retries) throw err;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+  throw new Error('Token refresh exhausted retries');
+}
+
 // POST /api/open-banking/sync — Refresh: incremental sync from lastSyncAt to now
 export async function POST(request: NextRequest) {
   try {
@@ -20,15 +35,18 @@ export async function POST(request: NextRequest) {
     if (!conn) {
       return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
     }
-    if (conn.status !== 'active') {
-      return NextResponse.json({ error: 'Connection is not active' }, { status: 400 });
+    if (!['active', 'expired', 'error'].includes(conn.status)) {
+      return NextResponse.json({ error: 'Connection is not active. Please reconnect your bank.' }, { status: 400 });
     }
 
-    // Refresh token if expired
+    // Proactive token refresh: refresh if expired or about to expire
     let accessToken = conn.accessToken;
-    if (conn.tokenExpiresAt && new Date(conn.tokenExpiresAt) < new Date()) {
+    const expiresAt = conn.tokenExpiresAt ? new Date(conn.tokenExpiresAt).getTime() : 0;
+    const needsRefresh = expiresAt > 0 && expiresAt < (Date.now() + REFRESH_BUFFER_MS);
+
+    if (needsRefresh || conn.status === 'expired') {
       try {
-        const refreshed = await refreshAccessToken(conn.refreshToken);
+        const refreshed = await refreshWithRetry(conn.refreshToken);
         accessToken = refreshed.access_token;
         await (prisma as any).bankConnection.update({
           where: { id: conn.id },
@@ -36,14 +54,16 @@ export async function POST(request: NextRequest) {
             accessToken: refreshed.access_token,
             refreshToken: refreshed.refresh_token,
             tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+            status: 'active',
+            lastSyncError: null,
           },
         });
       } catch (err: any) {
         await (prisma as any).bankConnection.update({
           where: { id: conn.id },
-          data: { status: 'expired', lastSyncError: 'Token refresh failed: ' + err.message },
+          data: { status: 'expired', lastSyncError: 'Token refresh failed — please reconnect your bank' },
         });
-        return NextResponse.json({ error: 'Token expired. Please reconnect.' }, { status: 401 });
+        return NextResponse.json({ error: 'Token expired. Please click "Reconnect Bank" to re-authorise.', code: 'TOKEN_EXPIRED' }, { status: 401 });
       }
     }
 

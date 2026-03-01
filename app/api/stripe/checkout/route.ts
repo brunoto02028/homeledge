@@ -11,6 +11,10 @@ function getStripe() {
 }
 
 const PLANS: Record<string, { priceId: string; name: string }> = {
+  starter: {
+    priceId: process.env.STRIPE_PRICE_STARTER || '',
+    name: 'Starter',
+  },
   pro: {
     priceId: process.env.STRIPE_PRICE_PRO || '',
     name: 'Pro',
@@ -18,6 +22,10 @@ const PLANS: Record<string, { priceId: string; name: string }> = {
   business: {
     priceId: process.env.STRIPE_PRICE_BUSINESS || '',
     name: 'Business',
+  },
+  managed: {
+    priceId: process.env.STRIPE_PRICE_MANAGED || '',
+    name: 'Managed',
   },
 };
 
@@ -54,11 +62,15 @@ export async function POST(req: Request) {
       });
     }
 
-    // Create checkout session
+    // Create checkout session with 7-day free trial
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: { userId, plan },
+      },
       success_url: `${process.env.NEXTAUTH_URL}/settings?subscription=success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/settings?subscription=cancelled`,
       metadata: { userId, plan },

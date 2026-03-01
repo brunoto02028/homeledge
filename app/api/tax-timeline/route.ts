@@ -28,12 +28,24 @@ export async function GET(request: Request) {
     // Fetch user's entity info to determine applicable deadlines
     const entities = await prisma.entity.findMany({
       where: { userId: { in: userIds } },
-      select: { type: true, taxRegime: true, isVatRegistered: true, financialYearEnd: true },
+      select: { id: true, name: true, type: true, taxRegime: true, isVatRegistered: true, financialYearEnd: true, companyNumber: true },
     });
 
     const hasCompany = entities.some(e => ['limited_company', 'llp'].includes(e.type));
     const hasSelfAssessment = entities.some(e => ['self_assessment', 'both'].includes(e.taxRegime)) || entities.length === 0;
     const isVatRegistered = entities.some(e => e.isVatRegistered);
+
+    // Fetch real CH deadlines from cached profile data for connected companies
+    const companyEntities = entities.filter(e => ['limited_company', 'llp'].includes(e.type) && e.companyNumber);
+    const chConnections = companyEntities.length > 0 ? await (prisma as any).governmentConnection.findMany({
+      where: {
+        userId: { in: userIds },
+        provider: 'companies_house',
+        entityId: { in: companyEntities.map(e => e.id) },
+        profileData: { not: null },
+      },
+      select: { entityId: true, companyNumber: true, profileData: true },
+    }) : [];
 
     const deadlines: Omit<TaxDeadline, 'status' | 'daysUntil'>[] = [];
 
@@ -117,34 +129,66 @@ export async function GET(request: Request) {
       });
     }
 
-    // Corporation Tax deadlines
+    // Corporation Tax deadlines — use real CH data when available
     if (hasCompany) {
-      deadlines.push(
-        {
-          id: `ct-payment-${year}`,
-          title: 'Corporation Tax Payment',
-          description: `Pay Corporation Tax for accounting period ending in ${year} (9 months + 1 day after year end)`,
-          date: `${year + 1}-01-01`,
-          category: 'corporation_tax',
-          url: 'https://www.gov.uk/pay-corporation-tax',
-        },
-        {
-          id: `ct-return-${year}`,
-          title: 'Corporation Tax Return (CT600)',
-          description: `File CT600 for accounting period ending in ${year} (12 months after year end)`,
-          date: `${year + 1}-03-31`,
-          category: 'corporation_tax',
-          url: 'https://www.gov.uk/company-tax-returns',
-        },
-        {
-          id: `confirmation-stmt-${year}`,
-          title: 'Confirmation Statement',
-          description: 'Annual confirmation statement to Companies House',
-          date: `${year}-12-31`,
-          category: 'corporation_tax',
-          url: 'https://www.gov.uk/file-your-confirmation-statement-with-companies-house',
-        },
-      );
+      // Per-entity CH deadlines from live profile data
+      for (const conn of chConnections) {
+        const entity = companyEntities.find(e => e.id === conn.entityId);
+        const companyLabel = entity?.name || conn.companyNumber || 'Company';
+        const profile = conn.profileData?.profile || conn.profileData;
+
+        // Annual Accounts deadline (the most critical one)
+        const accountsDue = profile?.accounts?.next_due || profile?.accounts?.next_accounts?.due_on;
+        if (accountsDue) {
+          const periodStart = profile?.accounts?.next_accounts?.period_start_on || profile?.accounts?.accounting_reference_date?.month;
+          const periodEnd = profile?.accounts?.next_accounts?.period_end_on;
+          deadlines.push({
+            id: `ch-accounts-${conn.companyNumber}`,
+            title: `Annual Accounts — ${companyLabel}`,
+            description: `File annual accounts for ${companyLabel} (${conn.companyNumber})${periodEnd ? ` for period ending ${new Date(periodEnd).toLocaleDateString('en-GB')}` : ''}. Late filing incurs automatic penalties starting at £150.`,
+            date: accountsDue,
+            category: 'corporation_tax',
+            url: 'https://www.gov.uk/file-your-company-annual-accounts',
+          });
+        }
+
+        // Confirmation Statement deadline
+        const csDue = profile?.confirmation_statement?.next_due;
+        if (csDue) {
+          deadlines.push({
+            id: `ch-cs-${conn.companyNumber}`,
+            title: `Confirmation Statement — ${companyLabel}`,
+            description: `File CS01 for ${companyLabel} (${conn.companyNumber}). £13 fee. Failure to file can lead to the company being struck off.`,
+            date: csDue,
+            category: 'corporation_tax',
+            url: 'https://www.gov.uk/file-your-confirmation-statement-with-companies-house',
+          });
+        }
+      }
+
+      // Generic fallback deadlines for companies without CH connection
+      const connectedEntityIds = new Set(chConnections.map((c: any) => c.entityId));
+      const unconnectedCompanies = companyEntities.filter(e => !connectedEntityIds.has(e.id));
+      if (unconnectedCompanies.length > 0) {
+        deadlines.push(
+          {
+            id: `ct-payment-${year}`,
+            title: 'Corporation Tax Payment',
+            description: `Pay Corporation Tax for accounting period ending in ${year} (9 months + 1 day after year end). Connect your company to Companies House for exact dates.`,
+            date: `${year + 1}-01-01`,
+            category: 'corporation_tax',
+            url: 'https://www.gov.uk/pay-corporation-tax',
+          },
+          {
+            id: `ct-return-${year}`,
+            title: 'Corporation Tax Return (CT600)',
+            description: `File CT600 for accounting period ending in ${year} (12 months after year end)`,
+            date: `${year + 1}-03-31`,
+            category: 'corporation_tax',
+            url: 'https://www.gov.uk/company-tax-returns',
+          },
+        );
+      }
     }
 
     // PAYE deadlines (general)

@@ -475,24 +475,54 @@ export async function sendFilingRejectedEmail(
 }
 
 // ─── Send Helper ─────────────────────────────────────────────────────────
+// Priority: 1) Resend API  2) SMTP (nodemailer)  3) Simulated (log only)
+
+async function sendViaResend(to: string, subject: string, html: string) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend API error ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  return { success: true, messageId: data.id };
+}
+
+async function sendViaSMTP(to: string, subject: string, html: string) {
+  const info = await transporter.sendMail({ from: FROM, to, subject, html });
+  return { success: true, messageId: info.messageId };
+}
 
 async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.log(`[Email] SMTP not configured. Would send to ${to}: ${subject}`);
+  const useResend = !!process.env.RESEND_API_KEY;
+  const useSMTP = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+
+  if (!useResend && !useSMTP) {
+    console.log(`[Email] No email provider configured. Would send to ${to}: ${subject}`);
     return { success: false, simulated: true };
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: FROM,
-      to,
-      subject,
-      html,
-    });
-    console.log(`[Email] Sent to ${to}: ${subject} (${info.messageId})`);
-    return { success: true, messageId: info.messageId };
+    const result = useResend
+      ? await sendViaResend(to, subject, html)
+      : await sendViaSMTP(to, subject, html);
+    console.log(`[Email] Sent to ${to}: ${subject} (${result.messageId}) via ${useResend ? 'Resend' : 'SMTP'}`);
+    return result;
   } catch (error: any) {
-    console.error(`[Email] Failed to send to ${to}:`, error.message);
+    console.error(`[Email] Failed to send to ${to} via ${useResend ? 'Resend' : 'SMTP'}:`, error.message);
     return { success: false, error: error.message };
   }
+}
+
+/** Check if email sending is configured */
+export function isEmailConfigured(): boolean {
+  return !!(process.env.RESEND_API_KEY || (process.env.SMTP_USER && process.env.SMTP_PASS));
 }

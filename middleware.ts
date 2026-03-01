@@ -3,12 +3,12 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/change-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/change-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies', '/intelligence'];
 
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
-const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect'];
-const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode'];
+const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect', '/api/news'];
+const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -98,6 +98,11 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith('/accountant') && role !== 'accountant') {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
+      // Admin-only routes (learning modules) — block non-admin entirely
+      const adminOnlyRoutes = ['/learn', '/academy', '/relocation', '/english-hub'];
+      if (adminOnlyRoutes.some(r => pathname === r || pathname.startsWith(r + '/'))) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
       // Check feature permissions (only if permissions array is non-empty — empty = all access)
       if (permissions.length > 0) {
         const routePermMap: Record<string, string> = {
@@ -107,14 +112,14 @@ export async function middleware(request: NextRequest) {
           '/categories': 'categories', '/reports': 'reports', '/files': 'files',
           '/vault': 'vault', '/projections': 'projections', '/transfers': 'transfers',
           '/properties': 'properties', '/product-calculator': 'product_calculator',
-          '/tax-timeline': 'tax_timeline', '/learn': 'learn', '/academy': 'academy',
-          '/relocation': 'relocation', '/english-hub': 'english_hub', '/services': 'services', '/settings': 'settings',
+          '/tax-timeline': 'tax_timeline', '/services': 'services',
+          '/email': 'email', '/settings': 'settings',
         };
         const matchedRoute = Object.keys(routePermMap).find(
           r => pathname === r || pathname.startsWith(r + '/')
         );
         if (matchedRoute && !permissions.includes(routePermMap[matchedRoute])) {
-          return NextResponse.redirect(new URL('/dashboard?restricted=1', request.url));
+          return NextResponse.redirect(new URL('/settings?upgrade=1', request.url));
         }
       }
     }

@@ -481,6 +481,7 @@ export function AnalyticsDashboard() {
                   <thead>
                     <tr className="border-b text-left">
                       <th className="py-3 pr-4 font-medium text-muted-foreground">IP</th>
+                      <th className="py-3 pr-4 font-medium text-muted-foreground">Location</th>
                       <th className="py-3 pr-4 font-medium text-muted-foreground">Device</th>
                       <th className="py-3 pr-4 font-medium text-muted-foreground">Browser</th>
                       <th className="py-3 pr-4 font-medium text-muted-foreground">OS</th>
@@ -500,6 +501,13 @@ export function AnalyticsDashboard() {
                         return (
                           <tr key={v.id} className="border-b hover:bg-muted/30 transition-colors">
                             <td className="py-3 pr-4 font-mono text-xs">{v.ip}</td>
+                            <td className="py-3 pr-4 text-xs">
+                              {v.country ? (
+                                <span>{v.city ? `${v.city}, ` : ''}{v.country}</span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
                             <td className="py-3 pr-4">
                               <span className="inline-flex items-center gap-1.5 capitalize">
                                 <Icon className="h-3.5 w-3.5 text-muted-foreground" /> {v.device}

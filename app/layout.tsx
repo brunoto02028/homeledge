@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   authors: [{ name: "HomeLedger" }],
   icons: {
     icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    shortcut: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
   openGraph: {
@@ -64,6 +64,35 @@ export default function RootLayout({
       <head>
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js"></script>
         <style>{`[data-hydration-error] { display: none !important; }`}</style>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "HomeLedger",
+              "url": "https://homeledger.co.uk",
+              "applicationCategory": "FinanceApplication",
+              "operatingSystem": "Web",
+              "description": "All-in-one UK finance platform for individuals and small businesses. AI-powered bank statement processing, HMRC tax reports, invoice management, secure vault, identity verification, and real-time global intelligence.",
+              "offers": {
+                "@type": "AggregateOffer",
+                "priceCurrency": "GBP",
+                "lowPrice": "7.90",
+                "highPrice": "99.90",
+                "offerCount": "4"
+              },
+              "provider": {
+                "@type": "Organization",
+                "name": "HomeLedger",
+                "url": "https://homeledger.co.uk",
+                "logo": "https://homeledger.co.uk/icon-512.png",
+                "contactPoint": { "@type": "ContactPoint", "email": "admin@homeledger.co.uk", "contactType": "customer service" }
+              },
+              "featureList": ["Bank Statement Processing", "HMRC Tax Reports", "Invoice Management", "AI Categorisation", "Secure Vault", "Identity Verification", "Open Banking", "Global Intelligence Dashboard"]
+            })
+          }}
+        />
       </head>
       <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
         <Providers>

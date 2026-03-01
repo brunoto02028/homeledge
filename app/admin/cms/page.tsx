@@ -13,9 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import {
-  Sparkles, Mic, MicOff, Save, Eye, EyeOff, Loader2, RefreshCw,
+  Sparkles, Mic, MicOff, Save, Loader2, RefreshCw,
   Globe, FileText, HelpCircle, Star, Megaphone, Layout, Settings2,
-  ChevronDown, ChevronUp, ExternalLink, Wand2,
+  ChevronDown, ChevronUp, ExternalLink, Wand2, Check, X, Plus, Trash2,
 } from 'lucide-react';
 
 interface Section {
@@ -33,7 +33,7 @@ const SECTION_META: Record<string, { label: string; icon: React.ElementType; des
   meta: { label: 'SEO / Meta Tags', icon: Globe, description: 'Page title, meta description, Open Graph tags, and keywords' },
   hero: { label: 'Hero Section', icon: Megaphone, description: 'Headline, sub-headline, and CTA buttons' },
   stats: { label: 'Stats Bar', icon: Layout, description: 'Key numbers shown below the hero (e.g. 16+ Modules, AI, HMRC, 256-bit)' },
-  features: { label: 'Features Grid', icon: Layout, description: '16 feature cards with icons, titles and descriptions' },
+  features: { label: 'Features Grid', icon: Layout, description: 'Feature cards with icons, titles and descriptions' },
   business: { label: 'For Business', icon: Settings2, description: 'Business section — headline, bullet points, entity mockup' },
   howItWorks: { label: 'How It Works', icon: Settings2, description: 'Step-by-step guide (3 steps)' },
   testimonials: { label: 'Testimonials', icon: Star, description: 'Customer quotes — name, role, avatar initials and testimonial text' },
@@ -43,6 +43,65 @@ const SECTION_META: Record<string, { label: string; icon: React.ElementType; des
   cta: { label: 'Final CTA', icon: Megaphone, description: 'Final conversion section with headline and button' },
   footer: { label: 'Footer', icon: Layout, description: 'Footer columns, links, copyright' },
 };
+
+// Human-readable labels for known content keys
+const FIELD_LABELS: Record<string, string> = {
+  headline: 'Headline',
+  subheadline: 'Sub-headline',
+  ctaPrimary: 'Primary Button Text',
+  ctaSecondary: 'Secondary Button Text',
+  buttonText: 'Button Text',
+  description: 'Description',
+  descriptionDetail: 'Detailed Description',
+  tagline: 'Tagline',
+  copyright: 'Copyright',
+  pageTitle: 'Page Title',
+  metaDescription: 'Meta Description',
+  ogTitle: 'Open Graph Title',
+  ogDescription: 'Open Graph Description',
+  keywords: 'Keywords (comma-separated)',
+  complianceBanner: 'Compliance Banner',
+  noAccountBanner: 'No Account Banner',
+  question: 'Question',
+  answer: 'Answer',
+  name: 'Name',
+  role: 'Role',
+  quote: 'Quote',
+  title: 'Title',
+  icon: 'Icon Name',
+  step: 'Step Number',
+  price: 'Price',
+  period: 'Period',
+  cta: 'CTA Button',
+  per: 'Per',
+  checks: 'Number of Checks',
+  validityDays: 'Validity (days)',
+  badge: 'Badge Text',
+  label: 'Label',
+  href: 'Link URL',
+  law: 'Law Reference',
+  penalty: 'Penalty',
+  people: 'Target Audience',
+  rating: 'Rating',
+  highlighted: 'Highlighted',
+  features: 'Features',
+  id: 'ID',
+};
+
+// Check if a value is a simple string/number/boolean (editable as text)
+function isSimpleValue(val: any): boolean {
+  return typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean';
+}
+
+// Check if an array contains simple strings (like features list or keywords)
+function isStringArray(val: any): boolean {
+  return Array.isArray(val) && val.length > 0 && val.every((v: any) => typeof v === 'string');
+}
+
+// Check if an array contains objects (like items, steps, plans)
+function isObjectArray(val: any): boolean {
+  return Array.isArray(val) && val.length > 0 && val.every((v: any) => typeof v === 'object' && v !== null && !Array.isArray(v));
+}
 
 export default function AdminCmsPage() {
   const { data: session, status } = useSession();
@@ -56,7 +115,8 @@ export default function AdminCmsPage() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const [editData, setEditData] = useState<Record<string, { title: string; subtitle: string; content: string; isPublished: boolean }>>({});
+  const [editData, setEditData] = useState<Record<string, { title: string; subtitle: string; content: any; isPublished: boolean }>>({});
+  const [aiPreview, setAiPreview] = useState<{ sectionKey: string; generated: any } | null>(null);
 
   // Auth check
   useEffect(() => {
@@ -70,14 +130,13 @@ export default function AdminCmsPage() {
       const res = await fetch('/api/cms?all=true');
       const data = await res.json();
       setSections(data);
-      // Initialize edit data — include ALL section keys, even those not yet created
       const ed: Record<string, any> = {};
       for (const key of Object.keys(SECTION_META)) {
         const existing = data.find((s: Section) => s.sectionKey === key);
         ed[key] = {
           title: existing?.title || '',
           subtitle: existing?.subtitle || '',
-          content: JSON.stringify(existing?.content || {}, null, 2),
+          content: existing?.content || {},
           isPublished: existing?.isPublished ?? true,
         };
       }
@@ -91,20 +150,49 @@ export default function AdminCmsPage() {
 
   useEffect(() => { fetchSections(); }, [fetchSections]);
 
+  // Update a content field value
+  const updateContentField = (sectionKey: string, path: (string | number)[], value: any) => {
+    setEditData(prev => {
+      const section = { ...prev[sectionKey] };
+      const content = JSON.parse(JSON.stringify(section.content || {}));
+      let obj = content;
+      for (let i = 0; i < path.length - 1; i++) {
+        obj = obj[path[i]];
+      }
+      obj[path[path.length - 1]] = value;
+      return { ...prev, [sectionKey]: { ...section, content } };
+    });
+  };
+
+  // Add item to an array
+  const addArrayItem = (sectionKey: string, path: (string | number)[], template: any) => {
+    setEditData(prev => {
+      const section = { ...prev[sectionKey] };
+      const content = JSON.parse(JSON.stringify(section.content || {}));
+      let obj = content;
+      for (const p of path) obj = obj[p];
+      if (Array.isArray(obj)) obj.push(template);
+      return { ...prev, [sectionKey]: { ...section, content } };
+    });
+  };
+
+  // Remove item from an array
+  const removeArrayItem = (sectionKey: string, path: (string | number)[], index: number) => {
+    setEditData(prev => {
+      const section = { ...prev[sectionKey] };
+      const content = JSON.parse(JSON.stringify(section.content || {}));
+      let obj = content;
+      for (const p of path) obj = obj[p];
+      if (Array.isArray(obj)) obj.splice(index, 1);
+      return { ...prev, [sectionKey]: { ...section, content } };
+    });
+  };
+
   // Save section
   const handleSave = async (sectionKey: string) => {
     const data = editData[sectionKey];
     if (!data) return;
     setSaving(sectionKey);
-
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(data.content);
-    } catch {
-      toast({ title: 'Invalid JSON', description: 'The content field must be valid JSON.', variant: 'destructive' });
-      setSaving(null);
-      return;
-    }
 
     try {
       const res = await fetch('/api/cms', {
@@ -114,7 +202,7 @@ export default function AdminCmsPage() {
           sectionKey,
           title: data.title,
           subtitle: data.subtitle,
-          content: parsedContent,
+          content: data.content,
           isPublished: data.isPublished,
         }),
       });
@@ -132,7 +220,7 @@ export default function AdminCmsPage() {
     }
   };
 
-  // AI Generate
+  // AI Generate — now shows preview for approval
   const handleGenerate = async (sectionKey: string) => {
     if (!aiPrompt.trim()) {
       toast({ title: 'Enter a prompt', description: 'Describe what content you want the AI to generate.', variant: 'destructive' });
@@ -148,21 +236,15 @@ export default function AdminCmsPage() {
         body: JSON.stringify({
           sectionKey,
           prompt: aiPrompt,
-          currentContent: currentContent ? JSON.parse(currentContent) : null,
+          currentContent: currentContent || null,
         }),
       });
 
       const data = await res.json();
       if (data.generated) {
-        setEditData(prev => ({
-          ...prev,
-          [sectionKey]: {
-            ...prev[sectionKey],
-            content: JSON.stringify(data.generated, null, 2),
-          },
-        }));
+        setAiPreview({ sectionKey, generated: data.generated });
         setAiPrompt('');
-        toast({ title: 'AI Content Generated', description: 'Review the generated content and click Save to publish.' });
+        toast({ title: 'AI Content Ready', description: 'Review the generated text below. Click "Apply" to use it or "Discard" to cancel.' });
       } else {
         throw new Error(data.error || 'Generation failed');
       }
@@ -171,6 +253,20 @@ export default function AdminCmsPage() {
     } finally {
       setGenerating(null);
     }
+  };
+
+  // Accept AI-generated content
+  const acceptAiContent = () => {
+    if (!aiPreview) return;
+    setEditData(prev => ({
+      ...prev,
+      [aiPreview.sectionKey]: {
+        ...prev[aiPreview.sectionKey],
+        content: aiPreview.generated,
+      },
+    }));
+    toast({ title: 'Applied', description: 'AI content applied. Review the fields and click Save to publish.' });
+    setAiPreview(null);
   };
 
   // Voice Input (Web Speech API)
@@ -198,7 +294,6 @@ export default function AdminCmsPage() {
         transcript += event.results[i][0].transcript;
       }
       setAiPrompt(prev => {
-        // Replace interim with final
         const base = prev.replace(/\s*\[listening\.\.\.\]$/, '');
         return base + (base ? ' ' : '') + transcript;
       });
@@ -210,6 +305,295 @@ export default function AdminCmsPage() {
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
+  };
+
+  // Render friendly text fields for content object
+  const renderContentFields = (sectionKey: string, content: any, parentPath: (string | number)[] = []) => {
+    if (!content || typeof content !== 'object') return null;
+
+    const entries = Object.entries(content);
+
+    return entries.map(([fieldKey, value]) => {
+      const currentPath = [...parentPath, fieldKey];
+      const label = FIELD_LABELS[fieldKey] || fieldKey.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+
+      // Simple string value — render as Input or Textarea
+      if (typeof value === 'string') {
+        const isLong = value.length > 100;
+        return (
+          <div key={currentPath.join('.')} className="space-y-1.5">
+            <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
+            {isLong ? (
+              <Textarea
+                value={value}
+                onChange={(e) => updateContentField(sectionKey, currentPath, e.target.value)}
+                rows={3}
+                className="text-sm"
+              />
+            ) : (
+              <Input
+                value={value}
+                onChange={(e) => updateContentField(sectionKey, currentPath, e.target.value)}
+                className="text-sm"
+              />
+            )}
+          </div>
+        );
+      }
+
+      // Number value
+      if (typeof value === 'number') {
+        return (
+          <div key={currentPath.join('.')} className="space-y-1.5">
+            <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => updateContentField(sectionKey, currentPath, Number(e.target.value))}
+              className="text-sm w-32"
+            />
+          </div>
+        );
+      }
+
+      // Boolean value
+      if (typeof value === 'boolean') {
+        return (
+          <div key={currentPath.join('.')} className="flex items-center gap-2">
+            <Switch
+              checked={value}
+              onCheckedChange={(v) => updateContentField(sectionKey, currentPath, v)}
+            />
+            <Label className="text-sm text-muted-foreground">{label}</Label>
+          </div>
+        );
+      }
+
+      // Array of strings (features list, keywords, etc.)
+      if (isStringArray(value)) {
+        return (
+          <div key={currentPath.join('.')} className="space-y-2">
+            <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
+            <div className="space-y-1.5">
+              {(value as string[]).map((item: string, idx: number) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <Input
+                    value={item}
+                    onChange={(e) => updateContentField(sectionKey, [...currentPath, idx], e.target.value)}
+                    className="text-sm flex-1"
+                  />
+                  <button
+                    onClick={() => removeArrayItem(sectionKey, currentPath, idx)}
+                    className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+                    title="Remove"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addArrayItem(sectionKey, currentPath, '')}
+                className="text-xs h-7"
+                type="button"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add Item
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      // Array of objects (items, steps, plans, etc.)
+      if (isObjectArray(value)) {
+        return (
+          <div key={currentPath.join('.')} className="space-y-3">
+            <Label className="text-sm font-medium text-muted-foreground">{label} ({(value as any[]).length} items)</Label>
+            <div className="space-y-3">
+              {(value as any[]).map((item: any, idx: number) => (
+                <div key={idx} className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {item.title || item.name || item.question || `Item ${idx + 1}`}
+                    </span>
+                    <button
+                      onClick={() => removeArrayItem(sectionKey, currentPath, idx)}
+                      className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+                      title="Remove item"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {Object.entries(item).map(([itemKey, itemVal]) => {
+                      const itemLabel = FIELD_LABELS[itemKey] || itemKey.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                      const itemPath = [...currentPath, idx, itemKey];
+
+                      if (typeof itemVal === 'string') {
+                        const isLongText = itemVal.length > 80;
+                        return (
+                          <div key={itemKey} className={`space-y-1 ${isLongText ? 'md:col-span-2' : ''}`}>
+                            <Label className="text-xs text-muted-foreground">{itemLabel}</Label>
+                            {isLongText ? (
+                              <Textarea
+                                value={itemVal}
+                                onChange={(e) => updateContentField(sectionKey, itemPath, e.target.value)}
+                                rows={2}
+                                className="text-xs"
+                              />
+                            ) : (
+                              <Input
+                                value={itemVal}
+                                onChange={(e) => updateContentField(sectionKey, itemPath, e.target.value)}
+                                className="text-xs h-8"
+                              />
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (typeof itemVal === 'number') {
+                        return (
+                          <div key={itemKey} className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">{itemLabel}</Label>
+                            <Input
+                              type="number"
+                              value={itemVal}
+                              onChange={(e) => updateContentField(sectionKey, itemPath, Number(e.target.value))}
+                              className="text-xs h-8 w-24"
+                            />
+                          </div>
+                        );
+                      }
+
+                      if (typeof itemVal === 'boolean') {
+                        return (
+                          <div key={itemKey} className="flex items-center gap-2 py-1">
+                            <Switch
+                              checked={itemVal}
+                              onCheckedChange={(v) => updateContentField(sectionKey, itemPath, v)}
+                            />
+                            <Label className="text-xs text-muted-foreground">{itemLabel}</Label>
+                          </div>
+                        );
+                      }
+
+                      // Nested string array inside item (e.g. plan features)
+                      if (isStringArray(itemVal)) {
+                        return (
+                          <div key={itemKey} className="md:col-span-2 space-y-1">
+                            <Label className="text-xs text-muted-foreground">{itemLabel}</Label>
+                            <Textarea
+                              value={(itemVal as string[]).join('\n')}
+                              onChange={(e) => updateContentField(sectionKey, itemPath, e.target.value.split('\n'))}
+                              rows={Math.min((itemVal as string[]).length + 1, 6)}
+                              className="text-xs"
+                              placeholder="One item per line"
+                            />
+                          </div>
+                        );
+                      }
+
+                      return null;
+                    })}
+                  </div>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const template = { ...((value as any[])[0] || {}) };
+                  for (const k of Object.keys(template)) {
+                    if (typeof template[k] === 'string') template[k] = '';
+                    else if (typeof template[k] === 'number') template[k] = 0;
+                    else if (typeof template[k] === 'boolean') template[k] = false;
+                    else if (Array.isArray(template[k])) template[k] = [];
+                  }
+                  addArrayItem(sectionKey, currentPath, template);
+                }}
+                className="text-xs h-7"
+                type="button"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add {fieldKey === 'items' ? 'Item' : fieldKey === 'steps' ? 'Step' : fieldKey === 'plans' ? 'Plan' : 'Entry'}
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      // Nested object (like mockup, phoneMockup, etc.)
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        return (
+          <div key={currentPath.join('.')} className="space-y-2 rounded-lg border border-border/30 p-3">
+            <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
+            <div className="space-y-3 pl-2">
+              {renderContentFields(sectionKey, value, currentPath)}
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    });
+  };
+
+  // Render AI preview as readable text
+  const renderAiPreview = (content: any, indent: number = 0) => {
+    if (!content || typeof content !== 'object') return null;
+    const pad = 'pl-' + (indent * 3);
+
+    return Object.entries(content).map(([key, value]) => {
+      const label = FIELD_LABELS[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return (
+          <div key={key} className={`${pad} py-1`}>
+            <span className="text-xs font-semibold text-purple-400">{label}:</span>
+            <span className="text-sm text-foreground ml-2">{String(value)}</span>
+          </div>
+        );
+      }
+
+      if (isStringArray(value)) {
+        return (
+          <div key={key} className={`${pad} py-1`}>
+            <span className="text-xs font-semibold text-purple-400">{label}:</span>
+            <ul className="ml-4 mt-0.5">
+              {(value as string[]).map((item: string, i: number) => (
+                <li key={i} className="text-sm text-foreground">• {item}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+
+      if (isObjectArray(value)) {
+        return (
+          <div key={key} className={`${pad} py-1`}>
+            <span className="text-xs font-semibold text-purple-400">{label} ({(value as any[]).length} items):</span>
+            {(value as any[]).map((item: any, i: number) => (
+              <div key={i} className="ml-3 mt-1 p-2 rounded border border-purple-500/20 bg-purple-500/5">
+                <span className="text-xs font-medium text-purple-300">{item.title || item.name || item.question || `Item ${i + 1}`}</span>
+                {renderAiPreview(item, indent + 1)}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        return (
+          <div key={key} className={`${pad} py-1`}>
+            <span className="text-xs font-semibold text-purple-400">{label}:</span>
+            <div className="ml-2">{renderAiPreview(value, indent + 1)}</div>
+          </div>
+        );
+      }
+
+      return null;
+    });
   };
 
   if (loading || status === 'loading') return <LoadingSpinner />;
@@ -313,27 +697,53 @@ export default function AdminCmsPage() {
                     </div>
                   </div>
 
-                  {/* Content JSON */}
-                  <div className="space-y-2">
-                    <Label>Content (JSON)</Label>
-                    <Textarea
-                      value={data.content}
-                      onChange={(e) => setEditData(prev => ({
-                        ...prev,
-                        [key]: { ...prev[key], content: e.target.value },
-                      }))}
-                      rows={12}
-                      className="font-mono text-xs"
-                      placeholder="{}"
-                    />
-                  </div>
+                  {/* Content Fields — rendered as friendly text inputs */}
+                  {data.content && typeof data.content === 'object' && Object.keys(data.content).length > 0 && (
+                    <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <Label className="text-sm font-semibold">Content Fields</Label>
+                      <div className="space-y-4">
+                        {renderContentFields(key, data.content)}
+                      </div>
+                    </div>
+                  )}
 
-                  {/* AI Generation */}
+                  {/* AI Generation with Preview/Approval */}
                   <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
                       <Sparkles className="h-4 w-4" />
                       <span className="text-sm font-semibold">AI Content Generator</span>
                     </div>
+
+                    {/* AI Preview — shown when AI generates content, waiting for approval */}
+                    {aiPreview && aiPreview.sectionKey === key && (
+                      <div className="rounded-lg border-2 border-purple-400/40 bg-purple-500/10 p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-purple-400" />
+                          <span className="text-sm font-semibold text-purple-300">AI Generated Preview — Review before applying</span>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto space-y-1">
+                          {renderAiPreview(aiPreview.generated)}
+                        </div>
+                        <div className="flex gap-2 pt-2 border-t border-purple-500/20">
+                          <Button
+                            size="sm"
+                            onClick={acceptAiContent}
+                            className="bg-green-600 hover:bg-green-500 text-white"
+                          >
+                            <Check className="h-4 w-4 mr-1" /> Apply Content
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAiPreview(null)}
+                            className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                          >
+                            <X className="h-4 w-4 mr-1" /> Discard
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-2">
                       <div className="flex-1 relative">
                         <Textarea

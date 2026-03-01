@@ -4,10 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
-import { ROUTE_PERMISSION_MAP, hasPermission, type PermissionKey } from "@/lib/permissions"
+import { ROUTE_PERMISSION_MAP, hasPermission, ADMIN_ONLY_MODULES, type PermissionKey } from "@/lib/permissions"
 
 const navItems = [
   { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard, permission: 'dashboard' as PermissionKey },
@@ -17,6 +17,8 @@ const navItems = [
   { href: "/documents", labelKey: "nav.documents", icon: Camera, permission: 'documents' as PermissionKey },
   { href: "/categories", labelKey: "nav.categories", icon: Tag, permission: 'categories' as PermissionKey },
   { href: "/english-hub", labelKey: "nav.englishHub", icon: Languages, permission: 'english_hub' as PermissionKey },
+  { href: "/email", labelKey: "nav.email", icon: Mail, permission: 'email' as PermissionKey },
+  { href: "/intelligence", labelKey: "nav.intelligence", icon: Radio, permission: 'intelligence' as PermissionKey },
   { href: "/entities", labelKey: "nav.entities", icon: Landmark, permission: 'entities' as PermissionKey },
   { href: "/files", labelKey: "nav.files", icon: FolderOpen, permission: 'files' as PermissionKey },
   { href: "/household", labelKey: "nav.household", icon: Users, permission: 'household' as PermissionKey },
@@ -135,10 +137,12 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
     setLocale(locale === 'en' ? 'pt-BR' : 'en')
   }
 
-  // Filter items by permission
-  const visibleItems = orderedItems.filter(item =>
-    hasPermission(userRole, userPermissions, item.permission)
-  )
+  // Filter out admin-only modules for non-admin users (completely hidden)
+  // All other modules are visible but may be locked (padlock icon)
+  const visibleItems = orderedItems.filter(item => {
+    if (ADMIN_ONLY_MODULES.includes(item.permission) && !isAdmin) return false
+    return true
+  })
 
   return (
     <nav className="flex flex-col gap-0.5">
@@ -172,32 +176,41 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
         const Icon = item.icon
         const label = t(item.labelKey)
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+        const isLocked = !hasPermission(userRole, userPermissions, item.permission)
         return (
           <div
             key={item.href}
-            draggable={reorderMode}
+            draggable={reorderMode && !isLocked}
             onDragStart={() => handleDragStart(index)}
             onDragEnter={() => handleDragEnter(index)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => e.preventDefault()}
-            className={cn(reorderMode && "cursor-grab active:cursor-grabbing")}
+            className={cn(reorderMode && !isLocked && "cursor-grab active:cursor-grabbing")}
           >
             <Link
-              href={item.href}
+              href={isLocked ? '/settings?upgrade=1' : item.href}
               onClick={reorderMode ? (e) => e.preventDefault() : onItemClick}
-              title={collapsed ? label : undefined}
+              title={collapsed ? (isLocked ? `${label} (Upgrade)` : label) : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                 collapsed && "justify-center px-2",
-                isActive
-                  ? "bg-white/15 text-white shadow-sm"
-                  : "text-slate-400 hover:bg-white/10 hover:text-slate-200",
-                reorderMode && "hover:bg-white/5 border border-transparent hover:border-white/10"
+                isLocked
+                  ? "text-slate-600 hover:bg-white/5 hover:text-slate-500 opacity-60"
+                  : isActive
+                    ? "bg-white/15 text-white shadow-sm"
+                    : "text-slate-400 hover:bg-white/10 hover:text-slate-200",
+                reorderMode && !isLocked && "hover:bg-white/5 border border-transparent hover:border-white/10"
               )}
             >
-              {reorderMode && !collapsed && <GripVertical className="h-4 w-4 text-slate-600 flex-shrink-0" />}
-              <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-amber-400" : "")} />
-              {!collapsed && <span>{label}</span>}
+              {reorderMode && !collapsed && !isLocked && <GripVertical className="h-4 w-4 text-slate-600 flex-shrink-0" />}
+              <Icon className={cn("h-5 w-5 flex-shrink-0", isLocked ? "text-slate-600" : isActive ? "text-amber-400" : "")} />
+              {!collapsed && (
+                <span className="flex-1 flex items-center justify-between">
+                  <span>{label}</span>
+                  {isLocked && <Lock className="h-3 w-3 text-slate-600 ml-auto" />}
+                </span>
+              )}
+              {collapsed && isLocked && <Lock className="h-2.5 w-2.5 text-slate-600 absolute -top-0.5 -right-0.5" />}
             </Link>
           </div>
         )

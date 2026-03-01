@@ -125,15 +125,21 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 dark:from-amber-500 dark:to-amber-400">
+            <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20">
               {step === 'success' ? (
-                <CheckCircle2 className="h-7 w-7 text-white dark:text-slate-900" />
+                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-emerald-500 to-emerald-400">
+                  <CheckCircle2 className="h-7 w-7 text-white" />
+                </div>
               ) : step === 'newPassword' ? (
-                <KeyRound className="h-7 w-7 text-white dark:text-slate-900" />
+                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-amber-500">
+                  <KeyRound className="h-7 w-7 text-slate-900" />
+                </div>
               ) : step === 'code' ? (
-                <Mail className="h-7 w-7 text-white dark:text-slate-900" />
+                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-amber-500">
+                  <Mail className="h-7 w-7 text-slate-900" />
+                </div>
               ) : (
-                <PoundSterling className="h-7 w-7 text-white dark:text-slate-900" />
+                <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
               )}
             </div>
           </div>

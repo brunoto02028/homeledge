@@ -51,21 +51,58 @@ export async function POST(request: Request) {
     });
 
     // ─── 1. Deadline Reminders ─────────────────────────────────────────
-    const allDeadlines = getUpcomingDeadlines();
-    const relevantDeadlines = allDeadlines
-      .map(d => {
-        const daysUntil = Math.ceil((d.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        let urgency = 'upcoming';
-        if (daysUntil < 0) urgency = 'overdue';
-        else if (daysUntil <= 14) urgency = 'due_soon';
-        else if (daysUntil > 30) return null; // Skip deadlines > 30 days out
-        return { ...d, daysUntil, urgency };
-      })
-      .filter(Boolean) as any[];
+    const genericDeadlines = getUpcomingDeadlines();
 
-    if (relevantDeadlines.length > 0) {
-      for (const user of users) {
-        try {
+    for (const user of users) {
+      try {
+        // Start with generic UK tax deadlines
+        const allDeadlines = [...genericDeadlines];
+
+        // Add real per-company CH deadlines for this user
+        const chConns = await (prisma as any).governmentConnection.findMany({
+          where: { userId: user.id, provider: 'companies_house', profileData: { not: null } },
+          select: { companyNumber: true, profileData: true, entityId: true },
+        });
+
+        for (const conn of chConns) {
+          const profile = conn.profileData?.profile || conn.profileData;
+          const companyName = profile?.company_name || conn.companyNumber;
+
+          const accountsDue = profile?.accounts?.next_due || profile?.accounts?.next_accounts?.due_on;
+          if (accountsDue) {
+            const dueDate = new Date(accountsDue);
+            allDeadlines.push({
+              title: `Annual Accounts — ${companyName}`,
+              dueDate: dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+              date: dueDate,
+              type: 'Companies House',
+            });
+          }
+
+          const csDue = profile?.confirmation_statement?.next_due;
+          if (csDue) {
+            const dueDate = new Date(csDue);
+            allDeadlines.push({
+              title: `Confirmation Statement — ${companyName}`,
+              dueDate: dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+              date: dueDate,
+              type: 'Companies House',
+            });
+          }
+        }
+
+        const relevantDeadlines = allDeadlines
+          .map(d => {
+            const daysUntil = Math.ceil((d.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            let urgency = 'upcoming';
+            if (daysUntil < 0) urgency = 'overdue';
+            else if (daysUntil <= 14) urgency = 'due_soon';
+            else if (daysUntil > 60) return null; // Skip deadlines > 60 days out
+            return { ...d, daysUntil, urgency };
+          })
+          .filter(Boolean) as any[];
+
+        if (relevantDeadlines.length > 0) {
           await sendDeadlineReminderEmail(
             user.email,
             user.fullName || 'User',
@@ -77,9 +114,9 @@ export async function POST(request: Request) {
             }))
           );
           results.deadlineEmails++;
-        } catch (err: any) {
-          results.errors.push(`Deadline email to ${user.email}: ${err.message}`);
         }
+      } catch (err: any) {
+        results.errors.push(`Deadline email to ${user.email}: ${err.message}`);
       }
     }
 
@@ -164,7 +201,7 @@ export async function POST(request: Request) {
       success: true,
       ...results,
       usersProcessed: users.length,
-      deadlinesFound: relevantDeadlines.length,
+      deadlineEmailsSent: results.deadlineEmails,
     });
   } catch (error: any) {
     console.error('[Cron] Daily checks error:', error);

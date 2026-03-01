@@ -76,7 +76,16 @@ export default function CategoriesClient() {
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', icon: 'Tag', color: '#3b82f6', type: 'expense' as CategoryType });
   const [activeTab, setActiveTab] = useState<'all' | 'expense' | 'income'>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('categories-view-mode') as 'grid' | 'list') || 'grid';
+    }
+    return 'grid';
+  });
+  const handleViewMode = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('categories-view-mode', mode);
+  };
   const { toast } = useToast();
 
   const fetchCategories = async () => {
@@ -332,14 +341,14 @@ export default function CategoriesClient() {
         <div className="flex items-center gap-2">
           <div className="flex border rounded-lg overflow-hidden">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => handleViewMode('grid')}
               className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
               title="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => handleViewMode('list')}
               className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
               title="List view"
             >

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendSignupVerificationEmail } from '@/lib/email';
+import { sendSignupVerificationEmail, isEmailConfigured } from '@/lib/email';
+import { getPermissionsForPlan, PURCHASABLE_PLANS } from '@/lib/permissions';
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -11,7 +12,7 @@ function generateVerificationCode(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, fullName, accountType } = body;
+    const { email, password, fullName, accountType, selectedPlan } = body;
 
     // Validation
     if (!email || !password || !fullName) {
@@ -36,6 +37,20 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       // If user exists but not verified, allow re-sending verification
       if (!existingUser.emailVerified && existingUser.status === 'pending_verification') {
+        // If email not configured, auto-verify
+        if (!isEmailConfigured()) {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { status: 'active', emailVerified: true } as any,
+          });
+          return NextResponse.json({
+            success: true,
+            requiresVerification: false,
+            email: existingUser.email,
+            message: 'Account verified. You can now sign in.',
+          });
+        }
+
         const code = generateVerificationCode();
         await prisma.emailVerificationToken.create({
           data: {
@@ -45,9 +60,20 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        try {
-          await sendSignupVerificationEmail(existingUser.email, existingUser.fullName, code);
-        } catch { /* non-critical */ }
+        const emailResult = await sendSignupVerificationEmail(existingUser.email, existingUser.fullName, code);
+        if (!emailResult.success) {
+          // Auto-verify if email fails
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { status: 'active', emailVerified: true } as any,
+          });
+          return NextResponse.json({
+            success: true,
+            requiresVerification: false,
+            email: existingUser.email,
+            message: 'Account verified. You can now sign in.',
+          });
+        }
 
         return NextResponse.json({
           success: true,
@@ -68,6 +94,8 @@ export async function POST(request: NextRequest) {
 
     // Create user with transaction — PENDING verification
     const result = await prisma.$transaction(async (tx) => {
+      const plan = selectedPlan && PURCHASABLE_PLANS.includes(selectedPlan) ? selectedPlan : 'none';
+      const permissions = getPermissionsForPlan(plan);
       const user = await tx.user.create({
         data: {
           email: email.toLowerCase(),
@@ -77,7 +105,9 @@ export async function POST(request: NextRequest) {
           status: 'pending_verification',
           emailVerified: false,
           onboardingCompleted: false,
-        },
+          plan,
+          permissions,
+        } as any,
       });
 
       // Create household or business
@@ -121,11 +151,34 @@ export async function POST(request: NextRequest) {
       return { user, code };
     });
 
-    // Send verification email
-    try {
-      await sendSignupVerificationEmail(result.user.email, result.user.fullName, result.code);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+    // Send verification email (or auto-verify if email not configured)
+    if (!isEmailConfigured()) {
+      console.log(`[Signup] Email not configured — auto-verifying ${result.user.email}`);
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { status: 'active', emailVerified: true } as any,
+      });
+      return NextResponse.json({
+        success: true,
+        requiresVerification: false,
+        email: result.user.email,
+        message: 'Account created! You can now sign in.',
+      });
+    }
+
+    const emailResult = await sendSignupVerificationEmail(result.user.email, result.user.fullName, result.code);
+    if (!emailResult.success) {
+      console.error(`[Signup] Email failed for ${result.user.email} — auto-verifying`);
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { status: 'active', emailVerified: true } as any,
+      });
+      return NextResponse.json({
+        success: true,
+        requiresVerification: false,
+        email: result.user.email,
+        message: 'Account created! You can now sign in.',
+      });
     }
 
     return NextResponse.json({

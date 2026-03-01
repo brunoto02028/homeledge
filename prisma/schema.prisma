@@ -708,6 +708,8 @@ model User {
   mustChangePassword Boolean @default(false) @map("must_change_password")
   submissionProfiles SubmissionProfile[]
   invoiceSubmissions InvoiceSubmission[]
+  emailAccounts     EmailAccount[]
+  emailSignatures   EmailSignature[]
 
   @@index([email])
   @@index([status])
@@ -1720,4 +1722,142 @@ model SiteEvent {
   @@index([path])
   @@index([createdAt])
   @@map("site_events")
+}
+
+// ── Email Client Models ─────────────────────────────────────────────────────
+
+model EmailAccount {
+  id              String          @id @default(cuid())
+  userId          String          @map("user_id")
+  email           String
+  displayName     String?         @map("display_name")
+  provider        String          @default("imap") // "imap", "gmail", "outlook"
+  imapHost        String?         @map("imap_host")
+  imapPort        Int?            @map("imap_port") @default(993)
+  smtpHost        String?         @map("smtp_host")
+  smtpPort        Int?            @map("smtp_port") @default(587)
+  username        String?
+  passwordEnc     String?         @map("password_enc") // AES-encrypted
+  accessToken     String?         @map("access_token") // OAuth token (encrypted)
+  refreshToken    String?         @map("refresh_token") // OAuth refresh (encrypted)
+  tokenExpiresAt  DateTime?       @map("token_expires_at")
+  useTls          Boolean         @default(true) @map("use_tls")
+  isActive        Boolean         @default(true) @map("is_active")
+  color           String?         @default("#f59e0b") // UI accent color
+  signatureId     String?         @map("signature_id")
+  lastSyncAt      DateTime?       @map("last_sync_at")
+  syncEnabled     Boolean         @default(true) @map("sync_enabled")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signature       EmailSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
+  folders         EmailFolder[]
+  messages        EmailMessage[]
+
+  @@unique([userId, email])
+  @@index([userId])
+  @@index([lastSyncAt])
+  @@map("email_accounts")
+}
+
+model EmailFolder {
+  id              String          @id @default(cuid())
+  accountId       String          @map("account_id")
+  name            String          // "INBOX", "Sent", "Drafts", etc.
+  path            String          // IMAP path e.g. "INBOX", "[Gmail]/Sent Mail"
+  type            String          @default("custom") // "inbox", "sent", "drafts", "trash", "spam", "archive", "custom"
+  unreadCount     Int             @default(0) @map("unread_count")
+  totalCount      Int             @default(0) @map("total_count")
+  lastSyncUid     String?         @map("last_sync_uid") // IMAP UID for incremental sync
+  createdAt       DateTime        @default(now()) @map("created_at")
+  // Relations
+  account         EmailAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  messages        EmailMessage[]
+
+  @@unique([accountId, path])
+  @@index([accountId])
+  @@index([type])
+  @@map("email_folders")
+}
+
+model EmailMessage {
+  id              String          @id @default(cuid())
+  accountId       String          @map("account_id")
+  folderId        String          @map("folder_id")
+  messageId       String?         @map("message_id") // RFC Message-ID header
+  inReplyTo       String?         @map("in_reply_to")
+  threadId        String?         @map("thread_id")
+  uid             String?         // IMAP UID
+  subject         String?
+  fromAddress     String          @map("from_address")
+  fromName        String?         @map("from_name")
+  toAddresses     String[]        @map("to_addresses")
+  ccAddresses     String[]        @map("cc_addresses") @default([])
+  bccAddresses    String[]        @map("bcc_addresses") @default([])
+  bodyText        String?         @map("body_text")
+  bodyHtml        String?         @map("body_html")
+  snippet         String?         // first ~200 chars of body for preview
+  isRead          Boolean         @default(false) @map("is_read")
+  isStarred       Boolean         @default(false) @map("is_starred")
+  isDraft         Boolean         @default(false) @map("is_draft")
+  hasAttachments  Boolean         @default(false) @map("has_attachments")
+  size            Int?            // bytes
+  sentAt          DateTime?       @map("sent_at")
+  receivedAt      DateTime        @default(now()) @map("received_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  // AI fields
+  aiSummary       String?         @map("ai_summary")
+  aiCategory      String?         @map("ai_category") // "action_required", "fyi", "newsletter", "billing", "personal"
+  aiTaskCreated   Boolean         @default(false) @map("ai_task_created")
+  // Tracking fields
+  trackingId      String?         @unique @map("tracking_id") // UUID for open-tracking pixel
+  openedAt        DateTime?       @map("opened_at")            // first open timestamp
+  openCount       Int             @default(0) @map("open_count") // total opens
+  // Relations
+  account         EmailAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  folder          EmailFolder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  attachments     EmailAttachment[]
+
+  @@unique([accountId, uid, folderId])
+  @@index([accountId])
+  @@index([folderId])
+  @@index([threadId])
+  @@index([receivedAt])
+  @@index([isRead])
+  @@index([trackingId])
+  @@index([fromAddress])
+  @@map("email_messages")
+}
+
+model EmailAttachment {
+  id              String          @id @default(cuid())
+  messageId       String          @map("message_id")
+  filename        String
+  contentType     String          @map("content_type")
+  size            Int
+  contentId       String?         @map("content_id") // for inline images
+  storagePath     String?         @map("storage_path")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  // Relations
+  message         EmailMessage    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("email_attachments")
+}
+
+model EmailSignature {
+  id              String          @id @default(cuid())
+  userId          String          @map("user_id")
+  name            String          // "Work", "Personal", etc.
+  bodyHtml        String          @map("body_html")
+  isDefault       Boolean         @default(false) @map("is_default")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts        EmailAccount[]
+
+  @@index([userId])
+  @@map("email_signatures")
 }

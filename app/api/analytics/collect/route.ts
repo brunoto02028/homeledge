@@ -3,6 +3,25 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// GeoIP cache to avoid repeated lookups (in-memory, resets on restart)
+const geoCache = new Map<string, { country: string; city: string; expires: number }>();
+
+async function lookupGeo(ip: string): Promise<{ country: string; city: string } | null> {
+  if (!ip || ip === 'unknown' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return null;
+  const cached = geoCache.get(ip);
+  if (cached && cached.expires > Date.now()) return { country: cached.country, city: cached.city };
+  try {
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,city,status`, { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    if (data.status === 'success' && data.country) {
+      const geo = { country: data.country, city: data.city || '' };
+      geoCache.set(ip, { ...geo, expires: Date.now() + 24 * 60 * 60 * 1000 }); // cache 24h
+      return geo;
+    }
+  } catch { /* non-critical */ }
+  return null;
+}
+
 // Parse User-Agent into device/browser/os
 function parseUA(ua: string) {
   const device = /mobile|android|iphone|ipad/i.test(ua) ? (/ipad|tablet/i.test(ua) ? 'tablet' : 'mobile') : 'desktop';
@@ -42,6 +61,18 @@ export async function POST(req: NextRequest) {
       update: { lastSeen: new Date(), totalVisits: { increment: type === 'pageview' ? 1 : 0 }, ip, userAgent: userAgent.substring(0, 500) },
       create: { fingerprint, ip, userAgent: userAgent.substring(0, 500), device, browser, os, referrer: referrer || null },
     });
+
+    // GeoIP lookup (background, non-blocking) — only if country not set yet
+    if (!visitor.country && ip && ip !== 'unknown') {
+      lookupGeo(ip).then(geo => {
+        if (geo) {
+          (prisma as any).siteVisitor.update({
+            where: { id: visitor.id },
+            data: { country: geo.country, city: geo.city },
+          }).catch(() => {});
+        }
+      });
+    }
 
     // Handle different event types
     if (type === 'pageview') {

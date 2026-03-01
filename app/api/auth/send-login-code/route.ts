@@ -48,6 +48,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
+    // If no email provider is properly configured, skip OTP and allow direct login
+    const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    const resendConfigured = !!process.env.RESEND_API_KEY;
+    if (!smtpConfigured && !resendConfigured) {
+      console.log(`[Login Code] No email provider configured — bypassing 2FA for ${user.email}`);
+      return NextResponse.json({
+        success: true,
+        skipOtp: true,
+        message: 'No email provider configured — logging in directly',
+      });
+    }
+
     // Generate 6-digit OTP
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -72,7 +84,7 @@ export async function POST(request: Request) {
 
     if (!emailResult.success) {
       console.error('[Login Code] Email delivery failed for', user.email, emailResult);
-      // Invalidate the code we just created so it can't be guessed
+      // Invalidate the code we just created
       try {
         await prisma.emailVerificationToken.updateMany({
           where: { userId: user.id, token: code },
@@ -81,9 +93,13 @@ export async function POST(request: Request) {
       } catch (cleanupError) {
         console.error('[Login Code] Failed to cleanup verification code:', cleanupError);
       }
+      // FALLBACK: If email sending fails, bypass 2FA instead of blocking login
+      console.log(`[Login Code] Email failed — falling back to bypass for ${user.email}`);
       return NextResponse.json({
-        error: 'Failed to send verification code. Please check your email configuration or try again later.',
-      }, { status: 503 });
+        success: true,
+        skipOtp: true,
+        message: 'Email delivery failed — logging in directly',
+      });
     }
 
     return NextResponse.json({

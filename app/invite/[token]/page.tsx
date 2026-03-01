@@ -55,8 +55,8 @@ export default function InviteAcceptPage() {
         <CardContent className="p-8 text-center space-y-6">
           {/* Header */}
           <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
-              <PoundSterling className="h-5 w-5 text-slate-900" />
+            <div className="h-10 w-10 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
+              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
             </div>
             <span className="font-bold text-xl">HomeLedger</span>
           </div>

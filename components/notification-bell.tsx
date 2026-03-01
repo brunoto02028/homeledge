@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, FileText, Receipt, Upload, ListTodo, Calendar, ArrowLeftRight, Shield, Building, MapPin, UserPlus, UserMinus, CheckCircle2, AlertTriangle, Send, Link2 } from 'lucide-react';
+import { Bell, Check, FileText, Receipt, Upload, ListTodo, Calendar, ArrowLeftRight, Shield, Building, MapPin, UserPlus, UserMinus, CheckCircle2, AlertTriangle, Send, Link2, Clock, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NotifEvent {
@@ -13,6 +13,7 @@ interface NotifEvent {
   payload: Record<string, any> | null;
   readAt: string | null;
   createdAt: string;
+  isDeadline?: boolean;
 }
 
 const EVENT_ICONS: Record<string, React.ElementType> = {
@@ -35,7 +36,14 @@ const GOV_EVENT_ICONS: Record<string, React.ElementType> = {
   'gov.hmrc_connected': CheckCircle2,
 };
 
+const DEADLINE_ICONS: Record<string, React.ElementType> = {
+  'deadline.overdue': AlertTriangle,
+  'deadline.due_soon': Clock,
+  'deadline.upcoming': CalendarClock,
+};
+
 function getIcon(entityType: string, eventType?: string) {
+  if (eventType && DEADLINE_ICONS[eventType]) return DEADLINE_ICONS[eventType];
   if (eventType && GOV_EVENT_ICONS[eventType]) return GOV_EVENT_ICONS[eventType];
   const key = Object.keys(EVENT_ICONS).find(k => entityType.toLowerCase().includes(k));
   return key ? EVENT_ICONS[key] : Shield;
@@ -61,6 +69,11 @@ const FILING_TYPE_LABELS: Record<string, string> = {
 };
 
 function formatEventTitle(e: NotifEvent): string {
+  // Deadline alerts
+  if (e.isDeadline || e.entityType === 'deadline') {
+    const p = e.payload as any;
+    return p?.title || 'Filing Deadline';
+  }
   // Government events — friendly titles
   if (e.eventType.startsWith('gov.')) {
     const base = GOV_EVENT_TITLES[e.eventType] || e.eventType.replace(/\./g, ' ').replace(/_/g, ' ');
@@ -179,19 +192,32 @@ export function NotificationBell() {
                   >
                     <div className={cn(
                       'h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5',
+                      e.eventType === 'deadline.overdue' ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-sm' :
+                      e.eventType === 'deadline.due_soon' ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm' :
+                      e.eventType === 'deadline.upcoming' ? 'bg-gradient-to-br from-blue-400 to-blue-500 shadow-sm' :
                       e.eventType === 'gov.ch_filing_submitted' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm' :
                       e.eventType === 'gov.ch_filing_rejected' ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-sm' :
                       e.eventType === 'gov.ch_filing_accepted' ? 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-sm' :
                       e.eventType.startsWith('gov.') ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm' :
                       'bg-muted'
                     )}>
-                      <Icon className={cn('h-4 w-4', e.eventType.startsWith('gov.') ? 'text-white' : 'text-muted-foreground')} />
+                      <Icon className={cn('h-4 w-4', e.eventType.startsWith('deadline.') || e.eventType.startsWith('gov.') ? 'text-white' : 'text-muted-foreground')} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={cn('text-sm leading-snug', !e.readAt && 'font-medium')}>
                         {formatEventTitle(e)}
                       </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{timeAgo(e.createdAt)}</p>
+                      {e.isDeadline ? (
+                        <p className={cn('text-[11px] mt-0.5 font-semibold',
+                          (e.payload as any)?.urgency === 'overdue' ? 'text-red-600 dark:text-red-400' :
+                          (e.payload as any)?.urgency === 'due_soon' ? 'text-amber-600 dark:text-amber-400' :
+                          'text-blue-600 dark:text-blue-400'
+                        )}>
+                          {(e.payload as any)?.dueDate} · {(e.payload as any)?.daysText}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{timeAgo(e.createdAt)}</p>
+                      )}
                     </div>
                     {!e.readAt && (
                       <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-2" />

@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   FileText, FileSpreadsheet, ImageIcon, File, Search,
   Download, Eye, Loader2, FolderOpen, Building2, User,
-  Filter, Calendar, SortDesc
+  Filter, Calendar, SortDesc, Upload, X, Check
 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { formatDate } from '@/lib/utils';
 
@@ -57,6 +58,10 @@ export default function FilesClient() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [entities, setEntities] = useState<any[]>([]);
   const [entityFilter, setEntityFilter] = useState('all');
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadEntityId, setUploadEntityId] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const fetchFiles = async () => {
     try {
@@ -117,15 +122,76 @@ export default function FilesClient() {
     }
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (uploadEntityId) formData.append('entityId', uploadEntityId);
+      const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      toast({ title: 'File uploaded', description: data.fileName || file.name });
+      setShowUpload(false);
+      setUploadEntityId('');
+      fetchFiles();
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Files</h1>
-        <p className="text-muted-foreground">All uploaded files across your account</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Files</h1>
+          <p className="text-muted-foreground">All uploaded files across your account</p>
+        </div>
+        <Button onClick={() => setShowUpload(true)} className="gap-2">
+          <Upload className="h-4 w-4" /> Upload Document
+        </Button>
       </div>
+
+      {/* Upload Dialog */}
+      {showUpload && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Upload a Document</h3>
+              <button onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground">Upload a PDF, image, or document. The system will scan and classify it automatically.</p>
+            {entities.length > 0 && (
+              <Select value={uploadEntityId} onValueChange={setUploadEntityId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Associate with entity (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No entity</SelectItem>
+                  {entities.map((ent: any) => (
+                    <SelectItem key={ent.id} value={ent.id}>{ent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="flex items-center gap-3">
+              <label className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${uploading ? 'opacity-50 pointer-events-none' : 'hover:border-primary hover:bg-muted/30'}`}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
+                <span className="text-sm">{uploading ? 'Uploading & scanning...' : 'Choose file or drag here'}</span>
+                <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt" disabled={uploading} />
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

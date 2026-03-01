@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendPasswordResetEmail } from '@/lib/email';
+import { sendPasswordResetEmail, isEmailConfigured } from '@/lib/email';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -16,6 +16,14 @@ export async function POST(request: Request) {
 
     if (!email.includes('@') || email.length < 5) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    // Check if email is configured before proceeding
+    if (!isEmailConfigured()) {
+      console.error('[Forgot Password] Email service not configured — cannot send reset code');
+      return NextResponse.json({
+        error: 'Email service is temporarily unavailable. Please contact support or try again later.',
+      }, { status: 503 });
     }
 
     const user = await prisma.user.findUnique({
@@ -50,7 +58,19 @@ export async function POST(request: Request) {
     });
 
     // Send reset email
-    await sendPasswordResetEmail(user.email, user.fullName, code);
+    const emailResult = await sendPasswordResetEmail(user.email, user.fullName, code);
+
+    if (!emailResult.success) {
+      console.error('[Forgot Password] Email delivery failed for', user.email, emailResult);
+      // Invalidate the code since email didn't send
+      await prisma.passwordResetToken.updateMany({
+        where: { userId: user.id, token: code },
+        data: { usedAt: new Date() },
+      });
+      return NextResponse.json({
+        error: 'Failed to send reset code. Please try again later.',
+      }, { status: 503 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -58,10 +78,8 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Forgot password error:', error);
-    // Always return success to prevent email enumeration
     return NextResponse.json({
-      success: true,
-      message: 'If an account exists with that email, a reset code has been sent.',
-    });
+      error: 'An error occurred. Please try again later.',
+    }, { status: 500 });
   }
 }

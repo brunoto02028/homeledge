@@ -30,6 +30,8 @@ export const ALL_PERMISSIONS = [
   'relocation',
   'services',
   'english_hub',
+  'email',
+  'intelligence',
   'settings',
 ] as const;
 
@@ -61,6 +63,8 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/relocation': 'relocation',
   '/services': 'services',
   '/english-hub': 'english_hub',
+  '/email': 'email',
+  '/intelligence': 'intelligence',
   '/settings': 'settings',
 };
 
@@ -90,21 +94,45 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   relocation: 'Relocation Hub',
   services: 'Services',
   english_hub: 'English Hub',
+  email: 'Email',
+  intelligence: 'Global Intelligence',
   settings: 'Settings',
 };
 
+/** Modules reserved for admin only — not available in any customer plan. */
+export const ADMIN_ONLY_MODULES: PermissionKey[] = ['learn', 'academy', 'relocation', 'english_hub'];
+
+/** All modules available to customers (excludes admin-only). */
+export const CUSTOMER_MODULES = ALL_PERMISSIONS.filter(
+  p => !ADMIN_ONLY_MODULES.includes(p)
+) as PermissionKey[];
+
 /**
  * Default permission sets for each subscription plan.
- * - `free`: Basic features (8 permissions)
- * - `starter`: Core features (16 permissions)
- * - `pro`: All features
- * - `enterprise`: All features
+ * - `none`: Expired / no plan — dashboard + settings only (forces upgrade)
+ * - `starter`: Personal finance essentials (11 modules)
+ * - `pro`: Full self-service for sole traders & freelancers (19 modules)
+ * - `business`: Everything + gov APIs, team, advanced features (all customer modules)
+ * - `managed`: Everything in business + professional bookkeeping service
+ *
+ * Learning modules (learn, academy, relocation, english_hub) are admin-only.
+ * All plans include 7-day free trial, then auto-charge via Stripe.
  */
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
-  free: ['dashboard', 'statements', 'categories', 'settings', 'learn', 'academy', 'relocation', 'services', 'english_hub'],
-  starter: ['dashboard', 'household', 'entities', 'statements', 'documents', 'invoices', 'bills', 'actions', 'categories', 'reports', 'files', 'settings', 'learn', 'academy', 'relocation', 'services', 'english_hub'],
-  pro: [...ALL_PERMISSIONS] as PermissionKey[],
-  enterprise: [...ALL_PERMISSIONS] as PermissionKey[],
+  none: ['dashboard', 'settings'],
+  starter: [
+    'dashboard', 'statements', 'categories', 'invoices', 'bills',
+    'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
+  ],
+  pro: [
+    'dashboard', 'statements', 'categories', 'invoices', 'bills',
+    'documents', 'files', 'actions', 'life_events', 'vault', 'settings',
+    'entities', 'household', 'reports', 'projections', 'properties',
+    'product_calculator', 'tax_timeline', 'email', 'transfers',
+    'providers', 'services',
+  ],
+  business: [...CUSTOMER_MODULES] as PermissionKey[],
+  managed: [...CUSTOMER_MODULES] as PermissionKey[],
 };
 
 /**
@@ -180,9 +208,30 @@ export function canAccessRoute(
 /**
  * Get the list of permissions for a given subscription plan.
  *
- * @param plan - The plan name (`'free'`, `'starter'`, `'pro'`, `'enterprise'`)
- * @returns Array of permission keys for the plan. Falls back to `free` plan for unknown names.
+ * @param plan - The plan name (`'none'`, `'starter'`, `'pro'`, `'business'`, `'managed'`)
+ * @returns Array of permission keys for the plan. Falls back to `none` plan for unknown names.
  */
 export function getPermissionsForPlan(plan: string): PermissionKey[] {
-  return PLAN_PERMISSIONS[plan] || PLAN_PERMISSIONS.free;
+  return PLAN_PERMISSIONS[plan] || PLAN_PERMISSIONS.none;
 }
+
+/** Plan display names for UI. */
+export const PLAN_LABELS: Record<string, string> = {
+  none: 'No Plan',
+  starter: 'Starter',
+  pro: 'Pro',
+  business: 'Business',
+  managed: 'Managed',
+};
+
+/** Plan prices in pence (base price before Stripe fee). */
+export const PLAN_PRICES: Record<string, number> = {
+  none: 0,
+  starter: 799,
+  pro: 1499,
+  business: 2999,
+  managed: 9999,
+};
+
+/** All plans available for customer purchase (excludes 'none'). */
+export const PURCHASABLE_PLANS = ['starter', 'pro', 'business', 'managed'] as const;

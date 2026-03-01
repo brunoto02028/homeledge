@@ -174,7 +174,17 @@ export async function POST(
     }
 
     if (connection.status !== 'active') {
-      return NextResponse.json({ error: 'Connection is not active. Please reconnect via OAuth.' }, { status: 400 });
+      return NextResponse.json({ error: 'Connection is not active. Please reconnect via OAuth.', reconnect: true }, { status: 400 });
+    }
+
+    // Validate required env vars before attempting any filing
+    if (!process.env.CH_OAUTH_CLIENT_ID || !process.env.CH_OAUTH_CLIENT_SECRET) {
+      console.error('[CH Filing] CRITICAL: CH_OAUTH_CLIENT_ID or CH_OAUTH_CLIENT_SECRET not configured');
+      return NextResponse.json({ error: 'Companies House OAuth credentials not configured on the server. Contact support.', reconnect: false }, { status: 500 });
+    }
+    if (!process.env.COMPANIES_HOUSE_API_KEY) {
+      console.error('[CH Filing] CRITICAL: COMPANIES_HOUSE_API_KEY not configured');
+      return NextResponse.json({ error: 'Companies House API key not configured on the server. Contact support.', reconnect: false }, { status: 500 });
     }
 
     // Ensure token is valid
@@ -311,7 +321,25 @@ export async function POST(
       },
     });
   } catch (error: any) {
-    console.error('[CH Filing] Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to submit filing' }, { status: 500 });
+    console.error('[CH Filing] Error:', error.message || error);
+    const isReconnect = error.message?.includes('RECONNECT_REQUIRED');
+    
+    // If token is invalid, mark connection as needing reconnect
+    if (isReconnect) {
+      try {
+        const { connectionId: cId } = await params;
+        await (prisma as any).governmentConnection.update({
+          where: { id: cId },
+          data: { status: 'expired', lastError: error.message },
+        });
+      } catch { /* non-critical */ }
+    }
+
+    return NextResponse.json({ 
+      error: isReconnect 
+        ? 'Your Companies House connection has expired. Please disconnect and reconnect via OAuth to re-authorize.'
+        : (error.message || 'Failed to submit filing'),
+      reconnect: isReconnect,
+    }, { status: isReconnect ? 401 : 500 });
   }
 }

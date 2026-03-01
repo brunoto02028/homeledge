@@ -362,6 +362,15 @@ export function VaultClient() {
                             </div>
                           )}
                           {entry.passwordEnc && (
+                            entry.passwordEnc === '[decryption failed]' ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-muted-foreground/60 text-xs w-16">Pass</span>
+                                <span className="text-red-400 text-xs font-medium">[decryption failed]</span>
+                                <button onClick={() => handleEdit(entry)} className="text-xs text-amber-400 hover:text-amber-300 underline flex-shrink-0">
+                                  Re-enter
+                                </button>
+                              </div>
+                            ) : (
                             <div className="flex items-center gap-1.5">
                               <span className="text-muted-foreground/60 text-xs w-16">Pass</span>
                               <span className="text-muted/500 font-mono text-xs truncate">
@@ -374,6 +383,7 @@ export function VaultClient() {
                                 {copiedField === `pass-${entry.id}` ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
                               </button>
                             </div>
+                            )
                           )}
                           {entry.referenceNumber && (
                             <div className="flex items-center gap-1.5">

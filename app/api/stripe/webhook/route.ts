@@ -152,14 +152,14 @@ export async function POST(req: Request) {
         });
 
         if (user) {
-          const freePerms = getPermissionsForPlan('free');
+          const nonePerms = getPermissionsForPlan('none');
           await prisma.user.update({
             where: { id: user.id },
             data: {
-              plan: 'free',
+              plan: 'none',
               stripeSubscriptionId: null,
               planExpiresAt: null,
-              permissions: freePerms,
+              permissions: nonePerms,
             } as any,
           });
         }

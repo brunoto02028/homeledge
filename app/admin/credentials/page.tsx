@@ -78,6 +78,30 @@ const PROVIDER_CONFIG: Record<string, { label: string; icon: any; color: string;
       { label: 'Dashboard', url: 'https://dashboard.stripe.com/' },
     ],
   },
+  truelayer: {
+    label: 'TrueLayer',
+    icon: Landmark,
+    color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800',
+    links: [
+      { label: 'Console', url: 'https://console.truelayer.com/' },
+    ],
+  },
+  resend: {
+    label: 'Resend',
+    icon: Globe,
+    color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-800',
+    links: [
+      { label: 'Dashboard', url: 'https://resend.com/domains' },
+    ],
+  },
+  yoti: {
+    label: 'Yoti IDV',
+    icon: Shield,
+    color: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800',
+    links: [
+      { label: 'Hub', url: 'https://hub.yoti.com/' },
+    ],
+  },
   custom: {
     label: 'Custom / Other',
     icon: Globe,

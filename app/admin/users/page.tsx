@@ -290,10 +290,11 @@ export default function AdminUsersPage() {
                   }}
                   className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="free">Free</option>
+                  <option value="none">No Plan</option>
                   <option value="starter">Starter</option>
                   <option value="pro">Pro</option>
-                  <option value="enterprise">Enterprise</option>
+                  <option value="business">Business</option>
+                  <option value="managed">Managed</option>
                 </select>
               </div>
               <div className="sm:col-span-2">

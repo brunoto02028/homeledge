@@ -79,11 +79,15 @@ export default function EntityDetailClient() {
   const [filingDialog, setFilingDialog] = useState<string | null>(null);
   const [filingForm, setFilingForm] = useState<any>({});
   const [filingSubmitting, setFilingSubmitting] = useState(false);
-  const [filingStep, setFilingStep] = useState<'form' | 'confirm'>('form');
+  const [filingStep, setFilingStep] = useState<'form' | 'confirm' | 'success' | 'error'>('form');
+  const [filingResult, setFilingResult] = useState<any>(null);
   const [postcodeLooking, setPostcodeLooking] = useState(false);
   const [postcodeAddresses, setPostcodeAddresses] = useState<any[]>([]);
   const [connectAuthCode, setConnectAuthCode] = useState('');
   const [connecting, setConnecting] = useState(false);
+  const [chFilings, setChFilings] = useState<any[]>([]);
+  const [receiptSaved, setReceiptSaved] = useState(false);
+  const [receiptSaving, setReceiptSaving] = useState(false);
   // History & Docs state
   const [historyEntries, setHistoryEntries] = useState<any[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -218,9 +222,40 @@ export default function EntityDetailClient() {
     } catch { /* ignore */ }
   };
 
+  // Fetch HomeLedger CH filings from entity history
+  const fetchChFilings = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/entities/${entityId}/history?limit=20&type=address_change`);
+      if (res.ok) {
+        const data = await res.json();
+        setChFilings((data.entries || []).filter((e: any) =>
+          e.tags?.some?.((t: string) => t === 'companies-house') || e.title?.includes('CH Filing') || e.title?.includes('AD01') || e.title?.includes('Companies House')
+        ));
+      }
+    } catch { /* ignore */ }
+  }, [entityId]);
+
   useEffect(() => { fetchEntity(); }, [fetchEntity]);
-  useEffect(() => { if (entity?.companyNumber) { fetchChData(); fetchChConnection(); } }, [entity?.companyNumber, fetchChData, fetchChConnection]);
+  useEffect(() => { if (entity?.companyNumber) { fetchChData(); fetchChConnection(); fetchChFilings(); } }, [entity?.companyNumber, fetchChData, fetchChConnection, fetchChFilings]);
   useEffect(() => { if (activeTab === 'history') fetchHistory(); }, [activeTab, fetchHistory]);
+
+  // Auto-sync: update local registered address when CH data differs
+  useEffect(() => {
+    if (!chData?.registeredAddress || !entity) return;
+    if (entity.registeredAddress !== chData.registeredAddress) {
+      setForm(p => ({ ...p, registeredAddress: chData.registeredAddress }));
+      // Auto-save the synced address
+      fetch(`/api/entities/${entityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registeredAddress: chData.registeredAddress }),
+      }).then(res => {
+        if (res.ok) {
+          setEntity((prev: any) => prev ? { ...prev, registeredAddress: chData.registeredAddress } : prev);
+        }
+      }).catch(() => {});
+    }
+  }, [chData?.registeredAddress]);
 
   // Detect OAuth callback redirect (?ch_connected=true)
   useEffect(() => {
@@ -331,6 +366,73 @@ export default function EntityDetailClient() {
     }
   };
 
+  // Download filing receipt as text file
+  const downloadReceipt = () => {
+    if (!filingResult) return;
+    const addr = filingResult.formData
+      ? [filingResult.formData.premises, filingResult.formData.addressLine1, filingResult.formData.addressLine2, filingResult.formData.city, filingResult.formData.region, filingResult.formData.postcode, filingResult.formData.country].filter(Boolean).join(', ')
+      : '';
+    const lines = [
+      '═══════════════════════════════════════════════════════',
+      '         COMPANIES HOUSE FILING RECEIPT',
+      '               HomeLedger System',
+      '═══════════════════════════════════════════════════════',
+      '',
+      `Company:        ${entity?.name || 'N/A'}`,
+      `Company Number: ${entity?.companyNumber || 'N/A'}`,
+      '',
+      '───────────────────────────────────────────────────────',
+      `Filing Type:    ${filingResult.filingType || 'N/A'}`,
+      `Description:    ${filingResult.description || 'N/A'}`,
+      `Reference:      ${filingResult.reference}`,
+      `Status:         ${filingResult.status || 'N/A'}`,
+      `Submitted:      ${filingResult.submittedAt ? new Date(filingResult.submittedAt).toLocaleString('en-GB') : 'N/A'}`,
+      '',
+      ...(addr ? ['New Address:', `  ${addr}`, ''] : []),
+      '═══════════════════════════════════════════════════════',
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CH-Filing-Receipt-${filingResult.reference?.replace(/\s+/g, '-') || 'receipt'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Save filing receipt to Documents section
+  const saveReceiptToDocuments = async () => {
+    if (!filingResult) return;
+    setReceiptSaving(true);
+    try {
+      const res = await fetch(`/api/entities/${entityId}/filing-receipt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filingType: filingResult.filingType,
+          reference: filingResult.reference,
+          status: filingResult.status,
+          description: filingResult.description,
+          submittedAt: filingResult.submittedAt,
+          formData: filingResult.formData,
+          companyName: entity?.name,
+          companyNumber: entity?.companyNumber,
+        }),
+      });
+      if (res.ok) {
+        setReceiptSaved(true);
+        toast({ title: 'Receipt Saved', description: 'Filing receipt saved to Documents. You can find it in Capture & Classify.' });
+      } else {
+        const data = await res.json();
+        toast({ title: 'Error', description: data.error || 'Failed to save receipt', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to save receipt', variant: 'destructive' });
+    } finally {
+      setReceiptSaving(false);
+    }
+  };
+
   const submitFiling = async (filingType: string, formData: any) => {
     if (!chConnection) {
       toast({ title: 'Not Connected', description: 'Enter your Authentication Code and connect first.', variant: 'destructive' });
@@ -344,8 +446,34 @@ export default function EntityDetailClient() {
         body: JSON.stringify({ filingType, formData }),
       });
       const data = await res.json();
+
+      // Handle reconnect-required errors (expired OAuth token)
+      if (data.reconnect) {
+        toast({
+          title: 'Connection Expired',
+          description: data.error || 'Your Companies House connection has expired. Please disconnect and reconnect to re-authorize.',
+          variant: 'destructive',
+          duration: 15000,
+        });
+        // Update local state to reflect expired connection
+        setChConnection((prev: any) => prev ? { ...prev, status: 'expired' } : prev);
+        setFilingDialog(null);
+        setFilingStep('form');
+        return;
+      }
+
       if (res.ok && data.filing?.status !== 'rejected') {
-        toast({ title: 'Filing Submitted!', description: `${data.filing.description} — Ref: ${data.filing.reference || 'pending'}`, duration: 8000 });
+        // Store result for confirmation screen
+        setFilingResult({
+          success: true,
+          description: data.filing.description,
+          reference: data.filing.reference || 'pending',
+          status: data.filing.status,
+          formData,
+          filingType,
+          submittedAt: new Date().toISOString(),
+        });
+        setFilingStep('success');
 
         // Record in Entity History automatically
         try {
@@ -357,20 +485,25 @@ export default function EntityDetailClient() {
               title: data.filing.description || `CH Filing: ${filingType}`,
               description: `Submitted to Companies House.\nReference: ${data.filing.reference || 'pending'}\nStatus: ${data.filing.status}\n\nDetails: ${JSON.stringify(formData, null, 2)}`,
               date: new Date().toISOString(),
-              tags: ['companies-house', filingType, data.filing.reference].filter(Boolean).join(','),
+              tags: ['companies-house', filingType, data.filing.reference].filter(Boolean),
             }),
           });
         } catch { /* non-critical */ }
 
-        setFilingDialog(null);
-        setFilingForm({});
-        setFilingStep('form');
         fetchChData();
+        fetchChFilings();
       } else {
-        toast({ title: 'Filing Rejected', description: data.filing?.responseData?.error || data.error || 'Submission failed', variant: 'destructive', duration: 10000 });
+        const errorMsg = data.filing?.responseData?.error || data.error || 'Submission failed';
+        setFilingResult({
+          success: false,
+          error: errorMsg,
+          filingType,
+          formData,
+        });
+        setFilingStep('error');
       }
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to submit filing', variant: 'destructive' });
+      toast({ title: 'Network Error', description: err.message || 'Failed to submit filing. Check your connection and try again.', variant: 'destructive', duration: 10000 });
     } finally { setFilingSubmitting(false); }
   };
 
@@ -738,6 +871,48 @@ export default function EntityDetailClient() {
           ) : !chData ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">No Companies House data available</CardContent></Card>
           ) : (
+            <>
+            {/* Your Filings from HomeLedger */}
+            {chFilings.length > 0 && (
+              <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-emerald-600" /> Your Filings from HomeLedger
+                  </CardTitle>
+                  <CardDescription>Filings submitted directly from this system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {chFilings.map((f: any) => {
+                      const refMatch = f.description?.match(/Reference:\s*([\w-]+)/);
+                      const statusMatch = f.description?.match(/Status:\s*(\w+)/);
+                      return (
+                        <div key={f.id} className="flex items-start justify-between p-3 rounded-lg bg-white dark:bg-black/20 border">
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mt-0.5">
+                              <CheckCircle className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{f.title}</p>
+                              {refMatch?.[1] && <p className="text-xs text-muted-foreground font-mono">Ref: {refMatch[1]}</p>}
+                              {statusMatch?.[1] && (
+                                <Badge variant="outline" className="mt-1 text-xs capitalize text-emerald-700 border-emerald-300">
+                                  {statusMatch[1]}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {f.date ? new Date(f.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
               {/* Registered Office */}
               <Card>
@@ -745,10 +920,15 @@ export default function EntityDetailClient() {
                   <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" /> Registered Office</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm">{chData.registeredAddress}</p>
+                  <p className="text-sm font-medium">{chData.registeredAddress}</p>
+                  {chData.filings?.some((f: any) => f.type === 'AD01') && (
+                    <div className="mt-2 p-2 rounded bg-emerald-50 dark:bg-emerald-950/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                      <CheckCircle className="h-3 w-3 shrink-0" />
+                      Last changed: {new Date(chData.filings.find((f: any) => f.type === 'AD01').date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    To change address officially, use Companies House WebFiling at
-                    <a href="https://www.gov.uk/file-changes-to-a-company-with-companies-house" target="_blank" rel="noopener noreferrer" className="text-primary ml-1 hover:underline">gov.uk</a>
+                    You can change the address from the <button className="text-primary hover:underline" onClick={() => setActiveTab('actions')}>Actions &amp; Filings</button> tab.
                   </p>
                 </CardContent>
               </Card>
@@ -861,6 +1041,7 @@ export default function EntityDetailClient() {
                 </CardContent>
               </Card>
             </div>
+            </>
           )}
         </div>
       )}
@@ -939,7 +1120,7 @@ export default function EntityDetailClient() {
                         {chData?.registeredAddress && <p className="text-xs mt-1">Current: {chData.registeredAddress}</p>}
                       </div>
                     </div>
-                    <Button size="sm" disabled={!chConnection} onClick={() => { setFilingForm({ country: 'England' }); setFilingDialog('change_registered_office'); }}>
+                    <Button size="sm" disabled={!chConnection} onClick={() => { setFilingForm({ country: 'England', premises: '', addressLine1: '', addressLine2: '', city: '', region: '', postcode: '' }); setPostcodeAddresses([]); setFilingStep('form'); setFilingResult(null); setReceiptSaved(false); setFilingDialog('change_registered_office'); }}>
                       <Pencil className="h-3 w-3 mr-1" /> File
                     </Button>
                   </div>
@@ -1033,8 +1214,9 @@ export default function EntityDetailClient() {
                 { title: 'File Annual Accounts', desc: 'Free — Must be filed within 9 months of year end', fee: 'Free', icon: FileText, color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600', url: 'https://www.gov.uk/file-your-company-annual-accounts' },
                 { title: 'Apply to Strike Off', desc: 'DS01 — £10 fee', fee: '£10', icon: AlertTriangle, color: 'bg-red-100 dark:bg-red-900/30 text-red-600', url: 'https://www.gov.uk/strike-off-your-company-from-companies-register' },
                 { title: 'Register a Charge', desc: 'MR01 — Free within 21 days of creation', fee: 'Free', icon: Shield, color: 'bg-gray-100 dark:bg-gray-900/30 text-gray-600', url: 'https://www.gov.uk/guidance/register-a-charge-on-your-company' },
-                { title: 'Allot Shares', desc: 'SH01 — Return of allotment', fee: 'Free', icon: TrendingUp, color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600', url: 'https://www.gov.uk/running-a-limited-company/taking-money-out-of-a-limited-company' },
-                { title: 'WebFiling Dashboard', desc: 'All available filings in one place', fee: '', icon: Globe, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', url: `https://ewf.companieshouse.gov.uk/runpage?page=webFilingIntro&company=${entity.companyNumber}` },
+                { title: 'Allot Shares', desc: 'SH01 — Return of allotment', fee: 'Free', icon: TrendingUp, color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600', url: 'https://www.gov.uk/government/publications/return-of-allotment-of-shares-sh01' },
+                { title: 'WebFiling Dashboard', desc: 'All available filings in one place', fee: '', icon: Globe, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', url: `https://find-and-update.company-information.service.gov.uk/company/${entity.companyNumber}/filing-history` },
+                { title: 'Incorporate a Company', desc: 'Register a new limited company (£12 fee)', fee: '£12', icon: Plus, color: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600', url: 'https://www.gov.uk/limited-company-formation/register-your-company' },
               ].map((action, i) => (
                 <a key={i} href={action.url} target="_blank" rel="noopener noreferrer" className="block">
                   <Card className="hover:shadow-md transition-shadow hover:border-primary/30 cursor-pointer">
@@ -1064,18 +1246,22 @@ export default function EntityDetailClient() {
       {/* ── FILING DIALOGS ── */}
 
       {/* Change Registered Office Dialog — with Postcode Lookup + Confirmation */}
-      <Dialog open={filingDialog === 'change_registered_office'} onOpenChange={v => { if (!v) { setFilingDialog(null); setFilingStep('form'); } }}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={filingDialog === 'change_registered_office'} onOpenChange={() => {}}>
+        <DialogContent className="max-w-lg" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-blue-500" />
-              Change Registered Office (AD01)
+              {filingStep === 'success' ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : filingStep === 'error' ? <AlertTriangle className="h-5 w-5 text-red-500" /> : <MapPin className="h-5 w-5 text-blue-500" />}
+              {filingStep === 'success' ? 'Filing Submitted Successfully' : filingStep === 'error' ? 'Filing Failed' : 'Change Registered Office (AD01)'}
               {filingStep === 'confirm' && <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">Review</Badge>}
             </DialogTitle>
             <DialogDescription>
               {filingStep === 'form'
                 ? 'Search by postcode or enter the new address manually. This change takes effect immediately.'
-                : 'Please review carefully before submitting. This will change your company\'s registered address on the public register.'}
+                : filingStep === 'confirm'
+                ? 'Please review carefully before submitting. This will change your company\'s registered address on the public register.'
+                : filingStep === 'success'
+                ? 'Your filing has been accepted by Companies House.'
+                : 'There was a problem submitting your filing.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1189,6 +1375,83 @@ export default function EntityDetailClient() {
             </div>
           )}
 
+          {/* Success Confirmation Screen */}
+          {filingStep === 'success' && filingResult && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+                    <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-emerald-800 dark:text-emerald-200">{filingResult.description}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">Submitted {new Date(filingResult.submittedAt).toLocaleString('en-GB')}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="p-2 rounded bg-white/60 dark:bg-black/20">
+                    <p className="text-xs text-muted-foreground">Reference</p>
+                    <p className="font-mono font-semibold">{filingResult.reference}</p>
+                  </div>
+                  <div className="p-2 rounded bg-white/60 dark:bg-black/20">
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="font-semibold capitalize">{filingResult.status}</p>
+                  </div>
+                </div>
+              </div>
+              {filingResult.formData && (
+                <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">New Address Submitted</p>
+                  <p className="font-medium">
+                    {[filingResult.formData.premises, filingResult.formData.addressLine1, filingResult.formData.addressLine2, filingResult.formData.city, filingResult.formData.region, filingResult.formData.postcode, filingResult.formData.country].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              )}
+              {/* Save / Download Receipt */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={saveReceiptToDocuments}
+                  disabled={receiptSaved || receiptSaving}
+                >
+                  {receiptSaving ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : receiptSaved ? <CheckCircle className="h-4 w-4 mr-1.5 text-emerald-500" /> : <File className="h-4 w-4 mr-1.5" />}
+                  {receiptSaved ? 'Saved to Documents' : 'Save to Documents'}
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1" onClick={downloadReceipt}>
+                  <Download className="h-4 w-4 mr-1.5" /> Download Receipt
+                </Button>
+              </div>
+
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium">What happens next:</p>
+                  <ul className="mt-1 space-y-1 text-xs">
+                    <li>• Companies House processes the change immediately</li>
+                    <li>• You will receive a confirmation email from CH</li>
+                    <li>• This filing is saved in your entity history</li>
+                    <li>• The public register is updated within minutes</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Screen */}
+          {filingStep === 'error' && filingResult && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-3 mb-2">
+                  <AlertTriangle className="h-6 w-6 text-red-500" />
+                  <p className="font-semibold text-red-800 dark:text-red-200">Submission Failed</p>
+                </div>
+                <p className="text-sm text-red-700 dark:text-red-300">{filingResult.error}</p>
+              </div>
+            </div>
+          )}
+
           <DialogFooter className="flex gap-2">
             {filingStep === 'form' ? (
               <>
@@ -1200,7 +1463,7 @@ export default function EntityDetailClient() {
                   Review Changes <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
                 </Button>
               </>
-            ) : (
+            ) : filingStep === 'confirm' ? (
               <>
                 <Button variant="outline" onClick={() => setFilingStep('form')}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to Edit
@@ -1214,14 +1477,25 @@ export default function EntityDetailClient() {
                   Confirm &amp; Submit to CH
                 </Button>
               </>
+            ) : filingStep === 'success' ? (
+              <Button onClick={() => { setFilingDialog(null); setFilingStep('form'); setFilingResult(null); setFilingForm({}); }} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500">
+                <CheckCircle className="h-4 w-4 mr-2" /> Done
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => { setFilingStep('form'); setFilingResult(null); }}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Try Again
+                </Button>
+                <Button variant="ghost" onClick={() => { setFilingDialog(null); setFilingStep('form'); setFilingResult(null); }}>Close</Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Appoint Director Dialog */}
-      <Dialog open={filingDialog === 'appoint_director'} onOpenChange={v => !v && setFilingDialog(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <Dialog open={filingDialog === 'appoint_director'} onOpenChange={() => {}}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Appoint Director (AP01)</DialogTitle>
             <DialogDescription>Submit new director appointment to Companies House.</DialogDescription>
@@ -1261,8 +1535,8 @@ export default function EntityDetailClient() {
       </Dialog>
 
       {/* Terminate Director Dialog */}
-      <Dialog open={filingDialog === 'terminate_director'} onOpenChange={v => !v && setFilingDialog(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={filingDialog === 'terminate_director'} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Remove Director (TM01)</DialogTitle>
             <DialogDescription>Select the director to remove and the resignation date.</DialogDescription>
@@ -1299,8 +1573,8 @@ export default function EntityDetailClient() {
       </Dialog>
 
       {/* Confirmation Statement Dialog */}
-      <Dialog open={filingDialog === 'confirmation_statement'} onOpenChange={v => !v && setFilingDialog(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={filingDialog === 'confirmation_statement'} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Confirmation Statement (CS01)</DialogTitle>
             <DialogDescription>Confirm company details are correct. £13 fee payable via gov.uk after submission.</DialogDescription>
@@ -1327,8 +1601,8 @@ export default function EntityDetailClient() {
       </Dialog>
 
       {/* Change Officer Details Dialog */}
-      <Dialog open={filingDialog === 'change_officer_details'} onOpenChange={v => !v && setFilingDialog(null)}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <Dialog open={filingDialog === 'change_officer_details'} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Change Director Details (CH01)</DialogTitle>
             <DialogDescription>Update name, address, nationality, or occupation of an existing director.</DialogDescription>

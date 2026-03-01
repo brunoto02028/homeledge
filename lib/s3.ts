@@ -62,6 +62,26 @@ export async function getFileBuffer(cloudStoragePath: string): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
+export async function uploadBuffer(
+  buffer: Buffer,
+  fileName: string,
+  contentType: string,
+  isPublic: boolean = false
+): Promise<string> {
+  const prefix = isPublic ? `${folderPrefix}public/uploads` : `${folderPrefix}uploads`;
+  const cloudStoragePath = `${prefix}/${Date.now()}-${fileName}`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: cloudStoragePath,
+    ContentType: contentType,
+    Body: buffer,
+  });
+
+  await s3Client.send(command);
+  return cloudStoragePath;
+}
+
 export async function deleteFile(cloudStoragePath: string): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: bucketName,

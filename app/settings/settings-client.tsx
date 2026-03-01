@@ -403,122 +403,72 @@ export function SettingsClient() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Free Plan */}
-            <div className={`p-4 rounded-xl border-2 transition-all ${
-              !profile?.plan || profile.plan === 'free'
-                ? 'border-primary bg-primary/5'
-                : 'border-border'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-5 w-5 text-muted-foreground" />
-                <span className="font-semibold">{t('settings.free')}</span>
-              </div>
-              <p className="text-2xl font-bold">£0<span className="text-sm font-normal text-muted-foreground">{t('common.perMonth')}</span></p>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <li>{t('settings.freeLimits.statements')}</li>
-                <li>{t('settings.freeLimits.invoices')}</li>
-                <li>{t('settings.freeLimits.vault')}</li>
-                <li>{t('settings.freeLimits.reports')}</li>
-              </ul>
-              {(!profile?.plan || profile.plan === 'free') && (
-                <Badge className="mt-3 bg-primary/10 text-primary border-0">{t('settings.currentPlan')}</Badge>
-              )}
-            </div>
-
-            {/* Pro Plan */}
-            <div className={`p-4 rounded-xl border-2 transition-all ${
-              profile?.plan === 'pro'
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-muted-foreground/30'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 text-amber-500" />
-                <span className="font-semibold">{t('settings.pro')}</span>
-              </div>
-              <p className="text-2xl font-bold">£9.99<span className="text-sm font-normal text-muted-foreground">{t('common.perMonth')}</span></p>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <li>{t('settings.proLimits.statements')}</li>
-                <li>{t('settings.proLimits.invoices')}</li>
-                <li>{t('settings.proLimits.vault')}</li>
-                <li>{t('settings.proLimits.reports')}</li>
-                <li>{t('settings.proLimits.projections')}</li>
-                <li>{t('settings.proLimits.team')}</li>
-              </ul>
-              {profile?.plan === 'pro' ? (
-                <Badge className="mt-3 bg-primary/10 text-primary border-0">{t('settings.currentPlan')}</Badge>
-              ) : (
-                <Button
-                  size="sm"
-                  className="mt-3 w-full"
-                  disabled={!!loadingPlan}
-                  onClick={async () => {
-                    setLoadingPlan('pro');
-                    try {
-                      const res = await fetch('/api/stripe/checkout', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ plan: 'pro' }),
-                      });
-                      const data = await res.json();
-                      if (data.url) window.location.href = data.url;
-                      else toast({ title: data.error || 'Failed', variant: 'destructive' });
-                    } catch { toast({ title: 'Failed', variant: 'destructive' }); }
-                    finally { setLoadingPlan(null); }
-                  }}
-                >
-                  {loadingPlan === 'pro' ? <Loader2 className="h-4 w-4 animate-spin" /> : t('settings.upgrade')}
-                </Button>
-              )}
-            </div>
-
-            {/* Business Plan */}
-            <div className={`p-4 rounded-xl border-2 transition-all ${
-              profile?.plan === 'business'
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-muted-foreground/30'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Crown className="h-5 w-5 text-purple-500" />
-                <span className="font-semibold">{t('settings.businessPlan')}</span>
-              </div>
-              <p className="text-2xl font-bold">£24.99<span className="text-sm font-normal text-muted-foreground">{t('common.perMonth')}</span></p>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <li>{t('settings.businessLimits.everything')}</li>
-                <li>{t('settings.businessLimits.ai')}</li>
-                <li>{t('settings.businessLimits.team')}</li>
-                <li>{t('settings.businessLimits.entities')}</li>
-                <li>{t('settings.businessLimits.support')}</li>
-              </ul>
-              {profile?.plan === 'business' ? (
-                <Badge className="mt-3 bg-primary/10 text-primary border-0">{t('settings.currentPlan')}</Badge>
-              ) : (
-                <Button
-                  size="sm"
-                  className="mt-3 w-full"
-                  disabled={!!loadingPlan}
-                  onClick={async () => {
-                    setLoadingPlan('business');
-                    try {
-                      const res = await fetch('/api/stripe/checkout', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ plan: 'business' }),
-                      });
-                      const data = await res.json();
-                      if (data.url) window.location.href = data.url;
-                      else toast({ title: data.error || 'Failed', variant: 'destructive' });
-                    } catch { toast({ title: 'Failed', variant: 'destructive' }); }
-                    finally { setLoadingPlan(null); }
-                  }}
-                >
-                  {loadingPlan === 'business' ? <Loader2 className="h-4 w-4 animate-spin" /> : t('settings.upgrade')}
-                </Button>
-              )}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { key: 'starter', icon: Zap, color: 'text-emerald-500', price: '£8.31', basePrice: '£7.99', features: ['Statements + AI Categorisation', 'Invoices & Bills', 'Documents & Files', 'Vault & Actions', 'Life Events'] },
+              { key: 'pro', icon: Sparkles, color: 'text-amber-500', price: '£15.42', basePrice: '£14.99', popular: true, features: ['Everything in Starter', 'Entities & Household', 'Reports & Tax Timeline', 'Projections & Properties', 'Email & Open Banking'] },
+              { key: 'business', icon: Crown, color: 'text-purple-500', price: '£30.66', basePrice: '£29.99', features: ['Everything in Pro', 'Companies House API', 'HMRC Integration', 'Unlimited Entities', 'Priority AI & Support'] },
+              { key: 'managed', icon: ShieldCheck, color: 'text-blue-500', price: '£101.83', basePrice: '£99.99', features: ['Everything in Business', 'Professional Bookkeeping', 'Monthly Reports Prepared', 'Dedicated Support', 'Quarterly Review Meetings'] },
+            ].map(plan => {
+              const isCurrent = profile?.plan === plan.key;
+              const Icon = plan.icon;
+              return (
+                <div key={plan.key} className={`p-4 rounded-xl border-2 transition-all relative ${
+                  isCurrent ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/30'
+                }`}>
+                  {plan.popular && !isCurrent && (
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-amber-500 text-white text-[10px] px-2 py-0">Most Popular</Badge>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className={`h-5 w-5 ${plan.color}`} />
+                    <span className="font-semibold capitalize">{plan.key}</span>
+                  </div>
+                  <p className="text-2xl font-bold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                  <p className="text-[10px] text-muted-foreground">You receive {plan.basePrice} net</p>
+                  <Badge variant="outline" className="mt-1 text-[10px] border-emerald-500/30 text-emerald-500">7-day free trial</Badge>
+                  <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <CheckCircle className="h-3 w-3 text-emerald-500 mt-0.5 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {isCurrent ? (
+                    <Badge className="mt-3 bg-primary/10 text-primary border-0">{t('settings.currentPlan')}</Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="mt-3 w-full"
+                      disabled={!!loadingPlan}
+                      onClick={async () => {
+                        setLoadingPlan(plan.key);
+                        try {
+                          const res = await fetch('/api/stripe/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ plan: plan.key }),
+                          });
+                          const data = await res.json();
+                          if (data.url) window.location.href = data.url;
+                          else toast({ title: data.error || 'Failed', variant: 'destructive' });
+                        } catch { toast({ title: 'Failed', variant: 'destructive' }); }
+                        finally { setLoadingPlan(null); }
+                      }}
+                    >
+                      {loadingPlan === plan.key ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                        isCurrent ? t('settings.currentPlan') : t('settings.upgrade')
+                      )}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {profile?.plan && profile.plan !== 'free' && (
+          {profile?.plan && profile.plan !== 'none' && profile.plan !== 'free' && (
             <Button
               variant="outline"
               size="sm"

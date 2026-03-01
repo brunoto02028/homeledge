@@ -416,6 +416,10 @@ export async function refreshCHToken(refreshToken: string): Promise<{
   refresh_token?: string;
   expires_in: number;
 }> {
+  if (!CH_OAUTH.clientId || !CH_OAUTH.clientSecret) {
+    throw new Error('CH_OAUTH_CLIENT_ID or CH_OAUTH_CLIENT_SECRET not configured. Cannot refresh token.');
+  }
+  console.log('[CH Token] Refreshing token via', CH_OAUTH.tokenUrl);
   const res = await fetch(CH_OAUTH.tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -428,7 +432,15 @@ export async function refreshCHToken(refreshToken: string): Promise<{
     signal: AbortSignal.timeout(30000),
   });
 
-  if (!res.ok) throw new Error('CH token refresh failed');
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    console.error('[CH Token] Refresh failed:', res.status, errBody.slice(0, 500));
+    if (res.status === 401 || res.status === 400) {
+      throw new Error(`RECONNECT_REQUIRED: CH token refresh rejected (${res.status}). The refresh token may have expired. Please reconnect your Companies House account.`);
+    }
+    throw new Error(`CH token refresh failed (${res.status}): ${errBody.slice(0, 200)}`);
+  }
+  console.log('[CH Token] Token refreshed successfully');
   return res.json();
 }
 
@@ -731,9 +743,10 @@ export async function ensureValidToken(
 
   // Token expired, try to refresh
   if (!connection.refreshToken) {
-    throw new Error('Token expired and no refresh token available. Please reconnect.');
+    throw new Error('RECONNECT_REQUIRED: Token expired and no refresh token available. Please reconnect.');
   }
 
+  console.log('[Token] Token expired, attempting refresh for provider:', connection.provider);
   try {
     let result: { access_token: string; refresh_token?: string; expires_in: number };
     
@@ -751,7 +764,12 @@ export async function ensureValidToken(
     });
 
     return result.access_token;
-  } catch (error) {
-    throw new Error('Failed to refresh token. Please reconnect your account.');
+  } catch (error: any) {
+    console.error('[Token] Refresh failed:', error.message);
+    // Propagate RECONNECT_REQUIRED errors directly
+    if (error.message?.includes('RECONNECT_REQUIRED')) {
+      throw error;
+    }
+    throw new Error('RECONNECT_REQUIRED: Failed to refresh token. Please reconnect your account.');
   }
 }

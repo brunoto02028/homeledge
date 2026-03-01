@@ -174,8 +174,8 @@ export function OnboardingClient() {
       <div className="border-b border-border bg-card">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
-              <PoundSterling className="h-5 w-5 text-slate-900" />
+            <div className="h-9 w-9 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
+              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
             </div>
             <span className="font-bold text-lg">HomeLedger</span>
           </div>

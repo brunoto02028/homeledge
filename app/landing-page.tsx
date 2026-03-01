@@ -14,88 +14,57 @@ import {
   HeartPulse, Smartphone, BookOpen, Plane, Fingerprint, CreditCard,
   BadgeCheck, ScanLine, FileCheck, UserCheck, ShieldCheck, Scale,
   AlertTriangle, Clock, Scan, CircleCheck, ChevronRight, Calculator,
-  LineChart, PiggyBank, Target,
+  LineChart, PiggyBank, Target, Anchor, DollarSign,
 } from 'lucide-react';
 
 const FEATURE_CATEGORIES = [
-  { key: 'all', label: 'All Features', icon: Sparkles },
-  { key: 'finance', label: 'Core Finance', icon: PoundSterling },
-  { key: 'ai', label: 'AI & Automation', icon: Brain },
-  { key: 'compliance', label: 'Compliance & Gov', icon: Shield },
-  { key: 'learning', label: 'Learning & Services', icon: GraduationCap },
-  { key: 'property', label: 'Property & Mortgage', icon: Home },
-  { key: 'tools', label: 'Tools & Integrations', icon: Zap },
+  { key: 'all', tKey: 'landing.features.allFeatures', icon: Sparkles },
+  { key: 'finance', tKey: 'landing.features.coreFinance', icon: PoundSterling },
+  { key: 'ai', tKey: 'landing.features.aiAutomation', icon: Brain },
+  { key: 'compliance', tKey: 'landing.features.complianceGov', icon: Shield },
+  { key: 'learning', tKey: 'landing.features.learningServices', icon: GraduationCap },
+  { key: 'property', tKey: 'landing.features.propertyMortgage', icon: Home },
+  { key: 'tools', tKey: 'landing.features.toolsIntegrations', icon: Zap },
 ];
 
-const ALL_FEATURES = [
-  { icon: FileSpreadsheet, title: 'Bank Statements', desc: 'Upload CSV, PDF or Excel statements. AI categorises every transaction and maps it to your accounts automatically.', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'finance' },
-  { icon: FileText, title: 'Invoices', desc: 'Create professional invoices, track payments and overdue amounts. Scan paper invoices with AI document processing.', color: 'from-blue-500/20 to-cyan-500/10', ic: 'text-blue-400', cat: 'finance' },
-  { icon: Receipt, title: 'Bills & Subscriptions', desc: 'Manage recurring bills, set due-date reminders and track spending by provider. Never miss a payment.', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'finance' },
-  { icon: BarChart3, title: 'HMRC Tax Reports', desc: 'Generate SA103, CT600 and tax summaries with automatic HMRC box mapping. Export to PDF in one click.', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400', cat: 'finance' },
-  { icon: TrendingUp, title: 'Financial Projections', desc: 'Cash flow forecasting, budget tracking, savings goals and debt payoff plans. See your financial future.', color: 'from-cyan-500/20 to-sky-500/10', ic: 'text-cyan-400', cat: 'finance' },
-  { icon: ArrowLeftRight, title: 'Transfers', desc: 'Track inter-account transfers and reconcile balances across all your bank accounts and entities.', color: 'from-fuchsia-500/20 to-pink-500/10', ic: 'text-fuchsia-400', cat: 'finance' },
-  { icon: HeartPulse, title: 'Financial Health Score', desc: 'Real-time score based on 6 components: bill tracking, categorisation, savings rate, budgets, actions, and data freshness.', color: 'from-red-500/20 to-pink-500/10', ic: 'text-red-400', cat: 'finance' },
-  { icon: Brain, title: '4-Layer AI Categorisation', desc: 'Our intelligent engine learns from your corrections. Deterministic rules, pattern matching, AI classification, and auto-learning — 90%+ accuracy.', color: 'from-purple-500/20 to-fuchsia-500/10', ic: 'text-purple-400', cat: 'ai' },
-  { icon: MessageSquare, title: 'AI Assistant', desc: 'Context-aware AI chat that understands your data. Ask about your finances and get instant, accurate answers.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'ai' },
-  { icon: Tag, title: 'Smart Categories', desc: 'Custom categories with HMRC tax-box mapping. AI suggests the right category for every transaction.', color: 'from-orange-500/20 to-amber-500/10', ic: 'text-orange-400', cat: 'ai' },
-  { icon: Camera, title: 'Capture & Classify', desc: 'Scan receipts and documents from your phone. AI extracts, categorises, and files everything automatically.', color: 'from-indigo-500/20 to-blue-500/10', ic: 'text-indigo-400', cat: 'ai' },
-  { icon: Shield, title: 'Identity Verification (KYC)', desc: 'Built-in certified identity checks. Verify yourself or your clients with document scanning and biometric matching. Stay compliant.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'compliance' },
-  { icon: Link2, title: 'Government APIs', desc: 'Connect to Companies House and HMRC. View company profiles, filing history, tax obligations and submit returns.', color: 'from-teal-500/20 to-emerald-500/10', ic: 'text-teal-400', cat: 'compliance' },
-  { icon: Building, title: 'Companies House Filing', desc: 'File address changes and confirmation statements directly to Companies House. View officers, filing history, and company status in real time.', color: 'from-slate-500/20 to-zinc-500/10', ic: 'text-slate-400', cat: 'compliance' },
-  { icon: CalendarClock, title: 'Tax Timeline', desc: 'Visual calendar of HMRC deadlines — Self Assessment, VAT, Corporation Tax, PAYE. Alerts before every due date.', color: 'from-amber-500/20 to-yellow-500/10', ic: 'text-amber-400', cat: 'compliance' },
-  { icon: KeyRound, title: 'Secure Vault', desc: 'Store passwords, API keys and credentials with AES-256-GCM encryption. Bank-grade security for all your secrets.', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'compliance' },
-  { icon: GraduationCap, title: 'Accounting Academy', desc: 'AAT & ACCA exam practice with timed tests, study mode, AI tutor, and a visual career roadmap from Level 2 to Level 6.', color: 'from-indigo-500/20 to-violet-500/10', ic: 'text-indigo-400', cat: 'learning' },
-  { icon: Globe, title: 'UK Relocation Hub', desc: 'AI-powered guide for newcomers to the UK. Visa advice, NI numbers, bank accounts, GP registration — fully OISC compliant.', color: 'from-teal-500/20 to-cyan-500/10', ic: 'text-teal-400', cat: 'learning' },
-  { icon: ShoppingBag, title: 'Service Marketplace', desc: 'Professional accounting, tax filing, and bookkeeping services. Browse packages, compare prices, and track your orders.', color: 'from-rose-500/20 to-orange-500/10', ic: 'text-rose-400', cat: 'learning' },
-  { icon: GraduationCap, title: 'Financial Learning', desc: 'Built-in guides on UK tax, self-assessment, VAT registration, company accounts and personal finance.', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400', cat: 'learning' },
-  { icon: Wifi, title: 'Open Banking Sync', desc: 'Connect your UK bank accounts securely. Transactions sync automatically 3x daily. Full 24-month history on first connect.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'tools' },
-  { icon: Landmark, title: 'Multi-Entity', desc: 'Manage personal finances alongside multiple Ltd companies, CICs or sole-trader businesses — all in one account.', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'tools' },
-  { icon: FolderOpen, title: 'Document Storage', desc: 'Upload and organise financial documents. Full-text search, entity linking and secure cloud storage.', color: 'from-lime-500/20 to-emerald-500/10', ic: 'text-lime-400', cat: 'tools' },
-  { icon: Home, title: 'UK Life Events', desc: 'Track life milestones — buying a home, marriage, starting a business. Personalised financial checklists.', color: 'from-pink-500/20 to-rose-500/10', ic: 'text-pink-400', cat: 'tools' },
-  { icon: Smartphone, title: 'Install as App (PWA)', desc: 'Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'tools' },
-  { icon: Link2, title: 'Accountant Portal', desc: 'Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400', cat: 'tools' },
-  { icon: Home, title: 'Property Purchase Intelligence', desc: '9 purchase modes compared — personal, joint tenants, Ltd company, trust, charity, pension, shared ownership, right to buy. Full tax implications (SDLT, IHT, CGT, Corp Tax, ATED) sourced from GOV.UK.', color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400', cat: 'property' },
-  { icon: Calculator, title: 'SDLT Calculator', desc: 'Stamp Duty Land Tax calculator with 6 buyer types — first-time, additional property, company, non-resident, corporate. Official 2025/26 tax bands with detailed breakdowns.', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'property' },
-  { icon: Banknote, title: 'Mortgage Approval Simulator', desc: 'Estimate your mortgage chances based on age, employment type, income, debts, credit score, deposit, and property type. Probability gauge, stress test, red flags, and lender suitability.', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'property' },
-  { icon: Brain, title: 'Property Purchase Planner', desc: 'AI-powered plan using your real financial data. Reads accounts, entities, transactions, debts, and savings goals. Cross-entity strategy for personal vs company purchase.', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'property' },
-  { icon: LineChart, title: 'Investment Projections', desc: 'Compound interest engine for ISAs, stocks, pensions, bonds, company retained profits. Tracks dividends, reinvestment, and monthly contributions towards your deposit target.', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'property' },
-  { icon: Target, title: 'Savings Plan Generator', desc: 'Personalised savings plan based on your real income and expenses. Scenario modelling — see how expense cuts or partner income changes your timeline to deposit.', color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400', cat: 'property' },
-  { icon: PiggyBank, title: 'Mortgage Affordability', desc: 'Calculate max borrowing at 4x and 4.5x salary. Monthly payment breakdown with total interest paid over the mortgage term.', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'property' },
-  { icon: Shield, title: 'Credit Score Hub', desc: 'Understand UK credit scoring across Experian, Equifax and TransUnion. Score bands, impact factors, 8 improvement tips with timelines, and Experian API integration info.', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'property' },
+const ALL_FEATURES_DEFS = [
+  { icon: FileSpreadsheet, tTitle: 'landing.featureCards.bankStatements', tDesc: 'landing.featureCards.bankStatementsDesc', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'finance' },
+  { icon: FileText, tTitle: 'landing.featureCards.invoices', tDesc: 'landing.featureCards.invoicesDesc', color: 'from-blue-500/20 to-cyan-500/10', ic: 'text-blue-400', cat: 'finance' },
+  { icon: Receipt, tTitle: 'landing.featureCards.billsSubscriptions', tDesc: 'landing.featureCards.billsSubscriptionsDesc', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'finance' },
+  { icon: BarChart3, tTitle: 'landing.featureCards.hmrcTaxReports', tDesc: 'landing.featureCards.hmrcTaxReportsDesc', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400', cat: 'finance' },
+  { icon: TrendingUp, tTitle: 'landing.featureCards.financialProjections', tDesc: 'landing.featureCards.financialProjectionsDesc', color: 'from-cyan-500/20 to-sky-500/10', ic: 'text-cyan-400', cat: 'finance' },
+  { icon: ArrowLeftRight, tTitle: 'landing.featureCards.transfers', tDesc: 'landing.featureCards.transfersDesc', color: 'from-fuchsia-500/20 to-pink-500/10', ic: 'text-fuchsia-400', cat: 'finance' },
+  { icon: HeartPulse, tTitle: 'landing.featureCards.healthScore', tDesc: 'landing.featureCards.healthScoreDesc', color: 'from-red-500/20 to-pink-500/10', ic: 'text-red-400', cat: 'finance' },
+  { icon: Brain, tTitle: 'landing.featureCards.aiCategorisation', tDesc: 'landing.featureCards.aiCategorisationDesc', color: 'from-purple-500/20 to-fuchsia-500/10', ic: 'text-purple-400', cat: 'ai' },
+  { icon: MessageSquare, tTitle: 'landing.featureCards.aiAssistant', tDesc: 'landing.featureCards.aiAssistantDesc', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'ai' },
+  { icon: Tag, tTitle: 'landing.featureCards.smartCategories', tDesc: 'landing.featureCards.smartCategoriesDesc', color: 'from-orange-500/20 to-amber-500/10', ic: 'text-orange-400', cat: 'ai' },
+  { icon: Camera, tTitle: 'landing.featureCards.captureClassify', tDesc: 'landing.featureCards.captureClassifyDesc', color: 'from-indigo-500/20 to-blue-500/10', ic: 'text-indigo-400', cat: 'ai' },
+  { icon: Shield, tTitle: 'landing.featureCards.idVerification', tDesc: 'landing.featureCards.idVerificationDesc', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'compliance' },
+  { icon: Link2, tTitle: 'landing.featureCards.govApis', tDesc: 'landing.featureCards.govApisDesc', color: 'from-teal-500/20 to-emerald-500/10', ic: 'text-teal-400', cat: 'compliance' },
+  { icon: Building, tTitle: 'landing.featureCards.companiesHouse', tDesc: 'landing.featureCards.companiesHouseDesc', color: 'from-slate-500/20 to-zinc-500/10', ic: 'text-slate-400', cat: 'compliance' },
+  { icon: CalendarClock, tTitle: 'landing.featureCards.taxTimeline', tDesc: 'landing.featureCards.taxTimelineDesc', color: 'from-amber-500/20 to-yellow-500/10', ic: 'text-amber-400', cat: 'compliance' },
+  { icon: KeyRound, tTitle: 'landing.featureCards.secureVault', tDesc: 'landing.featureCards.secureVaultDesc', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'compliance' },
+  { icon: GraduationCap, tTitle: 'landing.featureCards.accountingAcademy', tDesc: 'landing.featureCards.accountingAcademyDesc', color: 'from-indigo-500/20 to-violet-500/10', ic: 'text-indigo-400', cat: 'learning' },
+  { icon: Globe, tTitle: 'landing.featureCards.relocationHub', tDesc: 'landing.featureCards.relocationHubDesc', color: 'from-teal-500/20 to-cyan-500/10', ic: 'text-teal-400', cat: 'learning' },
+  { icon: ShoppingBag, tTitle: 'landing.featureCards.marketplace', tDesc: 'landing.featureCards.marketplaceDesc', color: 'from-rose-500/20 to-orange-500/10', ic: 'text-rose-400', cat: 'learning' },
+  { icon: GraduationCap, tTitle: 'landing.featureCards.financialLearning', tDesc: 'landing.featureCards.financialLearningDesc', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400', cat: 'learning' },
+  { icon: Wifi, tTitle: 'landing.featureCards.openBanking', tDesc: 'landing.featureCards.openBankingDesc', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'tools' },
+  { icon: Landmark, tTitle: 'landing.featureCards.multiEntity', tDesc: 'landing.featureCards.multiEntityDesc', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'tools' },
+  { icon: FolderOpen, tTitle: 'landing.featureCards.documentStorage', tDesc: 'landing.featureCards.documentStorageDesc', color: 'from-lime-500/20 to-emerald-500/10', ic: 'text-lime-400', cat: 'tools' },
+  { icon: Home, tTitle: 'landing.featureCards.ukLifeEvents', tDesc: 'landing.featureCards.ukLifeEventsDesc', color: 'from-pink-500/20 to-rose-500/10', ic: 'text-pink-400', cat: 'tools' },
+  { icon: Smartphone, tTitle: 'landing.featureCards.pwa', tDesc: 'landing.featureCards.pwaDesc', color: 'from-sky-500/20 to-blue-500/10', ic: 'text-sky-400', cat: 'tools' },
+  { icon: Link2, tTitle: 'landing.featureCards.accountantPortal', tDesc: 'landing.featureCards.accountantPortalDesc', color: 'from-emerald-500/20 to-green-500/10', ic: 'text-emerald-400', cat: 'tools' },
+  { icon: Home, tTitle: 'landing.featureCards.propertyIntelligence', tDesc: 'landing.featureCards.propertyIntelligenceDesc', color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400', cat: 'property' },
+  { icon: Calculator, tTitle: 'landing.featureCards.sdltCalculator', tDesc: 'landing.featureCards.sdltCalculatorDesc', color: 'from-rose-500/20 to-pink-500/10', ic: 'text-rose-400', cat: 'property' },
+  { icon: Banknote, tTitle: 'landing.featureCards.mortgageSimulator', tDesc: 'landing.featureCards.mortgageSimulatorDesc', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400', cat: 'property' },
+  { icon: Brain, tTitle: 'landing.featureCards.purchasePlanner', tDesc: 'landing.featureCards.purchasePlannerDesc', color: 'from-violet-500/20 to-purple-500/10', ic: 'text-violet-400', cat: 'property' },
+  { icon: LineChart, tTitle: 'landing.featureCards.investmentProjections', tDesc: 'landing.featureCards.investmentProjectionsDesc', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400', cat: 'property' },
+  { icon: Target, tTitle: 'landing.featureCards.savingsPlan', tDesc: 'landing.featureCards.savingsPlanDesc', color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400', cat: 'property' },
+  { icon: PiggyBank, tTitle: 'landing.featureCards.mortgageAffordability', tDesc: 'landing.featureCards.mortgageAffordabilityDesc', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400', cat: 'property' },
+  { icon: Shield, tTitle: 'landing.featureCards.creditScoreHub', tDesc: 'landing.featureCards.creditScoreHubDesc', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400', cat: 'property' },
 ];
 
-const HOW_IT_WORKS = [
-  { step: '1', title: 'Create Your Free Account', desc: 'Sign up in under a minute. No credit card required. Add your personal profile or business entities.' },
-  { step: '2', title: 'Upload Your Data', desc: 'Import bank statements, scan invoices and receipts, or connect to HMRC & Companies House directly.' },
-  { step: '3', title: 'Get AI-Powered Insights', desc: 'AI categorises everything, generates tax reports, tracks deadlines and gives you a clear financial picture.' },
-];
-
-const TESTIMONIALS = [
-  { name: 'James Mitchell', role: 'Sole Trader, London', text: 'HomeLedger saved me hours every month. The AI categorisation is incredibly accurate and HMRC reports are generated in seconds.', avatar: 'JM' },
-  { name: 'Sarah Chen', role: 'Director, Tech Solutions Ltd', text: 'Managing multiple entities used to be a nightmare. Now everything is in one place — invoices, tax reports, bank statements.', avatar: 'SC' },
-  { name: 'David Okafor', role: 'Chartered Accountant', text: "The accountant portal is a game-changer. I can view all my clients' data without them sharing passwords. Brilliant.", avatar: 'DO' },
-];
-
-const FAQ_ITEMS = [
-  { q: 'Is HomeLedger really free?', a: 'Yes! Our Free plan includes full access to statements, invoices, bills, categories, and basic reports. Premium plans add advanced features like AI chat, financial projections, and priority support.' },
-  { q: 'Is my financial data secure?', a: 'Absolutely. All data is encrypted in transit (TLS 1.3) and at rest. Vault entries use AES-256-GCM encryption. We never share your data with third parties.' },
-  { q: 'Can I manage multiple businesses?', a: 'Yes. HomeLedger supports unlimited entities — personal accounts, limited companies, CICs, sole-trader businesses — all from one login.' },
-  { q: 'Does it generate HMRC-ready reports?', a: 'Yes. We generate SA103 (Self Assessment), CT600 (Corporation Tax), and detailed tax summaries with automatic box mapping. Export to PDF anytime.' },
-  { q: 'Can my accountant access my data?', a: 'Yes. Invite your accountant via email. They get a dedicated dashboard to view your data with read-only permissions — no credential sharing needed.' },
-  { q: 'What file formats do you support?', a: 'We accept CSV, PDF, Excel (.xlsx), and image files (JPG, PNG) for bank statements, invoices, and documents. Our AI processes them all.' },
-  { q: 'Can I install HomeLedger as a desktop app?', a: 'Yes! HomeLedger is a Progressive Web App (PWA). Click "Install" in your browser to add it to your desktop or mobile home screen.' },
-  { q: 'What property tools are included?', a: 'Our Property section includes: 9 purchase mode comparisons (personal, joint, Ltd company, trust, charity, pension, shared ownership, right to buy), SDLT calculator, Mortgage Approval Simulator, AI Purchase Planner with real data, compound interest investment projections, cross-entity strategy (personal vs company), savings plan generator, and a Credit Score Hub — all sourced from GOV.UK.' },
-  { q: 'Can it help me plan a property purchase?', a: 'Yes! The Property Purchase Planner reads your real financial data — accounts, entities, transactions, savings goals, and debts — to calculate a Mortgage Readiness Score, project your savings timeline, and suggest smart strategies like dividend extraction from your company or ISA optimisation. You can add investments (ISAs, stocks, pensions) and see compound interest growth projections towards your deposit.' },
-  { q: 'How does the AI Assistant work?', a: 'Our AI understands the context of the page you\'re on. Ask it about your statements, tax obligations, or spending patterns and it gives personalised answers.' },
-  { q: 'What is the Accounting Academy?', a: 'A built-in exam practice platform for AAT (Levels 2–4) and ACCA (Levels 5–6). Features timed exams, study mode with explanations, an AI tutor, and a visual career roadmap with salary ranges. Perfect for aspiring accountants or anyone wanting to understand UK bookkeeping.' },
-  { q: 'Do you offer relocation support for newcomers?', a: 'Yes! Our UK Relocation Hub is an AI-powered guide that helps newcomers with visa advice, National Insurance numbers, opening bank accounts, GP registration, council tax, and more. All advice is OISC compliant. We also offer professional relocation services through our marketplace.' },
-];
-
-const FALLBACK_PLANS = [
-  { name: 'Free', price: '£0', period: '', features: ['Unlimited statements', 'Invoices & bills', 'Basic reports', 'Up to 2 entities', 'Document storage'], cta: 'Get Started Free', highlighted: false },
-  { name: 'Pro', price: '£9.99', period: '/month', features: ['Everything in Free', 'AI Assistant', 'Financial projections', 'Unlimited entities', 'Tax timeline alerts', 'Priority support'], cta: 'Start Free Trial', highlighted: true },
-  { name: 'Business', price: '£24.99', period: '/month', features: ['Everything in Pro', 'Accountant portal', 'Government API access', 'Team collaboration', 'Advanced reports', 'Dedicated support'], cta: 'Start Free Trial', highlighted: false },
-];
+// FALLBACK_PLANS is now built dynamically inside the component using t() for translations
 
 interface CmsSection { sectionKey: string; title?: string; subtitle?: string; content?: any; }
 
@@ -118,8 +87,8 @@ export function LandingPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-500/30 animate-pulse flex items-center justify-center">
-          <PoundSterling className="h-8 w-8 text-slate-900" />
+        <div className="h-14 w-14 rounded-2xl shadow-lg shadow-amber-500/30 animate-pulse overflow-hidden">
+          <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
         </div>
       </div>
     );
@@ -133,17 +102,25 @@ export function LandingPage() {
     { href: '#verify-id', label: t('landing.nav.verifyId') },
     { href: '#property', label: t('landing.nav.property') },
     { href: '#new-arrivals', label: t('landing.nav.newToUk') },
+    { href: '/intelligence', label: '🌐 Intelligence' },
     { href: '#pricing', label: t('landing.nav.pricing') },
     { href: '#faq', label: t('landing.nav.faq') },
+  ];
+
+  const FALLBACK_PLANS = [
+    { name: t('landing.pricing.starterName'), price: '£7.90', period: t('landing.pricing.perMonth'), features: [t('landing.pricing.starterF1'), t('landing.pricing.starterF2'), t('landing.pricing.starterF3'), t('landing.pricing.starterF4'), t('landing.pricing.starterF5')], cta: t('landing.pricing.startFreeTrial'), highlighted: false },
+    { name: t('landing.pricing.proName'), price: '£14.90', period: t('landing.pricing.perMonth'), features: [t('landing.pricing.proF1'), t('landing.pricing.proF2'), t('landing.pricing.proF3'), t('landing.pricing.proF4'), t('landing.pricing.proF5')], cta: t('landing.pricing.startFreeTrial'), highlighted: true },
+    { name: t('landing.pricing.businessName'), price: '£29.90', period: t('landing.pricing.perMonth'), features: [t('landing.pricing.businessF1'), t('landing.pricing.businessF2'), t('landing.pricing.businessF3'), t('landing.pricing.businessF4'), t('landing.pricing.businessF5')], cta: t('landing.pricing.startFreeTrial'), highlighted: false },
+    { name: t('landing.pricing.managedName'), price: '£99.90', period: t('landing.pricing.perMonth'), features: [t('landing.pricing.managedF1'), t('landing.pricing.managedF2'), t('landing.pricing.managedF3'), t('landing.pricing.managedF4'), t('landing.pricing.managedF5')], cta: t('landing.pricing.startFreeTrial'), highlighted: false },
   ];
 
   const plans = dbPlans.length > 0
     ? dbPlans.map((p: any) => ({
         key: p.id, name: p.displayName,
         price: p.price === 0 ? '£0' : `£${p.price}`,
-        period: p.price === 0 ? '' : `/${p.interval || 'month'}`,
+        period: p.price === 0 ? '' : t('landing.pricing.perMonth'),
         features: p.features || [], highlighted: p.isDefault,
-        cta: p.price === 0 ? 'Get Started Free' : 'Start Free Trial',
+        cta: t('landing.pricing.startFreeTrial'),
       }))
     : FALLBACK_PLANS.map((p, i) => ({ key: i, ...p }));
 
@@ -153,8 +130,8 @@ export function LandingPage() {
       <nav className="sticky top-0 z-50 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 shadow-md shadow-amber-500/20 flex items-center justify-center">
-              <PoundSterling className="h-5 w-5 text-slate-900" />
+            <div className="h-9 w-9 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
+              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
             </div>
             <span className="text-xl font-bold text-white">HomeLedger</span>
           </Link>
@@ -247,10 +224,10 @@ export function LandingPage() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { label: 'Total Income', value: '£42,850', color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-500/5' },
-                    { label: 'Total Expenses', value: '£28,340', color: 'text-rose-400', bg: 'from-rose-500/10 to-rose-500/5' },
-                    { label: 'Transactions', value: '1,247', color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-500/5' },
-                    { label: 'Tax Saved', value: '£8,120', color: 'text-amber-400', bg: 'from-amber-500/10 to-amber-500/5' },
+                    { label: t('landing.mock.totalIncome'), value: '£42,850', color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-500/5' },
+                    { label: t('landing.mock.totalExpenses'), value: '£28,340', color: 'text-rose-400', bg: 'from-rose-500/10 to-rose-500/5' },
+                    { label: t('landing.mock.transactions'), value: '1,247', color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-500/5' },
+                    { label: t('landing.mock.taxSaved'), value: '£8,120', color: 'text-amber-400', bg: 'from-amber-500/10 to-amber-500/5' },
                   ].map((s, i) => (
                     <div key={i} className={`bg-gradient-to-br ${s.bg} rounded-lg p-3 border border-white/5`}>
                       <p className="text-[11px] text-slate-500">{s.label}</p>
@@ -296,7 +273,7 @@ export function LandingPage() {
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-12 scrollbar-hide">
             <div className="flex sm:flex-wrap sm:justify-center gap-2 min-w-max sm:min-w-0">
               {FEATURE_CATEGORIES.map((c) => {
-                const count = c.key === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === c.key).length;
+                const count = c.key === 'all' ? ALL_FEATURES_DEFS.length : ALL_FEATURES_DEFS.filter(f => f.cat === c.key).length;
                 const active = featureTab === c.key;
                 return (
                   <button
@@ -309,7 +286,7 @@ export function LandingPage() {
                     }`}
                   >
                     <c.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${active ? 'text-amber-400' : ''}`} />
-                    <span>{c.label}</span>
+                    <span>{t(c.tKey)}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-slate-500'}`}>
                       {count}
                     </span>
@@ -321,9 +298,9 @@ export function LandingPage() {
 
           {/* Feature Cards Grid — compact with expand on hover/click */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {ALL_FEATURES.filter(f => featureTab === 'all' || f.cat === featureTab).map((f) => (
+            {ALL_FEATURES_DEFS.filter(f => featureTab === 'all' || f.cat === featureTab).map((f) => (
               <div
-                key={f.title}
+                key={f.tTitle}
                 className="group neon-card p-4 cursor-pointer transition-all duration-300 hover:ring-1 hover:ring-amber-400/20 hover:shadow-lg hover:shadow-amber-500/5"
                 onClick={(e) => {
                   const el = e.currentTarget;
@@ -334,11 +311,11 @@ export function LandingPage() {
                   <div className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${f.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
                     <f.icon className={`h-5 w-5 ${f.ic}`} />
                   </div>
-                  <h3 className="text-sm font-semibold text-white leading-tight">{f.title}</h3>
+                  <h3 className="text-sm font-semibold text-white leading-tight">{t(f.tTitle)}</h3>
                 </div>
                 <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 [.expanded>&]:grid-rows-[1fr]">
                   <div className="overflow-hidden">
-                    <p className="text-xs text-slate-400 leading-relaxed mt-3 pt-3 border-t border-white/5">{f.desc}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed mt-3 pt-3 border-t border-white/5">{t(f.tDesc)}</p>
                   </div>
                 </div>
               </div>
@@ -348,10 +325,10 @@ export function LandingPage() {
           {/* Feature count summary */}
           <div className="text-center mt-10">
             <p className="text-sm text-slate-500">
-              Showing {featureTab === 'all' ? ALL_FEATURES.length : ALL_FEATURES.filter(f => f.cat === featureTab).length} of {ALL_FEATURES.length} modules
+              {t('landing.features.showing')} {featureTab === 'all' ? ALL_FEATURES_DEFS.length : ALL_FEATURES_DEFS.filter(f => f.cat === featureTab).length} {t('landing.features.of')} {ALL_FEATURES_DEFS.length} {t('landing.features.modules')}
               {featureTab !== 'all' && (
                 <button onClick={() => setFeatureTab('all')} className="ml-2 text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">
-                  Show all
+                  {t('landing.features.showAll')}
                 </button>
               )}
             </p>
@@ -366,20 +343,20 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 text-xs font-semibold mb-6">
-                <Building2 className="h-3.5 w-3.5" /> For UK Businesses
+                <Building2 className="h-3.5 w-3.5" /> {t('landing.business.badge')}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">Run Your Business Finances with Confidence</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">{t('landing.business.title')}</h2>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                Whether you&apos;re a sole trader, limited company, or CIC — HomeLedger handles invoices, tax reports, Companies House filings, and HMRC obligations.
+                {t('landing.business.description')}
               </p>
               <div className="mt-8 space-y-4">
                 {[
-                  { icon: Landmark, text: 'Manage multiple entities — Ltd, CIC, sole trader, personal' },
-                  { icon: BarChart3, text: 'SA103 & CT600 reports with automatic box mapping' },
-                  { icon: Link2, text: 'Companies House & HMRC API integration' },
-                  { icon: CalendarClock, text: 'Tax deadline alerts — SA, VAT, CT, PAYE' },
-                  { icon: FileText, text: 'Professional invoices with payment tracking' },
-                  { icon: Tag, text: 'AI categorisation with tax-regime awareness' },
+                  { icon: Landmark, text: t('landing.business.feature1') },
+                  { icon: BarChart3, text: t('landing.business.feature2') },
+                  { icon: Link2, text: t('landing.business.feature3') },
+                  { icon: CalendarClock, text: t('landing.business.feature4') },
+                  { icon: FileText, text: t('landing.business.feature5') },
+                  { icon: Tag, text: t('landing.business.feature6') },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 group">
                     <div className="h-8 w-8 rounded-lg bg-cyan-400/10 border border-cyan-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-cyan-400/30 transition-colors">
@@ -392,14 +369,14 @@ export function LandingPage() {
             </div>
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
-                <div className="flex items-center gap-3 mb-2"><Landmark className="h-5 w-5 text-cyan-400" /><span className="font-semibold text-white">Your Entities</span></div>
+                <div className="flex items-center gap-3 mb-2"><Landmark className="h-5 w-5 text-cyan-400" /><span className="font-semibold text-white">{t('landing.business.mockTitle')}</span></div>
                 {[{ name: 'Tech Solutions Ltd', type: 'Limited Company', co: '#12345678' }, { name: 'Sarah Consulting', type: 'Sole Trader', co: 'UTR: 12345' }, { name: 'Personal Account', type: 'Personal', co: '' }].map((e, i) => (
                   <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-cyan-400/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-lg bg-cyan-400/10 flex items-center justify-center"><Building2 className="h-4 w-4 text-cyan-400" /></div>
                       <div><div className="text-sm font-medium text-white">{e.name}</div><div className="text-xs text-slate-500">{e.type}{e.co && ` · ${e.co}`}</div></div>
                     </div>
-                    <div className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">Active</div>
+                    <div className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">{t('landing.mock.active')}</div>
                   </div>
                 ))}
               </div>
@@ -502,6 +479,193 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ── Global Intelligence ─────────────────────────────────────────── */}
+      <section id="intelligence" className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-[#060d1a] to-slate-950" />
+        {/* Animated glow orbs */}
+        <div className="absolute top-10 left-[20%] w-64 h-64 bg-cyan-500/8 rounded-full blur-[100px] orb-float-slow" />
+        <div className="absolute bottom-10 right-[15%] w-80 h-80 bg-red-500/6 rounded-full blur-[120px] orb-float-medium" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 text-xs font-semibold mb-6">
+              <Globe className="h-3.5 w-3.5" />
+              <span>Real-Time Global Intelligence</span>
+              <span className="relative flex h-2 w-2 ml-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+              <span className="text-red-400 text-[10px] font-bold tracking-wider">LIVE</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight">
+              The World at Your{' '}
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Fingertips
+              </span>
+            </h2>
+            <p className="mt-5 text-lg text-slate-400 leading-relaxed">
+              Monitor global events, military movements, earthquakes, weather patterns, and breaking news — all on one
+              interactive map with AI-powered analysis. Your personal war room.
+            </p>
+          </div>
+
+          {/* Mock War Room Map */}
+          <div className="max-w-5xl mx-auto mb-14">
+            <div className="relative rounded-2xl overflow-hidden border border-cyan-500/10 shadow-2xl shadow-cyan-500/5" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #0d1520 50%, #0a0a1a 100%)' }}>
+              {/* Fake top bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5" style={{ background: 'rgba(10,15,25,0.9)' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-white font-mono text-xs font-bold tracking-wider">GLOBAL INTELLIGENCE</span>
+                  <span className="text-cyan-400 font-mono text-[10px]">LIVE</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-[10px] font-mono text-cyan-400">
+                    <Clock className="w-3 h-3" />
+                    <span className="tabular-nums">
+                      {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  {[
+                    { label: 'TRACKING', val: '64', color: 'text-white' },
+                    { label: 'CRISIS', val: '23', color: 'text-red-400' },
+                    { label: 'OPPORTUNITY', val: '10', color: 'text-green-400' },
+                  ].map(s => (
+                    <div key={s.label} className="hidden sm:block text-center px-2">
+                      <div className="text-[8px] text-slate-500 tracking-wider">{s.label}</div>
+                      <div className={`text-xs font-bold font-mono ${s.color}`}>{s.val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Map area with animated dots */}
+              <div className="relative h-[280px] sm:h-[360px] overflow-hidden" style={{ background: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%230d1520"/></svg>')` }}>
+                {/* Grid overlay */}
+                <div className="absolute inset-0 opacity-[0.04]"
+                  style={{
+                    backgroundImage: 'linear-gradient(rgba(0,180,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,180,255,0.4) 1px, transparent 1px)',
+                    backgroundSize: '50px 50px',
+                  }}
+                />
+                {/* Day/night gradient mock */}
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%)' }} />
+
+                {/* Animated blinking dots representing news/events */}
+                {[
+                  { top: '25%', left: '22%', color: '#ef4444', size: 8, label: 'Washington DC' },
+                  { top: '30%', left: '47%', color: '#3b82f6', size: 6, label: 'London' },
+                  { top: '28%', left: '50%', color: '#22d3ee', size: 5, label: 'Paris' },
+                  { top: '40%', left: '55%', color: '#ef4444', size: 9, label: 'Middle East' },
+                  { top: '32%', left: '60%', color: '#f59e0b', size: 7, label: 'Moscow' },
+                  { top: '35%', left: '72%', color: '#ef4444', size: 8, label: 'Beijing' },
+                  { top: '45%', left: '75%', color: '#22c55e', size: 5, label: 'Tokyo' },
+                  { top: '55%', left: '25%', color: '#3b82f6', size: 6, label: 'São Paulo' },
+                  { top: '50%', left: '53%', color: '#f59e0b', size: 5, label: 'Cairo' },
+                  { top: '65%', left: '55%', color: '#22c55e', size: 4, label: 'Nairobi' },
+                  { top: '70%', left: '80%', color: '#3b82f6', size: 5, label: 'Sydney' },
+                  { top: '38%', left: '40%', color: '#ef4444', size: 6, label: 'Ukraine' },
+                  { top: '42%', left: '48%', color: '#f59e0b', size: 7, label: 'Gaza' },
+                  { top: '33%', left: '80%', color: '#22d3ee', size: 5, label: 'Seoul' },
+                ].map((dot, i) => (
+                  <div key={i} className="absolute" style={{ top: dot.top, left: dot.left }}>
+                    <div className="relative">
+                      <div
+                        className="rounded-full animate-ping absolute inset-0"
+                        style={{ width: dot.size * 2.5, height: dot.size * 2.5, background: dot.color, opacity: 0.2, animationDuration: `${2 + i * 0.3}s` }}
+                      />
+                      <div
+                        className="rounded-full relative"
+                        style={{ width: dot.size, height: dot.size, background: dot.color, boxShadow: `0 0 ${dot.size * 2}px ${dot.color}` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {/* Scan line */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" style={{ animation: 'scan-line 4s linear infinite' }} />
+                </div>
+
+                {/* Continent labels */}
+                {[
+                  { label: 'NORTH AMERICA', top: '20%', left: '15%' },
+                  { label: 'EUROPE', top: '22%', left: '45%' },
+                  { label: 'ASIA', top: '25%', left: '68%' },
+                  { label: 'AFRICA', top: '50%', left: '48%' },
+                  { label: 'S. AMERICA', top: '55%', left: '28%' },
+                  { label: 'OCEANIA', top: '65%', left: '78%' },
+                ].map((c, i) => (
+                  <div key={i} className="absolute text-[9px] font-mono text-slate-600/40 tracking-[0.2em] select-none" style={{ top: c.top, left: c.left }}>
+                    {c.label}
+                  </div>
+                ))}
+
+                {/* Legend */}
+                <div className="absolute bottom-3 left-3 flex gap-3 text-[9px] font-mono text-slate-500">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />Crisis</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />Opportunity</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />Neutral</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" />Military</span>
+                </div>
+
+                {/* Mini news ticker */}
+                <div className="absolute bottom-3 right-3 max-w-[240px] rounded-lg p-2 border border-cyan-500/10" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}>
+                  <div className="text-[9px] text-cyan-400 font-mono mb-1">LATEST INTEL</div>
+                  <div className="space-y-1">
+                    {[
+                      'US military operations in Middle East...',
+                      'M5.2 earthquake detected near Japan...',
+                      'NATO forces deployment to Eastern Europe...',
+                    ].map((t, i) => (
+                      <div key={i} className="text-[9px] text-slate-400 font-mono truncate flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${i === 0 ? 'bg-red-500' : i === 1 ? 'bg-orange-500' : 'bg-blue-500'}`} />
+                        {t}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-12">
+            {[
+              { icon: Globe, title: 'Live Global News', desc: '50+ countries, 11 war searches, auto-refresh every 60s', color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400' },
+              { icon: Plane, title: 'Aircraft Tracking', desc: 'Real-time military & civilian aircraft via OpenSky Network', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400' },
+              { icon: AlertTriangle, title: 'Earthquake Monitor', desc: 'USGS seismic data with magnitude, depth & tsunami alerts', color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400' },
+              { icon: Anchor, title: 'Naval Tracker', desc: 'Aircraft carriers, warships & strategic waterway monitoring worldwide', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400' },
+              { icon: Brain, title: 'AI Intelligence Agent', desc: 'Geopolitical analyst AI for news analysis & strategy', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400' },
+              { icon: Shield, title: 'Prophecy Tracking', desc: 'Biblical prophecy cross-reference with current events', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400' },
+              { icon: BarChart3, title: 'Economic Calendar', desc: 'Central bank decisions, GDP, CPI, employment data from 20+ countries', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400' },
+              { icon: DollarSign, title: 'World Economy', desc: 'GDP rankings, population stats, region data from World Bank', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400' },
+            ].map((f, i) => (
+              <div key={i} className={`bg-gradient-to-br ${f.color} rounded-xl p-4 border border-white/5 hover:border-cyan-400/20 transition-colors group`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <f.icon className={`h-4 w-4 ${f.ic} group-hover:scale-110 transition-transform`} />
+                  <span className="text-sm font-semibold text-white">{f.title}</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link
+              href="/intelligence"
+              className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-base hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:shadow-cyan-500/40 hover:scale-[1.02]"
+            >
+              <Globe className="h-5 w-5" />
+              Open Intelligence Dashboard
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <p className="mt-4 text-sm text-slate-500">Free access · Real-time data · No credit card required</p>
+          </div>
+        </div>
+      </section>
+
       {/* ── How It Works ────────────────────────────────────────────────── */}
       <section id="how-it-works" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -510,7 +674,11 @@ export function LandingPage() {
             <p className="mt-4 text-lg text-slate-400">{getCms('howItWorks')?.subtitle || t('landing.howItWorks.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {HOW_IT_WORKS.map((s, i) => (
+            {[
+              { step: '1', title: t('landing.howItWorks.step1Title'), desc: t('landing.howItWorks.step1Desc') },
+              { step: '2', title: t('landing.howItWorks.step2Title'), desc: t('landing.howItWorks.step2Desc') },
+              { step: '3', title: t('landing.howItWorks.step3Title'), desc: t('landing.howItWorks.step3Desc') },
+            ].map((s, i) => (
               <div key={i} className="relative text-center group">
                 <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-gradient-to-br from-amber-400/20 to-cyan-400/10 border border-amber-400/20 text-3xl font-bold text-amber-400 mb-6 shadow-lg shadow-amber-500/10 group-hover:shadow-amber-500/20 transition-shadow neon-text-amber">
                   {s.step}
@@ -533,22 +701,26 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Trusted by UK Professionals</h2>
-            <p className="mt-4 text-lg text-slate-400">See what sole traders, business owners and accountants say about HomeLedger.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.testimonials.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.testimonials.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
+            {[
+              { name: 'James Mitchell', role: 'Sole Trader, London', text: t('landing.testimonials.quote1'), avatar: 'JM' },
+              { name: 'Sarah Chen', role: 'Director, Tech Solutions Ltd', text: t('landing.testimonials.quote2'), avatar: 'SC' },
+              { name: 'David Okafor', role: 'Chartered Accountant', text: t('landing.testimonials.quote3'), avatar: 'DO' },
+            ].map((tm, i) => (
               <div key={i} className="neon-card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400/20 to-cyan-400/10 border border-amber-400/15 flex items-center justify-center text-sm font-bold text-amber-400">
-                    {t.avatar}
+                    {tm.avatar}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">{t.name}</div>
-                    <div className="text-xs text-slate-500">{t.role}</div>
+                    <div className="text-sm font-semibold text-white">{tm.name}</div>
+                    <div className="text-xs text-slate-500">{tm.role}</div>
                   </div>
                 </div>
-                <p className="text-sm text-slate-400 leading-relaxed italic">&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm text-slate-400 leading-relaxed italic">&ldquo;{tm.text}&rdquo;</p>
               </div>
             ))}
           </div>
@@ -562,19 +734,19 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-semibold mb-6">
-                <Briefcase className="h-3.5 w-3.5" /> For Accounting Firms
+                <Briefcase className="h-3.5 w-3.5" /> {t('landing.accountants.badge')}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">Manage All Your Clients in One Place</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">{t('landing.accountants.title')}</h2>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                Dedicated dashboard to onboard clients, view financial data, and generate HMRC-ready reports — without sharing login credentials.
+                {t('landing.accountants.description')}
               </p>
               <div className="mt-8 space-y-4">
                 {[
-                  { icon: UserPlus, text: 'Invite clients by email — they keep their own account' },
-                  { icon: Eye, text: 'View statements, invoices, bills & entities in real-time' },
-                  { icon: BarChart3, text: 'HMRC SA103 & CT600 reports at your fingertips' },
-                  { icon: Shield, text: 'Granular permissions — read-only by default' },
-                  { icon: Building2, text: 'Multi-entity support for complex client portfolios' },
+                  { icon: UserPlus, text: t('landing.accountants.feature1') },
+                  { icon: Eye, text: t('landing.accountants.feature2') },
+                  { icon: BarChart3, text: t('landing.accountants.feature3') },
+                  { icon: Shield, text: t('landing.accountants.feature4') },
+                  { icon: Building2, text: t('landing.accountants.feature5') },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 group">
                     <div className="h-8 w-8 rounded-lg bg-amber-400/10 border border-amber-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-amber-400/30 transition-colors"><item.icon className="h-4 w-4 text-amber-400" /></div>
@@ -584,24 +756,24 @@ export function LandingPage() {
               </div>
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-semibold text-sm hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20">
-                  Start Free as Accountant <ArrowRight className="h-4 w-4" />
+                  {t('landing.accountants.ctaPrimary')} <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">View Pricing</a>
+                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">{t('landing.pricing.title')}</a>
               </div>
             </div>
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
-                <div className="flex items-center gap-3 mb-4"><Briefcase className="h-6 w-6 text-amber-400" /><span className="text-white font-semibold">Accountant Dashboard</span></div>
+                <div className="flex items-center gap-3 mb-4"><Briefcase className="h-6 w-6 text-amber-400" /><span className="text-white font-semibold">{t('landing.mock.accountantDashboard')}</span></div>
                 {['John Smith — Sole Trader', 'ABC Ltd — Limited Company', 'Sarah Jones — Freelancer'].map((name, i) => (
                   <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-amber-400/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-amber-400/20 flex items-center justify-center"><Users className="h-4 w-4 text-amber-400" /></div>
                       <div>
                         <div className="text-white text-sm font-medium">{name}</div>
-                        <div className="text-slate-500 text-xs">{i === 0 ? '3 entities · Last viewed today' : i === 1 ? '1 entity · 2 days ago' : '2 entities · Pending'}</div>
+                        <div className="text-slate-500 text-xs">{i === 0 ? t('landing.mock.entitiesViewedToday') : i === 1 ? t('landing.mock.entityTwoDaysAgo') : t('landing.mock.entitiesPending')}</div>
                       </div>
                     </div>
-                    <div className={`px-2.5 py-1 rounded-full text-xs font-medium border ${i < 2 ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'}`}>{i < 2 ? 'Active' : 'Pending'}</div>
+                    <div className={`px-2.5 py-1 rounded-full text-xs font-medium border ${i < 2 ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'}`}>{i < 2 ? t('landing.mock.active') : t('landing.mock.pending')}</div>
                   </div>
                 ))}
               </div>
@@ -623,24 +795,20 @@ export function LandingPage() {
             {/* Left — Text */}
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-semibold mb-6">
-                <Fingerprint className="h-3.5 w-3.5" /> Certified Identity Verification (IDV)
+                <Fingerprint className="h-3.5 w-3.5" /> {t('landing.idv.heroBadge')}
               </div>
               <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
-                Verify Anyone&apos;s<br />Identity
-                <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent"> Digitally</span>
+                {t('landing.idv.heroTitle1')}<br />{t('landing.idv.heroTitle2')}
+                <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">{t('landing.idv.heroTitle3')}</span>
               </h2>
-              <p className="mt-6 text-lg text-slate-400 leading-relaxed">
-                Identity Document Verification (IDV) is a <strong className="text-white">certified digital process</strong> that confirms a person is who they claim to be. It combines <strong className="text-white">document scanning</strong> (passport, driving licence, BRP) with <strong className="text-white">biometric facial matching</strong> — all from a smartphone.
-              </p>
-              <p className="mt-4 text-base text-slate-500 leading-relaxed">
-                The person simply opens a secure link on their phone, takes a photo of their ID document, then takes a selfie. Our AI compares the face on the document with the live selfie in seconds. The result is a <strong className="text-slate-300">government-grade certified report</strong> delivered straight to your inbox.
-              </p>
+              <p className="mt-6 text-lg text-slate-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('landing.idv.heroDesc1') }} />
+              <p className="mt-4 text-base text-slate-500 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('landing.idv.heroDesc2') }} />
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link href="/verify-purchase" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 font-semibold text-sm hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20 transition-all">
-                  Start Verifying <ArrowRight className="h-4 w-4" />
+                  {t('landing.idv.ctaStart')} <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a href="#idv-law" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10 transition-all">
-                  <Scale className="h-4 w-4" /> UK Legal Requirements
+                  <Scale className="h-4 w-4" /> {t('landing.idv.ctaLegal')}
                 </a>
               </div>
             </div>
@@ -694,8 +862,8 @@ export function LandingPage() {
                             <Fingerprint className="h-4 w-4 text-white" />
                           </div>
                           <div>
-                            <span className="text-white text-[13px] font-semibold block leading-tight">Identity Check</span>
-                            <span className="text-[9px] text-emerald-400 font-medium">HomeLedger • Certified</span>
+                            <span className="text-white text-[13px] font-semibold block leading-tight">{t('landing.idv.mockIdentityCheck')}</span>
+                            <span className="text-[9px] text-emerald-400 font-medium">{t('landing.idv.mockCertified')}</span>
                           </div>
                         </div>
 
@@ -711,21 +879,21 @@ export function LandingPage() {
                             <div className="h-10 w-10 rounded-full bg-violet-400/10 flex items-center justify-center">
                               <Scan className="h-5 w-5 text-violet-400/70" />
                             </div>
-                            <span className="text-violet-300 text-[10px] font-medium">Position your ID here</span>
-                            <span className="text-slate-500 text-[8px]">Passport, Driving Licence, or BRP</span>
+                            <span className="text-violet-300 text-[10px] font-medium">{t('landing.idv.mockScanPrompt')}</span>
+                            <span className="text-slate-500 text-[8px]">{t('landing.idv.mockScanHint')}</span>
                           </div>
                           {/* Animated scan line */}
                           <div className="absolute left-3 right-3 h-[1.5px] bg-gradient-to-r from-transparent via-violet-400 to-transparent opacity-60" style={{ top: '45%' }} />
                         </div>
 
-                        <p className="text-center text-[8px] text-slate-500 mt-2">Align document within the frame</p>
+                        <p className="text-center text-[8px] text-slate-500 mt-2">{t('landing.idv.mockAlignHint')}</p>
 
                         {/* Progress Steps */}
                         <div className="mt-3 space-y-[7px]">
                           {[
-                            { text: 'Scan ID Document', done: true },
-                            { text: 'Take a Selfie', done: false },
-                            { text: 'Verification Complete', done: false },
+                            { text: t('landing.idv.mockStep1'), done: true },
+                            { text: t('landing.idv.mockStep2'), done: false },
+                            { text: t('landing.idv.mockStep3'), done: false },
                           ].map((s, i) => (
                             <div key={i} className={`flex items-center gap-2.5 px-3 py-[6px] rounded-xl ${s.done ? 'bg-violet-400/10 border border-violet-400/20' : 'bg-white/[0.03] border border-white/5'}`}>
                               <div className={`h-[18px] w-[18px] rounded-full flex items-center justify-center text-[8px] font-bold ${s.done ? 'bg-violet-400 text-white' : 'bg-white/10 text-slate-500'}`}>
@@ -740,7 +908,7 @@ export function LandingPage() {
                         {/* Capture Button */}
                         <div className="mt-3 mb-5">
                           <div className="w-full py-[10px] rounded-2xl bg-gradient-to-r from-violet-500 to-cyan-400 text-center text-white text-[12px] font-bold shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2">
-                            <Camera className="h-3.5 w-3.5" /> Capture Document
+                            <Camera className="h-3.5 w-3.5" /> {t('landing.idv.mockCapture')}
                           </div>
                         </div>
                       </div>
@@ -753,13 +921,13 @@ export function LandingPage() {
 
                 {/* Floating Badges — outside the phone */}
                 <div className="absolute -top-4 -right-12 sm:-right-24 px-3 py-2 rounded-2xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-emerald-500/10 backdrop-blur-md">
-                  <div className="h-6 w-6 rounded-full bg-emerald-400/20 flex items-center justify-center"><CircleCheck className="h-3.5 w-3.5" /></div> Face Match: 99.7%
+                  <div className="h-6 w-6 rounded-full bg-emerald-400/20 flex items-center justify-center"><CircleCheck className="h-3.5 w-3.5" /></div> {t('landing.idv.floatingFaceMatch')}
                 </div>
                 <div className="absolute top-1/2 -translate-y-1/2 -right-10 sm:-right-24 px-3 py-2 rounded-2xl bg-violet-400/10 border border-violet-400/20 text-violet-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-violet-500/10 backdrop-blur-md">
-                  <div className="h-6 w-6 rounded-full bg-violet-400/20 flex items-center justify-center"><Shield className="h-3.5 w-3.5" /></div> GDPR Certified
+                  <div className="h-6 w-6 rounded-full bg-violet-400/20 flex items-center justify-center"><Shield className="h-3.5 w-3.5" /></div> {t('landing.idv.floatingGdpr')}
                 </div>
                 <div className="absolute -bottom-4 -left-10 sm:-left-20 px-3 py-2 rounded-2xl bg-blue-400/10 border border-blue-400/20 text-blue-400 text-[11px] font-semibold flex items-center gap-2 shadow-xl shadow-blue-500/10 backdrop-blur-md">
-                  <div className="h-6 w-6 rounded-full bg-blue-400/20 flex items-center justify-center"><Clock className="h-3.5 w-3.5" /></div> ~90 seconds
+                  <div className="h-6 w-6 rounded-full bg-blue-400/20 flex items-center justify-center"><Clock className="h-3.5 w-3.5" /></div> {t('landing.idv.floatingTime')}
                 </div>
               </div>
             </div>
@@ -773,74 +941,24 @@ export function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-400/10 border border-red-400/20 text-red-400 text-xs font-semibold mb-6">
-              <Scale className="h-3.5 w-3.5" /> UK Legal Requirement
+              <Scale className="h-3.5 w-3.5" /> {t('landing.idv.lawBadge')}
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-              It&apos;s Not Optional —<br />
-              <span className="text-red-400">It&apos;s UK Law</span>
+              {t('landing.idv.lawTitle1')}<br />
+              <span className="text-red-400">{t('landing.idv.lawTitle2')}</span>
             </h2>
-            <p className="mt-6 text-lg text-slate-400 leading-relaxed">
-              The UK government requires identity verification in multiple scenarios. Failure to comply can result in <strong className="text-white">unlimited fines</strong>, <strong className="text-white">criminal prosecution</strong>, and <strong className="text-white">loss of your licence to operate</strong>. Every business, landlord, and professional in the UK must comply.
-            </p>
+            <p className="mt-6 text-lg text-slate-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('landing.idv.lawDesc') }} />
           </div>
 
           {/* Law Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {[
-              {
-                icon: Briefcase,
-                title: 'Right to Work (Employers)',
-                law: 'Immigration, Asylum & Nationality Act 2006',
-                desc: 'Every UK employer MUST verify the identity and right to work of all employees before their first day. Penalties: up to £60,000 per illegal worker and criminal prosecution.',
-                penalty: 'Up to £60,000 per worker',
-                iconBg: 'bg-violet-400/10 border-violet-400/20',
-                iconColor: 'text-violet-400',
-              },
-              {
-                icon: Home,
-                title: 'Right to Rent (Landlords)',
-                law: 'Immigration Act 2014 (Part 3)',
-                desc: 'All landlords in England MUST check that tenants have the right to rent in the UK. This includes verifying passports, BRPs, or share codes before signing any tenancy agreement.',
-                penalty: 'Up to £3,000 per tenant',
-                iconBg: 'bg-amber-400/10 border-amber-400/20',
-                iconColor: 'text-amber-400',
-              },
-              {
-                icon: Building2,
-                title: 'AML & KYC (Financial Services)',
-                law: 'Money Laundering Regulations 2017',
-                desc: 'Banks, accountants, estate agents, and regulated firms MUST verify customer identity under Anti-Money Laundering regulations. Required by the FCA and enforced by HMRC.',
-                penalty: 'Unlimited fines + prison',
-                iconBg: 'bg-red-400/10 border-red-400/20',
-                iconColor: 'text-red-400',
-              },
-              {
-                icon: GraduationCap,
-                title: 'DBS Checks (Education & Care)',
-                law: 'Safeguarding Vulnerable Groups Act 2006',
-                desc: 'Schools, nurseries, care homes and anyone working with children or vulnerable adults MUST undergo identity verification as part of DBS (formerly CRB) checks.',
-                penalty: 'Barred from profession',
-                iconBg: 'bg-blue-400/10 border-blue-400/20',
-                iconColor: 'text-blue-400',
-              },
-              {
-                icon: Globe,
-                title: 'Sponsor Licence (Visa Sponsors)',
-                law: 'UK Points-Based Immigration System',
-                desc: 'Businesses holding a Sponsor Licence MUST maintain records of identity checks for all sponsored workers. UKVI audits can revoke your licence if records are missing.',
-                penalty: 'Licence revocation',
-                iconBg: 'bg-teal-400/10 border-teal-400/20',
-                iconColor: 'text-teal-400',
-              },
-              {
-                icon: ShieldCheck,
-                title: 'GDPR Data Verification',
-                law: 'UK GDPR & Data Protection Act 2018',
-                desc: 'Organisations handling personal data may need to verify identity before granting Subject Access Requests. Proper IDV ensures GDPR compliance and data protection.',
-                penalty: 'Up to £17.5 million',
-                iconBg: 'bg-emerald-400/10 border-emerald-400/20',
-                iconColor: 'text-emerald-400',
-              },
+              { icon: Briefcase, title: t('landing.idv.law1Title'), law: t('landing.idv.law1Law'), desc: t('landing.idv.law1Desc'), penalty: t('landing.idv.law1Penalty'), iconBg: 'bg-violet-400/10 border-violet-400/20', iconColor: 'text-violet-400' },
+              { icon: Home, title: t('landing.idv.law2Title'), law: t('landing.idv.law2Law'), desc: t('landing.idv.law2Desc'), penalty: t('landing.idv.law2Penalty'), iconBg: 'bg-amber-400/10 border-amber-400/20', iconColor: 'text-amber-400' },
+              { icon: Building2, title: t('landing.idv.law3Title'), law: t('landing.idv.law3Law'), desc: t('landing.idv.law3Desc'), penalty: t('landing.idv.law3Penalty'), iconBg: 'bg-red-400/10 border-red-400/20', iconColor: 'text-red-400' },
+              { icon: GraduationCap, title: t('landing.idv.law4Title'), law: t('landing.idv.law4Law'), desc: t('landing.idv.law4Desc'), penalty: t('landing.idv.law4Penalty'), iconBg: 'bg-blue-400/10 border-blue-400/20', iconColor: 'text-blue-400' },
+              { icon: Globe, title: t('landing.idv.law5Title'), law: t('landing.idv.law5Law'), desc: t('landing.idv.law5Desc'), penalty: t('landing.idv.law5Penalty'), iconBg: 'bg-teal-400/10 border-teal-400/20', iconColor: 'text-teal-400' },
+              { icon: ShieldCheck, title: t('landing.idv.law6Title'), law: t('landing.idv.law6Law'), desc: t('landing.idv.law6Desc'), penalty: t('landing.idv.law6Penalty'), iconBg: 'bg-emerald-400/10 border-emerald-400/20', iconColor: 'text-emerald-400' },
             ].map((law, i) => (
               <div key={i} className="neon-card p-6 group hover:border-violet-400/20 transition-all">
                 <div className="flex items-start gap-4 mb-4">
@@ -855,7 +973,7 @@ export function LandingPage() {
                 <p className="text-sm text-slate-400 leading-relaxed mb-4">{law.desc}</p>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-400/5 border border-red-400/10">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
-                  <span className="text-xs text-red-400 font-medium">Penalty: {law.penalty}</span>
+                  <span className="text-xs text-red-400 font-medium">{t('landing.idv.penaltyLabel')}: {law.penalty}</span>
                 </div>
               </div>
             ))}
@@ -865,12 +983,10 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="rounded-2xl bg-gradient-to-r from-red-500/10 via-violet-500/10 to-red-500/10 border border-red-400/20 p-8">
               <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-3">Are You Compliant?</h3>
-              <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                Since <strong className="text-white">April 2022</strong>, the Home Office requires all Right to Work and Right to Rent checks to use a <strong className="text-white">certified Identity Document Validation Technology (IDVT)</strong> provider. Manual checks of physical documents are no longer sufficient for most document types. HomeLedger uses <strong className="text-white">Yoti</strong>, a UK-government certified IDVT provider.
-              </p>
+              <h3 className="text-xl font-bold text-white mb-3">{t('landing.idv.complianceTitle')}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: t('landing.idv.complianceDesc') }} />
               <Link href="/verify-purchase" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 font-semibold text-sm hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20 transition-all">
-                Get Compliant Now <ArrowRight className="h-4 w-4" />
+                {t('landing.idv.complianceCta')} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -882,18 +998,18 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-violet-950/20 to-slate-950" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Who Needs Identity Verification?</h2>
-            <p className="mt-4 text-lg text-slate-400">Almost every business and professional in the UK. Here are the most common use cases.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.idv.whoTitle')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.idv.whoSubtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Briefcase, title: 'Employers & HR Teams', desc: 'Verify Right to Work for every new hire. From startups to large corporates — it\'s a legal requirement before the employee\'s first day.', people: 'All UK employers' },
-              { icon: Home, title: 'Landlords & Letting Agents', desc: 'Right to Rent checks before signing tenancy agreements. Applies to all residential lettings in England.', people: '2.6 million UK landlords' },
-              { icon: Building2, title: 'Accountants & Financial Advisors', desc: 'Client onboarding KYC/AML checks. Required under Money Laundering Regulations for all regulated firms.', people: 'FCA regulated firms' },
-              { icon: Scale, title: 'Solicitors & Law Firms', desc: 'Client verification for conveyancing, litigation, and corporate transactions. SRA requires robust ID checks.', people: 'SRA regulated solicitors' },
-              { icon: Globe, title: 'Immigration Advisors', desc: 'Document verification for visa applications, settled status, and naturalisation. Share certified results with the Home Office.', people: 'OISC registered advisors' },
-              { icon: Users, title: 'Recruitment Agencies', desc: 'Bulk verification for temporary and permanent placements. Process hundreds of checks efficiently with our Business Pack.', people: '30,000+ UK agencies' },
+              { icon: Briefcase, title: t('landing.idv.who1Title'), desc: t('landing.idv.who1Desc'), people: t('landing.idv.who1People') },
+              { icon: Home, title: t('landing.idv.who2Title'), desc: t('landing.idv.who2Desc'), people: t('landing.idv.who2People') },
+              { icon: Building2, title: t('landing.idv.who3Title'), desc: t('landing.idv.who3Desc'), people: t('landing.idv.who3People') },
+              { icon: Scale, title: t('landing.idv.who4Title'), desc: t('landing.idv.who4Desc'), people: t('landing.idv.who4People') },
+              { icon: Globe, title: t('landing.idv.who5Title'), desc: t('landing.idv.who5Desc'), people: t('landing.idv.who5People') },
+              { icon: Users, title: t('landing.idv.who6Title'), desc: t('landing.idv.who6Desc'), people: t('landing.idv.who6People') },
             ].map((item, i) => (
               <div key={i} className="neon-card p-6 group hover:border-violet-400/20 transition-all">
                 <div className="flex items-center gap-3 mb-4">
@@ -917,8 +1033,8 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-violet-950/20" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">How It Works — Step by Step</h2>
-            <p className="mt-4 text-lg text-slate-400">The entire process takes less than 90 seconds. No apps to download, no accounts to create.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.idv.processTitle')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.idv.processSubtitle')}</p>
           </div>
 
           {/* Visual Process Flow */}
@@ -926,8 +1042,8 @@ export function LandingPage() {
             {[
               {
                 step: '01',
-                title: 'You Buy a Package',
-                desc: 'Choose Single, Business or Enterprise. Pay securely via Stripe. You receive unique verification links instantly.',
+                title: t('landing.idv.process1Title'),
+                desc: t('landing.idv.process1Desc'),
                 illustration: (
                   <div className="relative h-40 bg-gradient-to-b from-violet-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
                     <div className="relative w-32 h-24 rounded-xl bg-white/5 border border-white/10 p-3">
@@ -943,8 +1059,8 @@ export function LandingPage() {
               },
               {
                 step: '02',
-                title: 'Send the Link',
-                desc: 'Share the secure verification link via email, WhatsApp, or text. The person to be verified opens it on their phone.',
+                title: t('landing.idv.process2Title'),
+                desc: t('landing.idv.process2Desc'),
                 illustration: (
                   <div className="relative h-40 bg-gradient-to-b from-blue-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
                     <div className="flex items-center gap-3">
@@ -962,8 +1078,8 @@ export function LandingPage() {
               },
               {
                 step: '03',
-                title: 'Scan & Selfie',
-                desc: 'They photograph their ID document (passport, driving licence, or BRP) and take a live selfie for biometric matching.',
+                title: t('landing.idv.process3Title'),
+                desc: t('landing.idv.process3Desc'),
                 illustration: (
                   <div className="relative h-40 bg-gradient-to-b from-emerald-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
                     <div className="relative">
@@ -982,8 +1098,8 @@ export function LandingPage() {
               },
               {
                 step: '04',
-                title: 'Certified Result',
-                desc: 'AI verifies the document and matches the face. You receive a certified result by email within seconds.',
+                title: t('landing.idv.process4Title'),
+                desc: t('landing.idv.process4Desc'),
                 illustration: (
                   <div className="relative h-40 bg-gradient-to-b from-emerald-400/5 to-transparent rounded-2xl flex items-center justify-center overflow-hidden">
                     <div className="w-28 h-20 rounded-xl bg-white/5 border border-emerald-400/20 p-3">
@@ -1021,15 +1137,15 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-slate-950 to-indigo-950/30" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Simple, Transparent Verification Pricing</h2>
-            <p className="mt-4 text-lg text-slate-400">No hidden fees. No subscription. Pay once, verify as needed. <strong className="text-white">No HomeLedger account required.</strong></p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.idv.pricingTitle')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.idv.pricingSubtitle')} <strong className="text-white">{t('landing.idv.pricingNoAccount')}</strong></p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
             {[
-              { name: 'Single Check', price: '£2.99', per: '/check', checks: '1 verification', features: ['Document scanning', 'Biometric face match', 'Certified PDF result', 'Email delivery', '30-day link validity', 'Passport, DL, or BRP'], highlighted: false },
-              { name: 'Business Pack', price: '£19.99', per: '/pack', checks: '10 verifications', features: ['Everything in Single', '10 unique verification links', 'Bulk management dashboard', 'Priority processing', '60-day link validity', 'Ideal for SMEs & agencies'], highlighted: true, badge: 'Best Value — Save 33%' },
-              { name: 'Enterprise', price: '£49.99', per: '/pack', checks: '50 verifications', features: ['Everything in Business', '50 unique verification links', 'Dedicated account support', 'API access for automation', '90-day link validity', 'For large organisations'], highlighted: false },
+              { name: t('landing.idv.singleName'), price: t('landing.idv.singlePrice'), per: t('landing.idv.singlePer'), checks: t('landing.idv.singleChecks'), features: [t('landing.idv.singleF1'), t('landing.idv.singleF2'), t('landing.idv.singleF3'), t('landing.idv.singleF4'), t('landing.idv.singleF5'), t('landing.idv.singleF6')], highlighted: false },
+              { name: t('landing.idv.businessPackName'), price: t('landing.idv.businessPackPrice'), per: t('landing.idv.businessPackPer'), checks: t('landing.idv.businessPackChecks'), features: [t('landing.idv.businessPackF1'), t('landing.idv.businessPackF2'), t('landing.idv.businessPackF3'), t('landing.idv.businessPackF4'), t('landing.idv.businessPackF5'), t('landing.idv.businessPackF6')], highlighted: true, badge: t('landing.idv.businessPackBadge') },
+              { name: t('landing.idv.enterpriseName'), price: t('landing.idv.enterprisePrice'), per: t('landing.idv.enterprisePer'), checks: t('landing.idv.enterpriseChecks'), features: [t('landing.idv.enterpriseF1'), t('landing.idv.enterpriseF2'), t('landing.idv.enterpriseF3'), t('landing.idv.enterpriseF4'), t('landing.idv.enterpriseF5'), t('landing.idv.enterpriseF6')], highlighted: false },
             ].map((plan, i) => (
               <div key={i} className={`relative neon-card p-8 transition-all ${plan.highlighted ? 'border-violet-400/40 shadow-lg shadow-violet-500/10 scale-[1.03]' : ''}`}>
                 {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-violet-500/20 whitespace-nowrap">{plan.badge}</div>}
@@ -1045,7 +1161,7 @@ export function LandingPage() {
                   ))}
                 </ul>
                 <Link href={`/verify-purchase?plan=${plan.name.toLowerCase().replace(/\s/g, '-')}`} className={`mt-8 block w-full text-center py-3 rounded-xl font-semibold text-sm transition-all ${plan.highlighted ? 'bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20' : 'glass text-white hover:bg-white/10'}`}>
-                  Buy Now
+                  {t('landing.idv.buyNow')}
                 </Link>
               </div>
             ))}
@@ -1054,11 +1170,11 @@ export function LandingPage() {
           {/* Trust Bar */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 mb-8">
             {[
-              { icon: Shield, text: 'Government-Certified (IDVT)' },
-              { icon: Lock, text: 'UK GDPR Compliant' },
-              { icon: Fingerprint, text: 'AI Biometric Matching' },
-              { icon: BadgeCheck, text: 'Home Office Approved' },
-              { icon: Clock, text: 'Results in ~90 Seconds' },
+              { icon: Shield, text: t('landing.idv.govCertified') },
+              { icon: Lock, text: t('landing.idv.ukGdpr') },
+              { icon: Fingerprint, text: t('landing.idv.aiBiometric') },
+              { icon: BadgeCheck, text: t('landing.idv.homeOffice') },
+              { icon: Clock, text: t('landing.idv.results90s') },
             ].map((badge, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
                 <badge.icon className="h-3.5 w-3.5 text-violet-400" />
@@ -1070,7 +1186,7 @@ export function LandingPage() {
           <div className="text-center">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-400/20">
               <ScanLine className="h-5 w-5 text-violet-400" />
-              <span className="text-slate-300 text-sm font-medium">No account needed — purchase, send the link, get results. It&apos;s that simple.</span>
+              <span className="text-slate-300 text-sm font-medium">{t('landing.idv.noAccountSimple')}</span>
             </div>
           </div>
         </div>
@@ -1083,19 +1199,19 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-400/10 border border-teal-400/20 text-teal-400 text-xs font-semibold mb-6">
-                <Plane className="h-3.5 w-3.5" /> For New UK Arrivals
+                <Plane className="h-3.5 w-3.5" /> {t('landing.newArrivals.badge')}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">New to the UK? We&apos;ve Got You Covered</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">{t('landing.newArrivals.title')}</h2>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                Whether you&apos;re relocating for work, study, or family — HomeLedger helps you navigate UK finances, accounting qualifications, and professional services from day one.
+                {t('landing.newArrivals.description')}
               </p>
               <div className="mt-8 space-y-4">
                 {[
-                  { icon: Globe, text: 'AI Relocation Guide — visas, NI numbers, bank accounts, GP registration (OISC compliant)' },
-                  { icon: GraduationCap, text: 'Accounting Academy — AAT & ACCA exam practice with AI tutor and career roadmap' },
-                  { icon: ShoppingBag, text: 'Service Marketplace — professional accounting, tax filing, and bookkeeping packages' },
-                  { icon: HeartPulse, text: 'Financial Health Score — track your financial wellbeing with a real-time dashboard' },
-                  { icon: Smartphone, text: 'Install as App — access HomeLedger offline from your phone or desktop' },
+                  { icon: Globe, text: t('landing.newArrivals.feat1') },
+                  { icon: GraduationCap, text: t('landing.newArrivals.feat2') },
+                  { icon: ShoppingBag, text: t('landing.newArrivals.feat3') },
+                  { icon: HeartPulse, text: t('landing.newArrivals.feat4') },
+                  { icon: Smartphone, text: t('landing.newArrivals.feat5') },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 group">
                     <div className="h-8 w-8 rounded-lg bg-teal-400/10 border border-teal-400/10 flex items-center justify-center flex-shrink-0 group-hover:border-teal-400/30 transition-colors">
@@ -1107,19 +1223,20 @@ export function LandingPage() {
               </div>
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-900 font-semibold text-sm hover:from-teal-300 hover:to-cyan-400 shadow-lg shadow-teal-500/20">
-                  Start Free Today <ArrowRight className="h-4 w-4" />
+                  {t('landing.newArrivals.ctaPrimary')} <ArrowRight className="h-4 w-4" />
                 </Link>
+                <a href="#pricing" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10">{t('landing.pricing.title')}</a>
               </div>
             </div>
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
-                <div className="flex items-center gap-3 mb-2"><Plane className="h-5 w-5 text-teal-400" /><span className="font-semibold text-white">Your UK Journey</span></div>
+                <div className="flex items-center gap-3 mb-2"><Plane className="h-5 w-5 text-teal-400" /><span className="font-semibold text-white">{t('landing.mock.yourUkJourney')}</span></div>
                 {[
-                  { title: 'Get your NI Number', status: 'Complete', color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
-                  { title: 'Open a UK Bank Account', status: 'Complete', color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
-                  { title: 'Register with a GP', status: 'In Progress', color: 'bg-amber-400/10 text-amber-400 border-amber-400/20' },
-                  { title: 'File Self Assessment', status: 'Upcoming', color: 'bg-slate-400/10 text-slate-400 border-slate-400/20' },
-                  { title: 'AAT Level 2 — Bookkeeping', status: '78% Score', color: 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20' },
+                  { title: t('landing.mock.getNiNumber'), status: t('landing.mock.complete'), color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
+                  { title: t('landing.mock.openBankAccount'), status: t('landing.mock.complete'), color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
+                  { title: t('landing.mock.registerGp'), status: t('landing.mock.inProgress'), color: 'bg-amber-400/10 text-amber-400 border-amber-400/20' },
+                  { title: t('landing.mock.fileSelfAssessment'), status: t('landing.mock.upcoming'), color: 'bg-slate-400/10 text-slate-400 border-slate-400/20' },
+                  { title: t('landing.mock.aatLevel2'), status: '78% Score', color: 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-teal-400/20 transition-colors">
                     <div className="flex items-center gap-3">
@@ -1142,7 +1259,7 @@ export function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.pricing.title')}</h2>
             <p className="mt-4 text-lg text-slate-400">{t('landing.pricing.subtitle')}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {plans.map((p: any) => (
               <div key={p.key} className={`relative neon-card p-8 transition-all ${p.highlighted ? 'pricing-glow neon-pulse scale-[1.03]' : ''}`}>
                 {p.highlighted && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-xs font-bold rounded-full shadow-lg shadow-amber-500/20">{t('landing.pricing.popular')}</div>}
@@ -1168,7 +1285,10 @@ export function LandingPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('faq')?.title || t('landing.faq.title')}</h2></div>
           <div className="space-y-3">
-            {FAQ_ITEMS.map((item, i) => (
+            {Array.from({ length: 12 }, (_, i) => ({
+              q: t(`landing.faq.q${i + 1}`),
+              a: t(`landing.faq.a${i + 1}`),
+            })).map((item, i) => (
               <div key={i} className="neon-card overflow-hidden">
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors">
                   <span className="font-medium text-white text-sm pr-4">{item.q}</span>
@@ -1202,8 +1322,8 @@ export function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 shadow-md shadow-amber-500/20 flex items-center justify-center">
-                  <PoundSterling className="h-4 w-4 text-slate-900" />
+                <div className="h-8 w-8 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
+                  <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
                 </div>
                 <span className="text-lg font-bold text-white">HomeLedger</span>
               </div>
@@ -1243,8 +1363,8 @@ export function LandingPage() {
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white mb-3">Newsletter</h4>
-              <p className="text-xs text-slate-500 mb-3">Get UK finance tips and product updates.</p>
+              <h4 className="text-sm font-semibold text-white mb-3">{t('landing.footer.newsletter')}</h4>
+              <p className="text-xs text-slate-500 mb-3">{t('landing.footer.newsletterDesc')}</p>
               <div className="flex gap-2">
                 <input type="email" placeholder="your@email.com" className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-slate-600 focus:border-amber-400/30 focus:outline-none transition-colors" />
                 <button className="px-3 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 hover:from-amber-300 hover:to-amber-400 transition-all">
@@ -1257,8 +1377,8 @@ export function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} HomeLedger. {t('landing.footer.allRightsReserved')}</p>
             <div className="flex items-center gap-4 text-sm text-slate-600">
-              <Link href="/login" className="hover:text-amber-400 transition-colors">Sign In</Link>
-              <Link href="/register" className="hover:text-amber-400 transition-colors">Create Account</Link>
+              <Link href="/login" className="hover:text-amber-400 transition-colors">{t('landing.nav.signIn')}</Link>
+              <Link href="/register" className="hover:text-amber-400 transition-colors">{t('landing.cta.ctaPrimary')}</Link>
             </div>
           </div>
         </div>
