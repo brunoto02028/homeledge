@@ -252,7 +252,7 @@ const CONTINENT_MAP: Record<string, string> = {
 
 // ─── API Handler ────────────────────────────────────────────────────────────
 const CACHE: Record<string, { data: any; ts: number }> = {};
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes — client polls every 60s
 
 export async function GET(req: NextRequest) {
   const apiKey = process.env.NEWSAPI_KEY;
@@ -383,7 +383,7 @@ export async function GET(req: NextRequest) {
       const promises = [
         ...countryFetches.map(async ({ country, size, cat }) => {
           const url = `https://newsapi.org/v2/top-headlines?country=${country}&pageSize=${size}&apiKey=${apiKey}`;
-          const res = await fetch(url, { next: { revalidate: 900 } });
+          const res = await fetch(url, { next: { revalidate: 180 } });
           const data = await res.json();
           return (data.articles || []).map((a: any) => ({
             ...a,
@@ -393,7 +393,7 @@ export async function GET(req: NextRequest) {
         }),
         ...warSearches.map(async ({ q, size, label }) => {
           const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=${size}&language=en&apiKey=${apiKey}`;
-          const res = await fetch(url, { next: { revalidate: 900 } });
+          const res = await fetch(url, { next: { revalidate: 180 } });
           const data = await res.json();
           return (data.articles || []).map((a: any) => ({ ...a, newsCategory: label }));
         }),

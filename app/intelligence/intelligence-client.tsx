@@ -114,6 +114,7 @@ export default function IntelligenceClient() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapStyle, setMapStyle] = useState('voyager');
+  const isLightMap = mapStyle === 'voyager' || mapStyle === 'topo';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [liveTime, setLiveTime] = useState('');
 
@@ -814,18 +815,18 @@ export default function IntelligenceClient() {
       </div>
 
       {/* ═══════════ STATS HUD ═══════════ */}
-      <div className="absolute top-[46px] sm:top-[96px] left-1 sm:left-5 right-1 sm:right-auto z-10 flex gap-0.5 sm:gap-1.5 sm:flex-wrap sm:max-w-[55%]">
+      <div className={`absolute top-[46px] sm:top-[96px] left-1 sm:left-5 right-1 sm:right-auto z-10 flex gap-0.5 sm:gap-1.5 sm:flex-wrap sm:max-w-[55%] ${isLightMap ? 'drop-shadow-lg' : ''}`}>
         {([
-          { label: 'TRACKING', mLabel: 'TRACK', value: stats.total, color: '#ededed', bg: 'rgba(5,5,16,0.55)', f: '' },
-          { label: 'CRISIS', mLabel: 'CRISIS', value: stats.crisis, color: '#ff2d55', bg: 'rgba(255,45,85,0.12)', f: 'negative' },
-          { label: 'POSITIVE', mLabel: 'POS+', value: stats.opportunity, color: '#30d158', bg: 'rgba(48,209,88,0.12)', f: 'positive' },
-          { label: 'UK IMPACT', mLabel: 'UK', value: stats.ukImpact, color: '#0ff', bg: 'rgba(0,255,255,0.1)', f: 'uk' },
-          { label: 'PROPHECY', mLabel: 'PROPH', value: stats.prophecy, color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', f: 'prophecy' },
+          { label: 'TRACKING', mLabel: 'TRACK', value: stats.total, color: '#ededed', bg: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(5,5,16,0.55)', f: '' },
+          { label: 'CRISIS', mLabel: 'CRISIS', value: stats.crisis, color: '#ff2d55', bg: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(255,45,85,0.12)', f: 'negative' },
+          { label: 'POSITIVE', mLabel: 'POS+', value: stats.opportunity, color: '#30d158', bg: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(48,209,88,0.12)', f: 'positive' },
+          { label: 'UK IMPACT', mLabel: 'UK', value: stats.ukImpact, color: '#0ff', bg: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(0,255,255,0.1)', f: 'uk' },
+          { label: 'PROPHECY', mLabel: 'PROPH', value: stats.prophecy, color: '#fbbf24', bg: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(251,191,36,0.12)', f: 'prophecy' },
         ] as const).map(s => (
           <button key={s.label} onClick={() => setSentimentFilter(sentimentFilter === s.f ? '' : s.f)}
             className={`flex-1 sm:flex-none backdrop-blur-xl rounded-md sm:rounded-lg px-1 sm:px-3 py-1 sm:py-1.5 font-mono cursor-pointer transition-all border
               ${sentimentFilter === s.f && s.f ? 'border-white/20 ring-1 ring-white/5' : 'border-white/[0.08] hover:border-white/15'}`}
-            style={{ background: s.bg }}>
+            style={{ background: s.bg, backdropFilter: 'blur(12px)' }}>
             <div className="text-[6px] sm:text-[9px] tracking-wider truncate" style={{ color: `${s.color}90` }}>
               <span className="sm:hidden">{s.mLabel}</span>
               <span className="hidden sm:inline">{s.label}</span>
@@ -837,7 +838,7 @@ export default function IntelligenceClient() {
 
       {/* ═══════════ BOTTOM TABS ═══════════ */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
-        <div className="flex items-center gap-0.5 px-1.5 sm:px-4 pb-0.5">
+        <div className={`flex items-center gap-0.5 px-1.5 sm:px-4 pb-0.5 ${isLightMap ? 'drop-shadow-lg' : ''}`}>
           {([
             { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', mLabel: 'Econ', c: '#22c55e' },
             { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Ops', mLabel: 'Naval', c: '#3b82f6' },
@@ -846,7 +847,7 @@ export default function IntelligenceClient() {
           ] as const).map(tab => (
             <button key={tab.id} onClick={() => setBottomTab(bottomTab === tab.id ? 'none' : tab.id)}
               className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-t-lg text-[8px] sm:text-[10px] font-mono font-bold tracking-wider transition-all"
-              style={bottomTab === tab.id ? { background: 'rgba(5,5,16,0.97)', color: tab.c, borderTop: `2px solid ${tab.c}`, borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)' } : { background: 'rgba(20,20,30,0.5)', color: '#555' }}>
+              style={bottomTab === tab.id ? { background: 'rgba(5,5,16,0.97)', color: tab.c, borderTop: `2px solid ${tab.c}`, borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' } : { background: isLightMap ? 'rgba(5,5,16,0.75)' : 'rgba(20,20,30,0.5)', color: isLightMap ? '#ccc' : '#555', backdropFilter: 'blur(12px)' }}>
               <tab.icon className="w-3 h-3" />
               <span className="hidden sm:inline">{tab.label}</span>
               <span className="sm:hidden">{tab.mLabel}</span>
@@ -1067,7 +1068,7 @@ export default function IntelligenceClient() {
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${SC[selectedArticle.sentiment]?.fill || '#0af'}30` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedArticle(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center transition"><X className="w-3.5 h-3.5" /></button>
-              {selectedArticle.imageUrl && <div className="w-full h-28 rounded-lg overflow-hidden mb-3"><img src={selectedArticle.imageUrl} alt="" className="w-full h-full object-cover" /></div>}
+              {selectedArticle.imageUrl && <div className="w-full h-28 rounded-lg overflow-hidden mb-3"><img src={selectedArticle.imageUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} /></div>}
               <h3 className="text-sm font-semibold text-white leading-tight mb-2 pr-8">{selectedArticle.title}</h3>
               <p className="text-xs text-zinc-500 leading-relaxed mb-3 cc-clamp-3">{selectedArticle.description}</p>
               <div className="flex items-center gap-2 mb-3 flex-wrap">
