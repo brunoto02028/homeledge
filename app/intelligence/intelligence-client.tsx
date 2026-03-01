@@ -587,11 +587,11 @@ export default function IntelligenceClient() {
         {/* Row 1: Title + Clock + Threat */}
         <div className="flex items-center justify-between px-3 sm:px-5 py-2 border-b border-cyan-500/10">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="relative w-2.5 h-2.5"><div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-50" /><div className="relative w-2.5 h-2.5 rounded-full bg-red-500" /></div>
-            <h1 className="text-white font-mono text-xs sm:text-base font-black tracking-[0.15em] uppercase">COMMAND CENTER</h1>
-            <span className="text-red-400 font-mono text-[10px] sm:text-xs font-bold tracking-wider animate-pulse">LIVE</span>
+            <div className="relative w-2 h-2 sm:w-2.5 sm:h-2.5"><div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-50" /><div className="relative w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500" /></div>
+            <h1 className="text-white font-mono text-[10px] sm:text-base font-black tracking-[0.15em] uppercase">COMMAND CENTER</h1>
+            <span className="text-red-400 font-mono text-[8px] sm:text-xs font-bold tracking-wider animate-pulse">LIVE</span>
           </div>
-          <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2 sm:gap-5">
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-[9px] font-mono text-zinc-500 tracking-wider">THREAT</span>
               <div className="w-20 h-2.5 bg-zinc-800/80 rounded-full overflow-hidden border border-zinc-700/30">
@@ -599,22 +599,21 @@ export default function IntelligenceClient() {
               </div>
               <span className="text-xs font-mono font-bold" style={{ color: threatColor }}>{threatLevel}%</span>
             </div>
-            <div className="flex items-center gap-1.5 font-mono">
+            <div className="flex items-center gap-1 font-mono">
               <Clock className="w-3 h-3 text-cyan-400" />
-              <span className="text-cyan-400 text-xs sm:text-sm font-bold tabular-nums tracking-wider">{liveTime}</span>
-              <span className="text-zinc-600 text-[9px]">UTC</span>
+              <span className="text-cyan-400 text-[10px] sm:text-sm font-bold tabular-nums tracking-wider">{liveTime}</span>
+              <span className="text-zinc-600 text-[8px] sm:text-[9px]">UTC</span>
             </div>
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden text-zinc-400 hover:text-white p-1">
-              <Menu className="w-5 h-5" />
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Row 2: Controls (desktop) */}
-        <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} sm:flex flex-wrap items-center gap-1 sm:gap-1.5 px-3 sm:px-5 py-1.5`}>
-          {/* Layer group */}
+        {/* Row 2: Controls (desktop — always visible) */}
+        <div className="hidden sm:flex flex-wrap items-center gap-1.5 px-5 py-1.5">
           <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
-            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">LAYERS</span>
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5">LAYERS</span>
             {([
               { k: 'air', on: showAircraft, set: setShowAircraft, l: '✈ AIR', c: '#00e5ff', cnt: aircraftCount },
               { k: 'nav', on: showNaval, set: setShowNaval, l: '⚓ NAV', c: '#3b82f6', cnt: navalVessels.length },
@@ -622,17 +621,15 @@ export default function IntelligenceClient() {
               { k: 'cf', on: showConflicts, set: setShowConflicts, l: '⚔ WAR', c: '#ef4444', cnt: conflictCount },
             ] as const).map(b => (
               <button key={b.k} onClick={() => b.set(!b.on)}
-                className="px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-mono font-bold tracking-wider transition-all relative"
+                className="px-2 py-1 rounded-md text-[10px] font-mono font-bold tracking-wider transition-all relative"
                 style={b.on ? { background: `${b.c}15`, color: b.c, borderColor: `${b.c}30`, border: '1px solid' } : { background: 'transparent', color: '#555', border: '1px solid transparent' }}>
                 {b.l}
                 {b.on && b.cnt > 0 && <span className="ml-1 text-[8px] opacity-60">{b.cnt}</span>}
               </button>
             ))}
           </div>
-
-          {/* Weather group */}
           <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
-            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">WX</span>
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5">WX</span>
             {WEATHER_LAYERS.map(w => (
               <button key={w.id} onClick={() => setWeatherLayer(weatherLayer === w.id ? '' : w.id)}
                 className="px-1.5 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
@@ -641,10 +638,8 @@ export default function IntelligenceClient() {
               </button>
             ))}
           </div>
-
-          {/* Map style */}
           <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
-            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">MAP</span>
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5">MAP</span>
             {MAP_STYLES.map(s => (
               <button key={s.id} onClick={() => setMapStyle(s.id)}
                 className="px-1.5 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
@@ -653,14 +648,10 @@ export default function IntelligenceClient() {
               </button>
             ))}
           </div>
-
-          {/* Toggles */}
           <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
             <button onClick={() => setScanLineOn(!scanLineOn)} className={`px-1.5 py-1 rounded-md text-[9px] font-mono ${scanLineOn ? 'text-cyan-400' : 'text-zinc-600'}`}>SCAN</button>
             <button onClick={() => setSfxOn(!sfxOn)} className={`px-1.5 py-1 rounded-md text-[9px] font-mono ${sfxOn ? 'text-cyan-400' : 'text-zinc-600'}`}>SFX</button>
           </div>
-
-          {/* Actions */}
           <div className="flex items-center gap-1 ml-auto">
             <button onClick={() => fetchNews()} disabled={loading}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-bold text-cyan-400 transition-all border border-cyan-500/20 hover:bg-cyan-500/10" style={{ background: 'rgba(0,255,255,0.05)' }}>
@@ -673,41 +664,127 @@ export default function IntelligenceClient() {
             <a href="/dashboard" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono text-zinc-500 border border-zinc-800/30 hover:text-zinc-300 transition">← EXIT</a>
           </div>
         </div>
+
+        {/* Mobile dropdown panel */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+              className="sm:hidden overflow-hidden border-b border-cyan-500/10" style={{ background: 'rgba(5,5,16,0.98)' }}>
+              <div className="px-3 py-2 space-y-2">
+                {/* Threat bar on mobile */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] font-mono text-zinc-500 tracking-wider">THREAT</span>
+                  <div className="flex-1 h-2 bg-zinc-800/80 rounded-full overflow-hidden border border-zinc-700/30">
+                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${threatLevel}%`, background: `linear-gradient(90deg, #22c55e, ${threatColor})` }} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold" style={{ color: threatColor }}>{threatLevel}%</span>
+                </div>
+
+                {/* Layers */}
+                <div>
+                  <div className="text-[7px] font-mono text-zinc-600 tracking-widest mb-1">LAYERS</div>
+                  <div className="flex flex-wrap gap-1">
+                    {([
+                      { k: 'air', on: showAircraft, set: setShowAircraft, l: '✈ AIR', c: '#00e5ff', cnt: aircraftCount },
+                      { k: 'nav', on: showNaval, set: setShowNaval, l: '⚓ NAV', c: '#3b82f6', cnt: navalVessels.length },
+                      { k: 'qk', on: showQuakes, set: setShowQuakes, l: '⚡ QUAKE', c: '#f97316', cnt: quakeCount },
+                      { k: 'cf', on: showConflicts, set: setShowConflicts, l: '⚔ WAR', c: '#ef4444', cnt: conflictCount },
+                    ] as const).map(b => (
+                      <button key={b.k} onClick={() => b.set(!b.on)}
+                        className="px-2.5 py-1.5 rounded-md text-[10px] font-mono font-bold tracking-wider transition-all"
+                        style={b.on ? { background: `${b.c}15`, color: b.c, border: `1px solid ${b.c}30` } : { background: 'rgba(255,255,255,0.02)', color: '#555', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        {b.l}{b.on && b.cnt > 0 && <span className="ml-1 text-[8px] opacity-60">{b.cnt}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Weather + Map in a row */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <div className="text-[7px] font-mono text-zinc-600 tracking-widest mb-1">WEATHER</div>
+                    <div className="flex flex-wrap gap-1">
+                      {WEATHER_LAYERS.map(w => (
+                        <button key={w.id} onClick={() => setWeatherLayer(weatherLayer === w.id ? '' : w.id)}
+                          className="px-2 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
+                          style={weatherLayer === w.id ? { background: 'rgba(14,165,233,0.15)', color: '#0ea5e9', border: '1px solid rgba(14,165,233,0.3)' } : { color: '#555', border: '1px solid transparent' }}>
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[7px] font-mono text-zinc-600 tracking-widest mb-1">MAP STYLE</div>
+                    <div className="flex flex-wrap gap-1">
+                      {MAP_STYLES.map(s => (
+                        <button key={s.id} onClick={() => setMapStyle(s.id)}
+                          className="px-2 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
+                          style={mapStyle === s.id ? { background: 'rgba(0,255,255,0.1)', color: '#0ff', border: '1px solid rgba(0,255,255,0.2)' } : { color: '#555', border: '1px solid transparent' }}>
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions row */}
+                <div className="flex items-center gap-1.5 pt-1 border-t border-white/5">
+                  <button onClick={() => setScanLineOn(!scanLineOn)} className={`px-2 py-1 rounded-md text-[9px] font-mono ${scanLineOn ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-600'}`}>SCAN</button>
+                  <button onClick={() => setSfxOn(!sfxOn)} className={`px-2 py-1 rounded-md text-[9px] font-mono ${sfxOn ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-600'}`}>SFX</button>
+                  <div className="flex-1" />
+                  <button onClick={() => { fetchNews(); setMobileMenuOpen(false); }} disabled={loading}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-mono font-bold text-cyan-400 border border-cyan-500/20" style={{ background: 'rgba(0,255,255,0.05)' }}>
+                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> REFRESH
+                  </button>
+                  <button onClick={() => { setSidebarOpen(!sidebarOpen); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-mono font-bold text-white border border-zinc-700/30" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <Newspaper className="w-3 h-3" /> INTEL
+                  </button>
+                  <a href="/dashboard" className="px-2 py-1.5 rounded-lg text-[9px] font-mono text-zinc-500 border border-zinc-800/30">EXIT</a>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ═══════════ STATS HUD ═══════════ */}
-      <div className="absolute top-[88px] sm:top-[96px] left-2 sm:left-5 z-10 flex gap-1.5 flex-wrap max-w-[60%] sm:max-w-[55%]">
+      <div className="absolute top-[46px] sm:top-[96px] left-1 sm:left-5 right-1 sm:right-auto z-10 flex gap-0.5 sm:gap-1.5 sm:flex-wrap sm:max-w-[55%]">
         {([
-          { label: 'TRACKING', value: stats.total, color: '#ededed', bg: 'rgba(255,255,255,0.04)', f: '' },
-          { label: 'CRISIS', value: stats.crisis, color: '#ff2d55', bg: 'rgba(255,45,85,0.08)', f: 'negative' },
-          { label: 'POSITIVE', value: stats.opportunity, color: '#30d158', bg: 'rgba(48,209,88,0.08)', f: 'positive' },
-          { label: 'UK IMPACT', value: stats.ukImpact, color: '#0ff', bg: 'rgba(0,255,255,0.06)', f: 'uk' },
-          { label: 'PROPHECY', value: stats.prophecy, color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', f: 'prophecy' },
+          { label: 'TRACKING', mLabel: 'TRACK', value: stats.total, color: '#ededed', bg: 'rgba(5,5,16,0.55)', f: '' },
+          { label: 'CRISIS', mLabel: 'CRISIS', value: stats.crisis, color: '#ff2d55', bg: 'rgba(255,45,85,0.12)', f: 'negative' },
+          { label: 'POSITIVE', mLabel: 'POS+', value: stats.opportunity, color: '#30d158', bg: 'rgba(48,209,88,0.12)', f: 'positive' },
+          { label: 'UK IMPACT', mLabel: 'UK', value: stats.ukImpact, color: '#0ff', bg: 'rgba(0,255,255,0.1)', f: 'uk' },
+          { label: 'PROPHECY', mLabel: 'PROPH', value: stats.prophecy, color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', f: 'prophecy' },
         ] as const).map(s => (
           <button key={s.label} onClick={() => setSentimentFilter(sentimentFilter === s.f ? '' : s.f)}
-            className={`backdrop-blur-md rounded-lg px-2.5 sm:px-3 py-1.5 font-mono cursor-pointer transition-all border
-              ${sentimentFilter === s.f && s.f ? 'border-white/20 scale-105 ring-1 ring-white/5' : 'border-white/5 hover:border-white/10'}`}
+            className={`flex-1 sm:flex-none backdrop-blur-xl rounded-md sm:rounded-lg px-1 sm:px-3 py-1 sm:py-1.5 font-mono cursor-pointer transition-all border
+              ${sentimentFilter === s.f && s.f ? 'border-white/20 ring-1 ring-white/5' : 'border-white/[0.08] hover:border-white/15'}`}
             style={{ background: s.bg }}>
-            <div className="text-[8px] sm:text-[9px] tracking-wider" style={{ color: `${s.color}90` }}>{s.label}</div>
-            <div className="text-sm sm:text-lg font-black tabular-nums" style={{ color: s.color, textShadow: `0 0 12px ${s.color}30` }}>{s.value}</div>
+            <div className="text-[6px] sm:text-[9px] tracking-wider truncate" style={{ color: `${s.color}90` }}>
+              <span className="sm:hidden">{s.mLabel}</span>
+              <span className="hidden sm:inline">{s.label}</span>
+            </div>
+            <div className="text-[11px] sm:text-lg font-black tabular-nums leading-tight" style={{ color: s.color, textShadow: `0 0 12px ${s.color}40` }}>{s.value}</div>
           </button>
         ))}
       </div>
 
       {/* ═══════════ BOTTOM TABS ═══════════ */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
-        <div className="flex items-center gap-0.5 px-2 sm:px-4 pb-0.5">
+        <div className="flex items-center gap-0.5 px-1.5 sm:px-4 pb-0.5">
           {([
-            { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', c: '#22c55e' },
-            { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Ops', c: '#3b82f6' },
-            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Cross-Ref', c: '#f59e0b' },
-            { id: 'stats' as BottomTab, icon: BarChart3, label: 'World Data', c: '#a855f7' },
+            { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', mLabel: 'Econ', c: '#22c55e' },
+            { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Ops', mLabel: 'Naval', c: '#3b82f6' },
+            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Cross-Ref', mLabel: 'Intel', c: '#f59e0b' },
+            { id: 'stats' as BottomTab, icon: BarChart3, label: 'World Data', mLabel: 'Data', c: '#a855f7' },
           ] as const).map(tab => (
             <button key={tab.id} onClick={() => setBottomTab(bottomTab === tab.id ? 'none' : tab.id)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-t-lg text-[9px] sm:text-[10px] font-mono font-bold tracking-wider transition-all"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-t-lg text-[8px] sm:text-[10px] font-mono font-bold tracking-wider transition-all"
               style={bottomTab === tab.id ? { background: 'rgba(5,5,16,0.97)', color: tab.c, borderTop: `2px solid ${tab.c}`, borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)' } : { background: 'rgba(20,20,30,0.5)', color: '#555' }}>
               <tab.icon className="w-3 h-3" />
               <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.mLabel}</span>
             </button>
           ))}
         </div>
@@ -851,7 +928,7 @@ export default function IntelligenceClient() {
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div initial={{ opacity: 0, x: 340 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 340 }} transition={{ type: 'spring', damping: 25 }}
-            className="absolute top-0 right-0 bottom-0 z-20 w-[320px] sm:w-[360px] overflow-y-auto cc-scrollbar"
+            className="absolute top-0 right-0 bottom-0 z-20 w-full sm:w-[360px] max-w-[360px] overflow-y-auto cc-scrollbar"
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', borderLeft: '1px solid rgba(0,255,255,0.08)' }}>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
@@ -921,7 +998,7 @@ export default function IntelligenceClient() {
       <AnimatePresence>
         {selectedArticle && (
           <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            className="absolute top-[50px] sm:top-[110px] left-2 sm:left-5 z-30 w-[calc(100%-1rem)] sm:w-[400px] max-w-[400px] rounded-xl overflow-hidden"
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${SC[selectedArticle.sentiment]?.fill || '#0af'}30` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedArticle(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center transition"><X className="w-3.5 h-3.5" /></button>
@@ -943,7 +1020,7 @@ export default function IntelligenceClient() {
       <AnimatePresence>
         {selectedEarthquake && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[380px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            className="absolute top-[50px] sm:top-[110px] left-2 sm:left-5 z-30 w-[calc(100%-1rem)] sm:w-[380px] max-w-[380px] rounded-xl overflow-hidden"
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,100,0,0.25)' }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedEarthquake(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
@@ -975,7 +1052,7 @@ export default function IntelligenceClient() {
           const kts = ac.velocity ? Math.round(ac.velocity / 1.852) : null;
           return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            className="absolute top-[50px] sm:top-[110px] left-2 sm:left-5 z-30 w-[calc(100%-1rem)] sm:w-[400px] max-w-[400px] rounded-xl overflow-hidden"
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${ac.military ? 'rgba(255,68,68,0.3)' : 'rgba(0,229,255,0.25)'}` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedAircraftDetail(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
@@ -1032,7 +1109,7 @@ export default function IntelligenceClient() {
           const stColor = selectedVessel.status === 'deployed' || selectedVessel.status === 'active' || selectedVessel.status === 'forward-deployed' ? '#22c55e' : selectedVessel.status === 'high-alert' ? '#ef4444' : selectedVessel.status === 'sea-trials' ? '#f59e0b' : '#94a3b8';
           return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            className="absolute top-[50px] sm:top-[110px] left-2 sm:left-5 z-30 w-[calc(100%-1rem)] sm:w-[400px] max-w-[400px] rounded-xl overflow-hidden"
             style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedVessel.color}40` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedVessel(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
