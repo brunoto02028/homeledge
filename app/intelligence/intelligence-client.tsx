@@ -70,6 +70,8 @@ export default function IntelligenceClient() {
   const markersRef = useRef<any[]>([]);
   const tileLayerRef = useRef<any>(null);
   const aircraftMarkersRef = useRef<any[]>([]);
+  const aircraftTrailsRef = useRef<any[]>([]);
+  const prevAircraftRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
   const quakeMarkersRef = useRef<any[]>([]);
   const navalMarkersRef = useRef<any[]>([]);
   const conflictMarkersRef = useRef<any[]>([]);
@@ -265,55 +267,119 @@ export default function IntelligenceClient() {
     });
   }, [filtered, mapLoaded, playBlip]);
 
-  // ─── Aircraft layer ───────────────────────────────────────────────────
+  // ─── Aircraft layer — live movement with trails ─────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const L = (window as any).L; if (!L) return;
     aircraftMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     aircraftMarkersRef.current = [];
-    if (!showAircraft) { setAircraftCount(0); return; }
+    aircraftTrailsRef.current.forEach(t => mapRef.current.removeLayer(t));
+    aircraftTrailsRef.current = [];
+    if (!showAircraft) { setAircraftCount(0); prevAircraftRef.current.clear(); return; }
+
+    let interpTimer: any = null;
+    const acDataRef: { current: any[] } = { current: [] };
+
     const fetchAircraft = async () => {
       try {
         const res = await fetch('/api/intelligence/aircraft'); if (!res.ok) return;
         const data = await res.json();
-        setAircraftCount(data.aircraft?.length || 0);
+        const aircraft = data.aircraft || [];
+        setAircraftCount(aircraft.length);
+        acDataRef.current = aircraft;
+
+        // Clear old trails
+        aircraftTrailsRef.current.forEach(t => mapRef.current?.removeLayer(t));
+        aircraftTrailsRef.current = [];
+
+        // Build new position map + draw trails from prev position
+        const newPosMap = new Map<string, { lat: number; lng: number }>();
+        aircraft.forEach((ac: any) => {
+          const key = ac.icao24 || ac.callsign || `${ac.lat}-${ac.lng}`;
+          const prev = prevAircraftRef.current.get(key);
+          newPosMap.set(key, { lat: ac.lat, lng: ac.lng });
+          // Draw trail line from previous to current position
+          if (prev && mapRef.current) {
+            const dist = Math.abs(prev.lat - ac.lat) + Math.abs(prev.lng - ac.lng);
+            if (dist > 0.01 && dist < 10) {
+              const color = ac.military ? '#ff444480' : '#00e5ff50';
+              const trail = L.polyline([[prev.lat, prev.lng], [ac.lat, ac.lng]], {
+                color, weight: ac.military ? 2 : 1, opacity: 0.6, dashArray: '4 4',
+              }).addTo(mapRef.current);
+              aircraftTrailsRef.current.push(trail);
+              // Fade trail after 20s
+              setTimeout(() => { if (mapRef.current) try { mapRef.current.removeLayer(trail); } catch {} }, 20000);
+            }
+          }
+        });
+        prevAircraftRef.current = newPosMap;
+
+        // Clear old markers
         aircraftMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
         aircraftMarkersRef.current = [];
-        (data.aircraft || []).forEach((ac: any) => {
+
+        // Create markers
+        aircraft.forEach((ac: any) => {
           const isMil = ac.military;
           const color = isMil ? '#ff4444' : '#00e5ff';
-          const sz = isMil ? 18 : 13;
+          const sz = isMil ? 20 : 14;
           const icon = L.divIcon({
             className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
-            html: `<div style="transform:rotate(${ac.heading || 0}deg);width:${sz}px;height:${sz}px;display:flex;align-items:center;justify-content:center;cursor:pointer;filter:drop-shadow(0 0 4px ${color});">
-              <svg width="${sz - 2}" height="${sz - 2}" viewBox="0 0 24 24" fill="${color}" opacity="${isMil ? 1 : 0.8}">
-                <path d="M12 2c-.5 0-1 .2-1.4.6L8 6v2L2 11v2l6 1v3l-2 2v1l3-1 3 1 3-1-3 1v-1l-2-2v-3l6-1v-2l-6-3V6l-2.6-3.4C13 2.2 12.5 2 12 2z"/>
+            html: `<div class="cc-aircraft" style="transform:rotate(${ac.heading || 0}deg);width:${sz}px;height:${sz}px;display:flex;align-items:center;justify-content:center;cursor:pointer;filter:drop-shadow(0 0 6px ${color});transition:transform 2s linear;">
+              <svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${color}" opacity="${isMil ? 1 : 0.85}">
+                <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
               </svg>
             </div>`,
           });
           const marker = L.marker([ac.lat, ac.lng], { icon }).addTo(mapRef.current);
+          (marker as any)._acData = ac;
           const csLabel = ac.callsign || 'N/A';
-          marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid ${color}40;border-radius:6px;color:#ededed;backdrop-filter:blur(20px);min-width:180px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-              <span style="font-weight:700;color:${color};font-size:12px;">✈ ${csLabel}</span>
-              ${isMil ? '<span style="background:rgba(255,68,68,0.2);color:#ff4444;font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid rgba(255,68,68,0.3);">MILITARY</span>' : ''}
+          const speedKnots = ac.velocity ? Math.round(ac.velocity / 1.852) : null;
+          const altFeet = ac.altitude ? Math.round(ac.altitude * 3.281) : null;
+          marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:10px;padding:10px 12px;background:rgba(5,5,15,0.97);border:1px solid ${color}50;border-radius:8px;color:#ededed;backdrop-filter:blur(20px);min-width:200px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid ${color}20;">
+              <span style="font-weight:800;color:${color};font-size:14px;">✈ ${csLabel}</span>
+              ${isMil ? '<span style="background:rgba(255,68,68,0.15);color:#ff4444;font-size:8px;padding:2px 6px;border-radius:3px;border:1px solid rgba(255,68,68,0.3);font-weight:700;">MILITARY</span>' : '<span style="background:rgba(0,229,255,0.1);color:#00e5ff;font-size:8px;padding:2px 6px;border-radius:3px;border:1px solid rgba(0,229,255,0.2);">CIVILIAN</span>'}
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:9px;">
-              <span style="color:#666;">ORIGIN</span><span style="color:#ccc;">${ac.country}</span>
-              <span style="color:#666;">ALT</span><span style="color:#ccc;">${ac.altitude ? ac.altitude.toLocaleString() + ' m' : '—'}</span>
-              <span style="color:#666;">SPEED</span><span style="color:#ccc;">${ac.velocity ? ac.velocity + ' km/h' : '—'}</span>
-              <span style="color:#666;">HDG</span><span style="color:#ccc;">${ac.heading ? ac.heading + '°' : '—'}</span>
-              <span style="color:#666;">ZONE</span><span style="color:#ccc;">${ac.zone}</span>
+            <div style="display:grid;grid-template-columns:70px 1fr;gap:3px 8px;font-size:9px;">
+              <span style="color:#555;">ORIGIN</span><span style="color:#ddd;font-weight:600;">${ac.country}</span>
+              <span style="color:#555;">ALTITUDE</span><span style="color:#ddd;">${ac.altitude ? ac.altitude.toLocaleString() + ' m' : '—'}${altFeet ? ' <span style="color:#666;">(' + altFeet.toLocaleString() + ' ft)</span>' : ''}</span>
+              <span style="color:#555;">SPEED</span><span style="color:#ddd;">${ac.velocity ? ac.velocity + ' km/h' : '—'}${speedKnots ? ' <span style="color:#666;">(' + speedKnots + ' kts)</span>' : ''}</span>
+              <span style="color:#555;">HEADING</span><span style="color:#ddd;">${ac.heading ? ac.heading + '°' : '—'}</span>
+              <span style="color:#555;">ICAO24</span><span style="color:#888;">${ac.icao24 || '—'}</span>
+              <span style="color:#555;">ZONE</span><span style="color:#888;">${ac.zone}</span>
+              <span style="color:#555;">POSITION</span><span style="color:#888;">${ac.lat?.toFixed(3)}°, ${ac.lng?.toFixed(3)}°</span>
             </div>
-          </div>`, { direction: 'top', offset: [0, -8], opacity: 1, className: 'cc-tooltip' });
+          </div>`, { direction: 'top', offset: [0, -10], opacity: 1, className: 'cc-tooltip' });
           marker.on('click', () => { setSelectedAircraftDetail(ac); mapRef.current?.flyTo([ac.lat, ac.lng], 7, { duration: 1 }); });
           aircraftMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Aircraft]', err); }
     };
-    fetchAircraft();
-    const i = setInterval(fetchAircraft, 90000);
-    return () => clearInterval(i);
+
+    // Interpolate positions between fetches — moves aircraft smoothly
+    const startInterpolation = () => {
+      interpTimer = setInterval(() => {
+        aircraftMarkersRef.current.forEach(marker => {
+          const ac = (marker as any)._acData;
+          if (!ac || !ac.heading || !ac.velocity) return;
+          const pos = marker.getLatLng();
+          // Move ~1 second of travel: velocity is km/h, convert to deg/s
+          const speedDegPerSec = (ac.velocity / 3600) / 111; // ~111km per degree
+          const hdgRad = (ac.heading * Math.PI) / 180;
+          const newLat = pos.lat + speedDegPerSec * Math.cos(hdgRad);
+          const newLng = pos.lng + speedDegPerSec * Math.sin(hdgRad);
+          marker.setLatLng([newLat, newLng]);
+        });
+      }, 1000);
+    };
+
+    fetchAircraft().then(startInterpolation);
+    const fetchInterval = setInterval(fetchAircraft, 30000); // Refresh every 30s
+    return () => {
+      clearInterval(fetchInterval);
+      if (interpTimer) clearInterval(interpTimer);
+    };
   }, [showAircraft, mapLoaded]);
 
   // ─── Earthquake layer ─────────────────────────────────────────────────
@@ -357,7 +423,7 @@ export default function IntelligenceClient() {
     return () => clearInterval(i);
   }, [showQuakes, mapLoaded]);
 
-  // ─── Conflict layer ───────────────────────────────────────────────────
+  // ─── Conflict layer — identified by name, description, source ────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const L = (window as any).L; if (!L) return;
@@ -372,36 +438,55 @@ export default function IntelligenceClient() {
         conflictMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
         conflictMarkersRef.current = [];
         (data.conflicts || []).forEach((c: any) => {
-          const sz = Math.min(24, 10 + (c.eventCount || 1) * 2);
+          const intensity = Math.min(c.eventCount || 1, 30);
+          const sz = Math.max(14, Math.min(28, 10 + intensity * 1.5));
+          const caption = c.captionfull || c.name || 'Unknown conflict';
+          const shortCaption = caption.length > 50 ? caption.slice(0, 50) + '...' : caption;
           const icon = L.divIcon({
-            className: '', iconSize: [sz * 2, sz * 2], iconAnchor: [sz, sz],
-            html: `<div style="width:${sz * 2}px;height:${sz * 2}px;display:flex;align-items:center;justify-content:center;position:relative;">
-              <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.5) 0%,rgba(239,68,68,0.1) 60%,transparent 70%);border:2px solid rgba(239,68,68,0.7);box-shadow:0 0 ${sz * 2}px rgba(239,68,68,0.4);animation:cc-pulse 2s ease-in-out infinite;cursor:pointer;"></div>
-              <div style="position:absolute;width:${sz * 1.8}px;height:${sz * 1.8}px;border:1px solid rgba(239,68,68,0.15);border-radius:50%;animation:cc-ring 3s ease-out infinite;"></div>
+            className: '', iconSize: [sz * 2.5, sz * 2.5], iconAnchor: [sz * 1.25, sz * 1.25],
+            html: `<div style="width:${sz * 2.5}px;height:${sz * 2.5}px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;">
+              <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.6) 0%,rgba(239,68,68,0.15) 50%,transparent 70%);border:2px solid rgba(239,68,68,0.8);box-shadow:0 0 ${sz * 2}px rgba(239,68,68,0.5),0 0 ${sz * 4}px rgba(239,68,68,0.2);animation:cc-pulse 1.8s ease-in-out infinite;"></div>
+              <div style="position:absolute;width:${sz * 2}px;height:${sz * 2}px;border:1px solid rgba(239,68,68,0.2);border-radius:50%;animation:cc-ring 2.5s ease-out infinite;"></div>
+              <div style="position:absolute;width:${sz * 2.4}px;height:${sz * 2.4}px;border:1px dashed rgba(239,68,68,0.1);border-radius:50%;animation:cc-ring 4s ease-out infinite;"></div>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:${Math.max(10, sz * 0.5)}px;pointer-events:none;">⚔</div>
             </div>`,
           });
           const marker = L.marker([c.lat, c.lng], { icon }).addTo(mapRef.current);
-          marker.bindTooltip(`<div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#ededed;">
-            <div style="font-weight:700;color:#ef4444;font-size:12px;">⚔ CONFLICT ZONE</div>
-            <div style="color:#ccc;">${c.name}</div>
-            <div style="color:#888;font-size:9px;">${c.eventCount} events (48h)</div>
-          </div>`, { direction: 'top', offset: [0, -sz], opacity: 1, className: 'cc-tooltip' });
+          marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:10px;padding:10px 12px;background:rgba(5,5,15,0.97);border:1px solid rgba(239,68,68,0.4);border-radius:8px;color:#ededed;backdrop-filter:blur(20px);max-width:320px;min-width:220px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(239,68,68,0.15);">
+              <span style="font-weight:800;color:#ef4444;font-size:13px;">⚔ CONFLICT</span>
+              <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:8px;padding:2px 6px;border-radius:3px;border:1px solid rgba(239,68,68,0.3);font-weight:700;">${intensity} EVENTS</span>
+            </div>
+            <div style="color:#ededed;font-weight:600;margin-bottom:4px;line-height:1.4;font-size:11px;">${shortCaption}</div>
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:2px 8px;font-size:9px;">
+              <span style="color:#555;">LOCATION</span><span style="color:#ccc;">${c.name}</span>
+              <span style="color:#555;">COORDS</span><span style="color:#888;">${c.lat?.toFixed(3)}°, ${c.lng?.toFixed(3)}°</span>
+              <span style="color:#555;">PERIOD</span><span style="color:#888;">Last 48 hours</span>
+            </div>
+            ${c.url ? '<div style="margin-top:6px;font-size:8px;color:#666;">Click for source article →</div>' : ''}
+          </div>`, { direction: 'top', offset: [0, -sz * 1.25], opacity: 1, className: 'cc-tooltip' });
+          marker.on('click', () => {
+            if (c.url) window.open(c.url, '_blank');
+            else mapRef.current?.flyTo([c.lat, c.lng], 7, { duration: 1 });
+          });
           conflictMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Conflicts]', err); }
     };
     fetchConflicts();
-    const i = setInterval(fetchConflicts, 900000);
+    const i = setInterval(fetchConflicts, 600000);
     return () => clearInterval(i);
   }, [showConflicts, mapLoaded]);
 
-  // ─── Naval layer ──────────────────────────────────────────────────────
+  // ─── Naval layer — enhanced ship markers with full info ──────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const L = (window as any).L; if (!L) return;
     navalMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     navalMarkersRef.current = [];
     if (!showNaval) return;
+    const NATION_FLAGS: Record<string, string> = { US: '🇺🇸', UK: '🇬🇧', FR: '🇫🇷', RU: '🇷🇺', CN: '🇨🇳', IN: '🇮🇳', IT: '🇮🇹', JP: '🇯🇵', KR: '🇰🇷', AU: '🇦🇺', TR: '🇹🇷', EG: '🇪🇬', BR: '🇧🇷', MULTI: '🌐', NATO: '🔵' };
+    const TYPE_LABELS: Record<string, string> = { carrier: 'AIRCRAFT CARRIER', amphibious: 'AMPHIBIOUS ASSAULT', cruiser: 'CRUISER', frigate: 'FRIGATE', destroyer: 'DESTROYER', patrol_zone: 'STRATEGIC WATERWAY' };
     const fetchNaval = async () => {
       try {
         const res = await fetch('/api/intelligence/naval'); if (!res.ok) return;
@@ -411,25 +496,38 @@ export default function IntelligenceClient() {
         navalMarkersRef.current = [];
         (data.vessels || []).forEach((v: NavalVessel) => {
           const isP = v.type === 'patrol_zone'; const isC = v.type === 'carrier';
-          const sz = isP ? 22 : isC ? 20 : 14;
+          const isA = v.type === 'amphibious';
+          const sz = isP ? 28 : isC ? 24 : isA ? 18 : 16;
+          const flag = NATION_FLAGS[v.nation] || '🏴';
+          const stColor = v.status === 'deployed' || v.status === 'active' || v.status === 'forward-deployed' ? '#22c55e' : v.status === 'high-alert' ? '#ef4444' : v.status === 'sea-trials' ? '#f59e0b' : '#94a3b8';
           const icon = L.divIcon({
-            className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
-            html: `<div style="width:${sz}px;height:${sz}px;border-radius:${isP ? '4px' : '50%'};
-              background:${isP ? 'rgba(100,116,139,0.15)' : v.color + '20'};
-              border:${isP ? '1.5px dashed rgba(100,116,139,0.5)' : `2px solid ${v.color}`};
-              box-shadow:0 0 ${sz}px ${v.color}30;cursor:pointer;
-              display:flex;align-items:center;justify-content:center;font-size:${sz * 0.45}px;
-              ${isP ? 'animation:cc-pulse 3s ease-in-out infinite;' : ''}">
-              ${isP ? '🔒' : isC ? '⚓' : v.type === 'amphibious' ? '🚢' : '🔱'}
-            </div>`,
+            className: '', iconSize: [sz + 8, sz + 8], iconAnchor: [(sz + 8) / 2, (sz + 8) / 2],
+            html: isP
+              ? `<div style="width:${sz + 8}px;height:${sz + 8}px;border-radius:6px;border:2px dashed rgba(100,116,139,0.5);background:rgba(100,116,139,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;animation:cc-pulse 3s ease-in-out infinite;"><span style="font-size:12px;">🔒</span></div>`
+              : `<div style="width:${sz + 8}px;height:${sz + 8}px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;">
+                  <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${v.color}25;border:2px solid ${v.color};box-shadow:0 0 ${sz}px ${v.color}40,0 0 ${sz * 2}px ${v.color}15;display:flex;align-items:center;justify-content:center;">
+                    <svg width="${sz * 0.55}" height="${sz * 0.55}" viewBox="0 0 24 24" fill="none" stroke="${v.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>
+                  </div>
+                  <div style="position:absolute;top:-2px;right:-2px;font-size:8px;line-height:1;">${flag}</div>
+                </div>`,
           });
           const marker = L.marker([v.lat, v.lng], { icon }).addTo(mapRef.current);
-          const stColor = v.status === 'deployed' || v.status === 'active' ? '#22c55e' : v.status === 'high-alert' ? '#ef4444' : '#94a3b8';
-          marker.bindTooltip(`<div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid ${v.color}40;border-radius:6px;color:#ededed;max-width:260px;">
-            <div style="font-weight:700;color:${v.color};font-size:12px;margin-bottom:3px;">${v.name}</div>
-            <div style="color:#888;font-size:9px;">${v.fleet} · ${v.area}</div>
-            <div style="margin-top:4px;"><span style="font-size:8px;padding:2px 6px;border-radius:3px;background:${stColor}15;color:${stColor};border:1px solid ${stColor}30;">${v.status.toUpperCase()}</span></div>
-          </div>`, { direction: 'top', offset: [0, -sz / 2], opacity: 1, className: 'cc-tooltip' });
+          const typeLabel = TYPE_LABELS[v.type] || v.type.toUpperCase();
+          marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:10px;padding:10px 12px;background:rgba(5,5,15,0.97);border:1px solid ${v.color}50;border-radius:8px;color:#ededed;backdrop-filter:blur(20px);min-width:240px;max-width:320px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid ${v.color}20;">
+              <span style="font-size:14px;">${flag}</span>
+              <span style="font-weight:800;color:${v.color};font-size:12px;">${v.name}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:3px 8px;font-size:9px;">
+              <span style="color:#555;">TYPE</span><span style="color:#ddd;font-weight:600;">${typeLabel}</span>
+              <span style="color:#555;">FLEET</span><span style="color:#ccc;">${v.fleet}</span>
+              <span style="color:#555;">AREA</span><span style="color:#ccc;">${v.area}</span>
+              <span style="color:#555;">STATUS</span><span style="font-weight:700;color:${stColor};">${v.status.toUpperCase()}</span>
+              <span style="color:#555;">COORDS</span><span style="color:#888;">${v.lat.toFixed(3)}°N, ${v.lng.toFixed(3)}°E</span>
+              <span style="color:#555;">DETAILS</span><span style="color:#888;">${v.details}</span>
+            </div>
+            <div style="margin-top:6px;font-size:8px;color:#555;">Click for full intel panel →</div>
+          </div>`, { direction: 'top', offset: [0, -(sz + 8) / 2], opacity: 1, className: 'cc-tooltip' });
           marker.on('click', () => { setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); });
           navalMarkersRef.current.push(marker);
         });
@@ -870,49 +968,109 @@ export default function IntelligenceClient() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {selectedAircraftDetail && (
+        {selectedAircraftDetail && (() => {
+          const ac = selectedAircraftDetail;
+          const color = ac.military ? '#ff4444' : '#00e5ff';
+          const altFt = ac.altitude ? Math.round(ac.altitude * 3.281).toLocaleString() : null;
+          const kts = ac.velocity ? Math.round(ac.velocity / 1.852) : null;
+          return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[360px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
-            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedAircraftDetail.military ? 'rgba(255,68,68,0.25)' : 'rgba(0,229,255,0.2)'}` }}>
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${ac.military ? 'rgba(255,68,68,0.3)' : 'rgba(0,229,255,0.25)'}` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedAircraftDetail(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               <div className="flex items-center gap-3 mb-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${selectedAircraftDetail.military ? 'bg-red-500/10' : 'bg-cyan-500/10'}`}><Plane className={`w-6 h-6 ${selectedAircraftDetail.military ? 'text-red-400' : 'text-cyan-400'}`} /></div>
-                <div>
-                  <div className={`text-base font-black font-mono ${selectedAircraftDetail.military ? 'text-red-400' : 'text-cyan-400'}`}>{selectedAircraftDetail.callsign || 'UNKNOWN'}</div>
-                  <div className="flex items-center gap-2"><span className="text-[10px] font-mono text-zinc-500">{selectedAircraftDetail.country}</span>{selectedAircraftDetail.military && <span className="text-[8px] px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-mono">MILITARY</span>}</div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center relative" style={{ background: `${color}10`, border: `1px solid ${color}20` }}>
+                  <Plane className="w-7 h-7" style={{ color, transform: `rotate(${ac.heading || 0}deg)` }} />
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-black font-mono" style={{ color }}>{ac.callsign || 'UNKNOWN'}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-zinc-400">{ac.country}</span>
+                    <span className="text-[8px] px-2 py-0.5 rounded font-mono font-bold" style={{ background: `${color}12`, color, border: `1px solid ${color}25` }}>{ac.military ? 'MILITARY' : 'CIVILIAN'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[{ l: 'ALT', v: selectedAircraftDetail.altitude ? `${selectedAircraftDetail.altitude.toLocaleString()}m` : '—' }, { l: 'SPD', v: selectedAircraftDetail.velocity ? `${selectedAircraftDetail.velocity}km/h` : '—' }, { l: 'HDG', v: selectedAircraftDetail.heading ? `${selectedAircraftDetail.heading}°` : '—' }, { l: 'ZONE', v: selectedAircraftDetail.zone || '—' }].map(d => (
-                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2 border border-white/5"><div className="text-[7px] text-zinc-600 font-mono">{d.l}</div><div className="text-xs font-bold text-white font-mono">{d.v}</div></div>
+              <div className="grid grid-cols-3 gap-1.5 mb-3">
+                {[
+                  { l: 'ALTITUDE', v: ac.altitude ? `${ac.altitude.toLocaleString()}m` : '—', s: altFt ? `${altFt} ft` : '' },
+                  { l: 'SPEED', v: ac.velocity ? `${ac.velocity} km/h` : '—', s: kts ? `${kts} knots` : '' },
+                  { l: 'HEADING', v: ac.heading ? `${ac.heading}°` : '—', s: '' },
+                ].map(d => (
+                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2.5 border border-white/5">
+                    <div className="text-[7px] text-zinc-600 font-mono tracking-wider">{d.l}</div>
+                    <div className="text-sm font-bold text-white font-mono">{d.v}</div>
+                    {d.s && <div className="text-[9px] text-zinc-600 font-mono">{d.s}</div>}
+                  </div>
                 ))}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 mb-3">
+                <div className="bg-white/[0.03] rounded-lg p-2.5 border border-white/5">
+                  <div className="text-[7px] text-zinc-600 font-mono tracking-wider">ICAO24</div>
+                  <div className="text-xs font-bold text-white font-mono">{ac.icao24 || '—'}</div>
+                </div>
+                <div className="bg-white/[0.03] rounded-lg p-2.5 border border-white/5">
+                  <div className="text-[7px] text-zinc-600 font-mono tracking-wider">ZONE</div>
+                  <div className="text-xs font-bold text-white font-mono">{ac.zone || '—'}</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[9px] font-mono text-zinc-600">
+                <span>Position: {ac.lat?.toFixed(4)}°, {ac.lng?.toFixed(4)}°</span>
+                <span>Source: OpenSky Network (ADS-B)</span>
               </div>
             </div>
           </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       <AnimatePresence>
-        {selectedVessel && (
+        {selectedVessel && (() => {
+          const NF: Record<string, string> = { US: '🇺🇸', UK: '🇬🇧', FR: '🇫🇷', RU: '🇷🇺', CN: '🇨🇳', IN: '🇮🇳', IT: '🇮🇹', JP: '🇯🇵', KR: '🇰🇷', AU: '🇦🇺', TR: '🇹🇷', EG: '🇪🇬', BR: '🇧🇷', MULTI: '🌐', NATO: '🔵' };
+          const TL: Record<string, string> = { carrier: 'AIRCRAFT CARRIER', amphibious: 'AMPHIBIOUS ASSAULT SHIP', cruiser: 'GUIDED-MISSILE CRUISER', frigate: 'FRIGATE', destroyer: 'DESTROYER', patrol_zone: 'STRATEGIC WATERWAY' };
+          const NN: Record<string, string> = { US: 'United States', UK: 'United Kingdom', FR: 'France', RU: 'Russia', CN: 'China', IN: 'India', IT: 'Italy', JP: 'Japan', KR: 'South Korea', AU: 'Australia', TR: 'Turkey', EG: 'Egypt', BR: 'Brazil', MULTI: 'Multinational', NATO: 'NATO Alliance' };
+          const stColor = selectedVessel.status === 'deployed' || selectedVessel.status === 'active' || selectedVessel.status === 'forward-deployed' ? '#22c55e' : selectedVessel.status === 'high-alert' ? '#ef4444' : selectedVessel.status === 'sea-trials' ? '#f59e0b' : '#94a3b8';
+          return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[370px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
-            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedVessel.color}30` }}>
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedVessel.color}40` }}>
             <div className="relative p-4">
               <button onClick={() => setSelectedVessel(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${selectedVessel.color}15` }}><Anchor className="w-6 h-6" style={{ color: selectedVessel.color }} /></div>
-                <div><div className="text-sm font-bold font-mono" style={{ color: selectedVessel.color }}>{selectedVessel.name}</div><div className="text-[10px] font-mono text-zinc-600">{selectedVessel.fleet}</div></div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center relative" style={{ background: `${selectedVessel.color}12`, border: `1px solid ${selectedVessel.color}25` }}>
+                  <Ship className="w-7 h-7" style={{ color: selectedVessel.color }} />
+                  <span className="absolute -top-1 -right-1 text-sm">{NF[selectedVessel.nation] || '🏴'}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold font-mono" style={{ color: selectedVessel.color }}>{selectedVessel.name}</div>
+                  <div className="text-[10px] font-mono text-zinc-500">{TL[selectedVessel.type] || selectedVessel.type.toUpperCase()}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded border" style={{ color: stColor, background: `${stColor}10`, borderColor: `${stColor}25` }}>{selectedVessel.status.toUpperCase()}</span>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-1.5 mb-3">
-                {[{ l: 'TYPE', v: selectedVessel.type.replace('_', ' ') }, { l: 'AREA', v: selectedVessel.area }, { l: 'STATUS', v: selectedVessel.status }, { l: 'NATION', v: selectedVessel.nation }].map(d => (
-                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2 border border-white/5"><div className="text-[8px] text-zinc-600 font-mono">{d.l}</div><div className="text-sm font-bold text-white font-mono capitalize">{d.v}</div></div>
+                {[
+                  { l: 'NATION', v: `${NF[selectedVessel.nation] || ''} ${NN[selectedVessel.nation] || selectedVessel.nation}` },
+                  { l: 'FLEET', v: selectedVessel.fleet },
+                  { l: 'AREA OF OPS', v: selectedVessel.area },
+                  { l: 'COORDINATES', v: `${selectedVessel.lat.toFixed(3)}°N, ${selectedVessel.lng.toFixed(3)}°E` },
+                ].map(d => (
+                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2.5 border border-white/5"><div className="text-[7px] text-zinc-600 font-mono tracking-wider">{d.l}</div><div className="text-xs font-bold text-white font-mono">{d.v}</div></div>
                 ))}
               </div>
-              <div className="text-xs font-mono text-zinc-500 bg-white/[0.02] rounded-lg p-2.5 border border-white/5">{selectedVessel.details}</div>
+              <div className="rounded-lg bg-white/[0.02] border border-white/5 p-3 mb-3">
+                <div className="text-[7px] text-zinc-600 font-mono tracking-wider mb-1">OPERATIONAL DETAILS</div>
+                <div className="text-xs font-mono text-zinc-400 leading-relaxed">{selectedVessel.details}</div>
+              </div>
+              <div className="flex items-center justify-between text-[9px] font-mono text-zinc-700">
+                <span>Source: OSINT / Public Naval Records</span>
+                <span>Approx. position</span>
+              </div>
             </div>
           </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* ═══════════ CSS ═══════════ */}
