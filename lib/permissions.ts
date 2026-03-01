@@ -120,6 +120,7 @@ export const CUSTOMER_MODULES = ALL_PERMISSIONS.filter(
  */
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
   none: ['dashboard', 'settings'],
+  intelligence: ['dashboard', 'intelligence', 'settings'],
   starter: [
     'dashboard', 'statements', 'categories', 'invoices', 'bills',
     'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
@@ -218,6 +219,7 @@ export function getPermissionsForPlan(plan: string): PermissionKey[] {
 /** Plan display names for UI. */
 export const PLAN_LABELS: Record<string, string> = {
   none: 'No Plan',
+  intelligence: 'Intelligence',
   starter: 'Starter',
   pro: 'Pro',
   business: 'Business',
@@ -227,6 +229,7 @@ export const PLAN_LABELS: Record<string, string> = {
 /** Plan prices in pence (base price before Stripe fee). */
 export const PLAN_PRICES: Record<string, number> = {
   none: 0,
+  intelligence: 299,
   starter: 799,
   pro: 1499,
   business: 2999,

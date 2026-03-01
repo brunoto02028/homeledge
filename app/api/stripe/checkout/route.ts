@@ -11,6 +11,10 @@ function getStripe() {
 }
 
 const PLANS: Record<string, { priceId: string; name: string }> = {
+  intelligence: {
+    priceId: process.env.STRIPE_PRICE_INTELLIGENCE || '',
+    name: 'Intelligence',
+  },
   starter: {
     priceId: process.env.STRIPE_PRICE_STARTER || '',
     name: 'Starter',

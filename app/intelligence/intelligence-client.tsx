@@ -77,6 +77,17 @@ export default function IntelligenceClient() {
   const conflictMarkersRef = useRef<any[]>([]);
   const weatherLayerRef = useRef<any>(null);
 
+  // Subscription gate
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/intelligence/check-access')
+      .then(r => r.json())
+      .then(d => { setHasAccess(d.hasAccess); setAccessChecked(true); })
+      .catch(() => { setHasAccess(false); setAccessChecked(true); });
+  }, []);
+
   // Data
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -549,6 +560,30 @@ export default function IntelligenceClient() {
     });
     return groups.sort((a, b) => b.articles.length - a.articles.length).slice(0, 12);
   }, [articles]);
+
+  // ─── ACCESS GATE ─────────────────────────────────────────────────────
+  if (!accessChecked) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-[#050510]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+          <span className="text-xs font-mono text-slate-500">VERIFYING ACCESS...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    if (typeof window !== 'undefined') window.location.href = '/intelligence/subscribe';
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-[#050510]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+          <span className="text-xs font-mono text-slate-500">REDIRECTING...</span>
+        </div>
+      </div>
+    );
+  }
 
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
