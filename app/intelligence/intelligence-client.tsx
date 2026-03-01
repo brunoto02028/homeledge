@@ -189,34 +189,59 @@ export default function IntelligenceClient() {
   }, [playBlip]);
 
   // ─── Init Leaflet ─────────────────────────────────────────────────────
+  const [mapDebug, setMapDebug] = useState('Loading Leaflet...');
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return;
+    let attempt = 0;
     const initMap = () => {
+      attempt++;
+      const container = mapContainerRef.current;
       const L = (window as any).L;
-      if (!L) { setTimeout(initMap, 200); return; }
-      const map = L.map(mapContainerRef.current, {
-        center: [25, 10], zoom: 3, minZoom: 2, maxZoom: 18,
-        zoomControl: false, worldCopyJump: true, attributionControl: false,
-      });
-      const style = MAP_STYLES.find(s => s.id === 'voyager')!;
-      const tile = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(map);
-      tileLayerRef.current = tile;
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-      mapRef.current = map;
-      setMapLoaded(true);
-      // Force Leaflet to recalculate container size after layout settles
-      setTimeout(() => map.invalidateSize(), 100);
-      setTimeout(() => map.invalidateSize(), 500);
+      if (!L || !container) {
+        setMapDebug(`Waiting for Leaflet JS... (attempt ${attempt})`);
+        if (attempt < 50) setTimeout(initMap, 300);
+        return;
+      }
+      const w = container.offsetWidth, h = container.offsetHeight;
+      if (w < 50 || h < 50) {
+        setMapDebug(`Container: ${w}x${h} — waiting for layout (attempt ${attempt})`);
+        if (attempt < 50) setTimeout(initMap, 300);
+        return;
+      }
+      setMapDebug(`Init map: ${w}x${h}`);
+      try {
+        const map = L.map(container, {
+          center: [25, 10], zoom: 3, minZoom: 2, maxZoom: 18,
+          zoomControl: false, worldCopyJump: true, attributionControl: false,
+        });
+        const style = MAP_STYLES.find(s => s.id === 'voyager')!;
+        const tile = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(map);
+        tileLayerRef.current = tile;
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        mapRef.current = map;
+        setMapLoaded(true);
+        setMapDebug(`Map OK: ${w}x${h} — tiles loading`);
+        // Force recalculate at multiple intervals
+        [100, 500, 1000, 2000].forEach(ms => setTimeout(() => {
+          if (mapRef.current) { mapRef.current.invalidateSize(); setMapDebug(`Map: ${container.offsetWidth}x${container.offsetHeight}`); }
+        }, ms));
+        // ResizeObserver for ongoing size changes
+        const ro = new ResizeObserver(() => { if (mapRef.current) mapRef.current.invalidateSize(); });
+        ro.observe(container);
+      } catch (err: any) {
+        setMapDebug(`Map ERROR: ${err.message}`);
+      }
     };
+    // Leaflet CSS is loaded via page.tsx <link> tag; only need JS
     if (!(window as any).L) {
-      const link = document.createElement('link'); link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link);
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => setTimeout(initMap, 200); document.head.appendChild(script);
+      script.onload = () => setTimeout(initMap, 100);
+      script.onerror = () => setMapDebug('FAILED to load Leaflet JS from CDN');
+      document.head.appendChild(script);
     } else { initMap(); }
     return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
-  }, []);
+  }, [accessChecked, hasAccess]);
 
   // ─── Change map style ─────────────────────────────────────────────────
   useEffect(() => {
@@ -592,8 +617,13 @@ export default function IntelligenceClient() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#050510]">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#050510]" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+      {/* Debug banner - REMOVE after fixing */}
+      <div className="absolute top-1 left-1/2 -translate-x-1/2 z-[99] bg-red-900/90 text-white text-[10px] font-mono px-3 py-1 rounded-full pointer-events-none">
+        {mapDebug}
+      </div>
 
       {/* ═══ HUD CORNER BRACKETS ═══ */}
       <div className="absolute inset-0 z-[2] pointer-events-none">

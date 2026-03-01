@@ -13,5 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default function IntelligencePage() {
-  return <IntelligenceClient />;
+  return (
+    <>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <IntelligenceClient />
+    </>
+  );
 }
