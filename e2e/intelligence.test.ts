@@ -195,7 +195,7 @@ async function testTopBarElements() {
     const titleEl = await page.$('h1');
     if (!titleEl) throw new Error('No h1 title');
     const titleText = await page.evaluate(el => el?.textContent, titleEl);
-    if (!titleText?.includes('Global Intelligence')) throw new Error(`Wrong title text: ${titleText}`);
+    if (!titleText?.includes('COMMAND CENTER')) throw new Error(`Wrong title text: ${titleText}`);
     // Check LIVE badge
     const liveText = await page.evaluate(() => document.body.innerText);
     if (!liveText.includes('LIVE')) throw new Error('No LIVE badge');
@@ -206,7 +206,7 @@ async function testLayerToggleButtons() {
   await test('Layer toggle buttons exist', async () => {
     const buttons = await page.$$('button');
     const texts = await Promise.all(buttons.map(b => page.evaluate(el => el.textContent || '', b)));
-    const expectedLabels = ['SCAN', 'SFX', 'AIR', 'NAVAL', 'QUAKE', 'CONFLICT'];
+    const expectedLabels = ['SCAN', 'SFX', 'AIR', 'NAV', 'QUAKE', 'WAR'];
     for (const label of expectedLabels) {
       if (!texts.some(t => t.includes(label))) throw new Error(`Missing ${label} toggle`);
     }
@@ -234,7 +234,7 @@ async function testStatsStrip() {
     const text = await page.evaluate(() => document.body.innerText);
     if (!text.includes('TRACKING')) throw new Error('No TRACKING stat');
     if (!text.includes('CRISIS')) throw new Error('No CRISIS stat');
-    if (!text.includes('OPPORTUNITY')) throw new Error('No OPPORTUNITY stat');
+    if (!text.includes('POSITIVE')) throw new Error('No POSITIVE stat');
     if (!text.includes('UK IMPACT')) throw new Error('No UK IMPACT stat');
     if (!text.includes('PROPHECY')) throw new Error('No PROPHECY stat');
   });
@@ -245,19 +245,19 @@ async function testFiltersSidebar() {
     // Click FILTERS button
     const filterBtn = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      const btn = btns.find(b => b.textContent?.includes('FILTERS'));
+      const btn = btns.find(b => b.textContent?.includes('INTEL'));
       if (btn) { btn.click(); return true; }
       return false;
     });
-    if (!filterBtn) throw new Error('FILTERS button not found');
+    if (!filterBtn) throw new Error('INTEL button not found');
     await new Promise(r => setTimeout(r, 500));
     // Check sidebar content
     const hasRegion = await page.evaluate(() => document.body.innerText.includes('REGION'));
     if (!hasRegion) throw new Error('Sidebar missing REGION section');
     const hasCategory = await page.evaluate(() => document.body.innerText.includes('CATEGORY'));
     if (!hasCategory) throw new Error('Sidebar missing CATEGORY section');
-    const hasNewsFeed = await page.evaluate(() => document.body.innerText.includes('NEWS FEED'));
-    if (!hasNewsFeed) throw new Error('Sidebar missing NEWS FEED');
+    const hasNewsFeed = await page.evaluate(() => document.body.innerText.includes('LIVE FEED'));
+    if (!hasNewsFeed) throw new Error('Sidebar missing LIVE FEED');
     // Close sidebar
     await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
@@ -291,18 +291,18 @@ async function testBottomTabNaval() {
   await test('Bottom tab: Naval Tracker opens', async () => {
     const clicked = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      const btn = btns.find(b => b.textContent?.includes('Naval Tracker'));
+      const btn = btns.find(b => b.textContent?.includes('Naval Ops'));
       if (btn) { btn.click(); return true; }
       return false;
     });
-    if (!clicked) throw new Error('Naval Tracker tab button not found');
+    if (!clicked) throw new Error('Naval Ops tab button not found');
     await new Promise(r => setTimeout(r, 1000));
-    const hasContent = await page.evaluate(() => document.body.innerText.includes('NAVAL DEPLOYMENT'));
+    const hasContent = await page.evaluate(() => document.body.innerText.includes('NAVAL DEPLOYMENTS'));
     if (!hasContent) throw new Error('Naval panel content not showing');
     // Close
     await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      btns.find(b => b.textContent?.includes('Naval Tracker'))?.click();
+      btns.find(b => b.textContent?.includes('Naval Ops'))?.click();
     });
     await new Promise(r => setTimeout(r, 300));
   });
@@ -312,18 +312,18 @@ async function testBottomTabCrossRef() {
   await test('Bottom tab: Cross-Reference opens', async () => {
     const clicked = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      const btn = btns.find(b => b.textContent?.includes('Cross-Reference'));
+      const btn = btns.find(b => b.textContent?.includes('Cross-Ref'));
       if (btn) { btn.click(); return true; }
       return false;
     });
-    if (!clicked) throw new Error('Cross-Reference tab button not found');
+    if (!clicked) throw new Error('Cross-Ref tab button not found');
     await new Promise(r => setTimeout(r, 1000));
-    const hasContent = await page.evaluate(() => document.body.innerText.includes('NEWS CROSS-REFERENCE'));
+    const hasContent = await page.evaluate(() => document.body.innerText.includes('INTEL CROSS-REFERENCE'));
     if (!hasContent) throw new Error('Cross-ref panel content not showing');
     // Close
     await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      btns.find(b => b.textContent?.includes('Cross-Reference'))?.click();
+      btns.find(b => b.textContent?.includes('Cross-Ref'))?.click();
     });
     await new Promise(r => setTimeout(r, 300));
   });
@@ -339,8 +339,8 @@ async function testBottomTabWorldData() {
     });
     if (!clicked) throw new Error('World Data tab button not found');
     await new Promise(r => setTimeout(r, 1500));
-    const hasContent = await page.evaluate(() => document.body.innerText.includes('WORLD DATA'));
-    if (!hasContent) throw new Error('World data panel content not showing');
+    const hasContent = await page.evaluate(() => document.body.innerText.includes('GLOBAL STATISTICS'));
+    if (!hasContent) throw new Error('Global statistics panel content not showing');
     // Close
     await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
@@ -369,10 +369,10 @@ async function testBackButton() {
   await test('Back button links to dashboard', async () => {
     const href = await page.evaluate(() => {
       const links = Array.from(document.querySelectorAll('a'));
-      const back = links.find(a => a.textContent?.includes('BACK'));
+      const back = links.find(a => a.textContent?.includes('EXIT'));
       return back?.getAttribute('href');
     });
-    if (href !== '/dashboard') throw new Error(`Back button href is ${href}, expected /dashboard`);
+    if (href !== '/dashboard') throw new Error(`Exit button href is ${href}, expected /dashboard`);
   });
 }
 
