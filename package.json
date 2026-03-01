@@ -133,7 +133,7 @@
     "framer-motion": "10.18.0",
     "gray-matter": "4.0.3",
     "imapflow": "^1.2.10",
-    "input-otp": "1.2.4",
+    "input-otp": "1.4.2",
     "jotai": "2.6.0",
     "jsonwebtoken": "9.0.2",
     "lodash": "4.17.21",
