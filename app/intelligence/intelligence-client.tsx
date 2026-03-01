@@ -204,13 +204,16 @@ export default function IntelligenceClient() {
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       mapRef.current = map;
       setMapLoaded(true);
+      // Force Leaflet to recalculate container size after layout settles
+      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 500);
     };
     if (!(window as any).L) {
       const link = document.createElement('link'); link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link);
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => setTimeout(initMap, 100); document.head.appendChild(script);
+      script.onload = () => setTimeout(initMap, 200); document.head.appendChild(script);
     } else { initMap(); }
     return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
   }, []);
