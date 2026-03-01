@@ -250,7 +250,9 @@ export default function IntelligenceClient() {
     const L = (window as any).L; if (!L) return;
     const style = MAP_STYLES.find(s => s.id === mapStyle) || MAP_STYLES[0];
     mapRef.current.removeLayer(tileLayerRef.current);
-    tileLayerRef.current = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(mapRef.current);
+    const opts: any = { maxZoom: 19 };
+    if (style.sub) opts.subdomains = style.sub;
+    tileLayerRef.current = L.tileLayer(style.url, opts).addTo(mapRef.current);
   }, [mapStyle]);
 
   // ─── Weather overlay ──────────────────────────────────────────────────

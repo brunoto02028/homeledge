@@ -250,21 +250,183 @@ const CONTINENT_MAP: Record<string, string> = {
   uy: 'Americas',
 };
 
+// ─── GDELT country name → code mapping ──────────────────────────────────────
+const GDELT_COUNTRY: Record<string, string> = {
+  'united states': 'us', 'united kingdom': 'gb', 'canada': 'ca', 'australia': 'au',
+  'germany': 'de', 'france': 'fr', 'italy': 'it', 'spain': 'es', 'portugal': 'pt',
+  'netherlands': 'nl', 'belgium': 'be', 'switzerland': 'ch', 'austria': 'at',
+  'sweden': 'se', 'norway': 'no', 'denmark': 'dk', 'finland': 'fi',
+  'poland': 'pl', 'czech republic': 'cz', 'romania': 'ro', 'greece': 'gr',
+  'hungary': 'hu', 'bulgaria': 'bg', 'ukraine': 'ua', 'russia': 'ru', 'turkey': 'tr',
+  'ireland': 'ie', 'india': 'in', 'china': 'cn', 'japan': 'jp', 'south korea': 'kr',
+  'taiwan': 'tw', 'hong kong': 'hk', 'singapore': 'sg', 'malaysia': 'my',
+  'thailand': 'th', 'indonesia': 'id', 'philippines': 'ph', 'vietnam': 'vn',
+  'pakistan': 'pk', 'bangladesh': 'bd', 'sri lanka': 'lk', 'nepal': 'np',
+  'israel': 'il', 'iran': 'ir', 'iraq': 'iq', 'saudi arabia': 'sa',
+  'united arab emirates': 'ae', 'qatar': 'qa', 'kuwait': 'kw', 'egypt': 'eg',
+  'syria': 'sy', 'lebanon': 'lb', 'jordan': 'jo', 'yemen': 'ye',
+  'brazil': 'br', 'argentina': 'ar', 'mexico': 'mx', 'colombia': 'co',
+  'chile': 'cl', 'peru': 'pe', 'venezuela': 've', 'cuba': 'cu', 'ecuador': 'ec',
+  'south africa': 'za', 'nigeria': 'ng', 'kenya': 'ke', 'ethiopia': 'et',
+  'ghana': 'gh', 'tanzania': 'tz', 'morocco': 'ma', 'algeria': 'dz',
+  'libya': 'ly', 'sudan': 'sd', 'south sudan': 'ss', 'somalia': 'so',
+  'new zealand': 'nz', 'afghanistan': 'af', 'myanmar': 'mm', 'cambodia': 'kh',
+  'kazakhstan': 'kz', 'uzbekistan': 'uz', 'palestine': 'ps',
+};
+
+function gdeltCountryToCode(name: string): string | null {
+  if (!name) return null;
+  const lower = name.toLowerCase().trim();
+  return GDELT_COUNTRY[lower] || null;
+}
+
+// ─── Source fetchers ─────────────────────────────────────────────────────────
+
+async function fetchGDELT(): Promise<any[]> {
+  const queries = [
+    { q: 'sourcelang:english', max: 75, label: 'general' },
+    { q: '(war OR military OR missile OR airstrike) sourcelang:english', max: 50, label: 'general' },
+    { q: '(economy OR trade OR "central bank" OR inflation) sourcelang:english', max: 30, label: 'business' },
+    { q: '(earthquake OR tsunami OR hurricane OR disaster) sourcelang:english', max: 20, label: 'science' },
+  ];
+  const results: any[] = [];
+  await Promise.all(queries.map(async ({ q, max, label }) => {
+    try {
+      const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=${max}&format=json&sort=DateDesc&timespan=24h`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.articles) return;
+      for (const a of data.articles) {
+        const cc = gdeltCountryToCode(a.sourcecountry || '');
+        results.push({
+          title: a.title, description: null, url: a.url,
+          urlToImage: a.socialimage || null,
+          publishedAt: a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/, '$1-$2-$3T$4:$5:$6Z')).toISOString() : new Date().toISOString(),
+          source: { id: '', name: a.domain || 'GDELT', country: cc || '' },
+          newsCategory: label, _src: 'gdelt',
+        });
+      }
+    } catch (e: any) { console.error('[GDELT]', e.message); }
+  }));
+  return results;
+}
+
+async function fetchCurrentsAPI(): Promise<any[]> {
+  const apiKey = process.env.CURRENTS_API_KEY;
+  if (!apiKey) return [];
+  const results: any[] = [];
+  const endpoints = [
+    `https://api.currentsapi.services/v1/latest-news?apiKey=${apiKey}&language=en`,
+    `https://api.currentsapi.services/v1/search?apiKey=${apiKey}&language=en&keywords=war+military+conflict&type=1`,
+    `https://api.currentsapi.services/v1/search?apiKey=${apiKey}&language=en&keywords=economy+trade+sanctions&type=1`,
+  ];
+  await Promise.all(endpoints.map(async (url) => {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.news) return;
+      for (const a of data.news) {
+        const cat = Array.isArray(a.category) ? a.category[0] : (a.category || 'general');
+        results.push({
+          title: a.title, description: a.description, url: a.url,
+          urlToImage: a.image && a.image !== 'None' ? a.image : null,
+          publishedAt: a.published ? new Date(a.published).toISOString() : new Date().toISOString(),
+          source: { id: '', name: a.author || 'Currents', country: '' },
+          newsCategory: cat === 'general' ? 'general' : cat === 'business' ? 'business' : cat === 'technology' ? 'technology' : cat === 'science' ? 'science' : 'general',
+          _src: 'currents',
+        });
+      }
+    } catch (e: any) { console.error('[Currents]', e.message); }
+  }));
+  return results;
+}
+
+async function fetchNewsAPI(apiKey: string, category: string, query: string): Promise<any[]> {
+  const results: any[] = [];
+
+  if (query) {
+    try {
+      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=50&language=en&apiKey=${apiKey}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const data = await res.json();
+      if (data.articles) results.push(...data.articles.map((a: any) => ({ ...a, newsCategory: 'general', _src: 'newsapi' })));
+    } catch (e: any) { console.error('[NewsAPI search]', e.message); }
+    return results;
+  }
+
+  if (category === 'prophecy') {
+    const qs = ['war OR conflict', 'earthquake OR disaster', 'Israel OR Jerusalem', 'famine OR economic collapse'];
+    await Promise.all(qs.map(async (q) => {
+      try {
+        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=12&language=en&apiKey=${apiKey}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        if (data.articles) results.push(...data.articles.map((a: any) => ({ ...a, newsCategory: 'prophecy', _src: 'newsapi' })));
+      } catch {}
+    }));
+    return results;
+  }
+
+  if (category) {
+    try {
+      const url = `https://newsapi.org/v2/top-headlines?category=${category}&pageSize=30&language=en&apiKey=${apiKey}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const data = await res.json();
+      if (data.articles) results.push(...data.articles.map((a: any) => ({ ...a, newsCategory: category, _src: 'newsapi' })));
+    } catch {}
+    return results;
+  }
+
+  // Global dashboard — optimized: 8 country fetches + 3 consolidated searches = 11 requests
+  const countryFetches = [
+    { country: 'us', size: 5 }, { country: 'gb', size: 5 },
+    { country: 'in', size: 4 }, { country: 'br', size: 4 },
+    { country: 'de', size: 3 }, { country: 'fr', size: 3 },
+    { country: 'au', size: 3 }, { country: 'il', size: 3 },
+  ];
+  const warSearches = [
+    { q: 'war OR military OR airstrike OR missile OR conflict OR sanctions', size: 15 },
+    { q: 'Iran OR Ukraine OR Gaza OR Taiwan OR "South China Sea" OR NATO', size: 12 },
+    { q: 'oil OR OPEC OR inflation OR recession OR "central bank" OR BRICS', size: 10 },
+  ];
+
+  await Promise.all([
+    ...countryFetches.map(async ({ country, size }) => {
+      try {
+        const url = `https://newsapi.org/v2/top-headlines?country=${country}&pageSize=${size}&apiKey=${apiKey}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        if (data.articles) results.push(...data.articles.map((a: any) => ({
+          ...a, newsCategory: 'general', source: { ...a.source, country }, _src: 'newsapi',
+        })));
+      } catch {}
+    }),
+    ...warSearches.map(async ({ q, size }) => {
+      try {
+        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=${size}&language=en&apiKey=${apiKey}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        if (data.articles) results.push(...data.articles.map((a: any) => ({ ...a, newsCategory: 'general', _src: 'newsapi' })));
+      } catch {}
+    }),
+  ]);
+  return results;
+}
+
 // ─── API Handler ────────────────────────────────────────────────────────────
 const CACHE: Record<string, { data: any; ts: number }> = {};
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes — client polls every 60s
 
 export async function GET(req: NextRequest) {
-  const apiKey = process.env.NEWSAPI_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: 'NEWSAPI_KEY not configured' }, { status: 500 });
-  }
+  const newsApiKey = process.env.NEWSAPI_KEY;
 
   const { searchParams } = new URL(req.url);
   const category = searchParams.get('category') || '';
   const query = searchParams.get('q') || '';
 
-  const cacheKey = `${category}:${query}`;
+  const cacheKey = `v2:${category}:${query}`;
 
   // Return cached if fresh
   if (CACHE[cacheKey] && Date.now() - CACHE[cacheKey].ts < CACHE_TTL) {
@@ -272,142 +434,24 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const articles: any[] = [];
+    // Fetch from all 3 sources in parallel
+    const [gdeltArticles, currentsArticles, newsApiArticles] = await Promise.all([
+      category || query ? Promise.resolve([]) : fetchGDELT(),
+      category || query ? Promise.resolve([]) : fetchCurrentsAPI(),
+      newsApiKey ? fetchNewsAPI(newsApiKey, category, query) : Promise.resolve([]),
+    ]);
 
-    if (query) {
-      // Search mode
-      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=50&language=en&apiKey=${apiKey}`;
-      const res = await fetch(url, { next: { revalidate: 600 } });
-      const data = await res.json();
-      if (data.articles) articles.push(...data.articles);
-    } else if (category === 'prophecy') {
-      // Biblical prophecy mode: search for war, conflict, end-times related news
-      const prophecyQueries = [
-        'war OR conflict OR military',
-        'earthquake OR tsunami OR volcano OR disaster',
-        'Israel OR Jerusalem OR Middle East peace',
-        'famine OR food crisis OR economic collapse',
-        'digital currency OR CBDC OR surveillance',
-        'persecution OR religious freedom',
-      ];
-      const promises = prophecyQueries.map(async (q) => {
-        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=15&language=en&apiKey=${apiKey}`;
-        const res = await fetch(url, { next: { revalidate: 600 } });
-        const data = await res.json();
-        return (data.articles || []).map((a: any) => ({ ...a, newsCategory: 'prophecy' }));
-      });
-      const results = await Promise.all(promises);
-      results.forEach(r => articles.push(...r));
-    } else if (category) {
-      // Single category
-      const url = `https://newsapi.org/v2/top-headlines?category=${category}&pageSize=30&language=en&apiKey=${apiKey}`;
-      const res = await fetch(url, { next: { revalidate: 600 } });
-      const data = await res.json();
-      if (data.articles) articles.push(...data.articles);
-    } else {
-      // GLOBAL DASHBOARD: fetch from multiple countries + war/geopolitical searches
-      const countryFetches = [
-        // Major powers
-        { country: 'us', size: 10, cat: 'general' },
-        { country: 'gb', size: 8, cat: 'general' },
-        { country: 'ru', size: 5, cat: 'general' },
-        { country: 'cn', size: 5, cat: 'general' },
-        // Europe
-        { country: 'de', size: 4, cat: 'general' },
-        { country: 'fr', size: 4, cat: 'general' },
-        { country: 'it', size: 3, cat: 'general' },
-        { country: 'es', size: 3, cat: 'general' },
-        { country: 'pt', size: 3, cat: 'general' },
-        { country: 'nl', size: 2, cat: 'general' },
-        { country: 'pl', size: 2, cat: 'general' },
-        { country: 'se', size: 2, cat: 'general' },
-        { country: 'no', size: 2, cat: 'general' },
-        { country: 'ua', size: 3, cat: 'general' },
-        { country: 'ro', size: 2, cat: 'general' },
-        { country: 'gr', size: 2, cat: 'general' },
-        { country: 'at', size: 2, cat: 'general' },
-        { country: 'ch', size: 2, cat: 'general' },
-        { country: 'be', size: 2, cat: 'general' },
-        { country: 'ie', size: 2, cat: 'general' },
-        { country: 'hu', size: 2, cat: 'general' },
-        { country: 'cz', size: 2, cat: 'general' },
-        // South America
-        { country: 'br', size: 5, cat: 'general' },
-        { country: 'ar', size: 3, cat: 'general' },
-        { country: 'co', size: 3, cat: 'general' },
-        { country: 've', size: 2, cat: 'general' },
-        // Central America & Caribbean
-        { country: 'mx', size: 4, cat: 'general' },
-        { country: 'cu', size: 2, cat: 'general' },
-        // Middle East
-        { country: 'il', size: 4, cat: 'general' },
-        { country: 'ae', size: 3, cat: 'general' },
-        { country: 'sa', size: 3, cat: 'general' },
-        { country: 'eg', size: 3, cat: 'general' },
-        { country: 'tr', size: 3, cat: 'general' },
-        // Asia-Pacific
-        { country: 'in', size: 5, cat: 'general' },
-        { country: 'jp', size: 4, cat: 'general' },
-        { country: 'kr', size: 3, cat: 'general' },
-        { country: 'au', size: 3, cat: 'general' },
-        { country: 'nz', size: 2, cat: 'general' },
-        { country: 'ph', size: 2, cat: 'general' },
-        { country: 'my', size: 2, cat: 'general' },
-        { country: 'sg', size: 2, cat: 'general' },
-        { country: 'th', size: 2, cat: 'general' },
-        { country: 'id', size: 2, cat: 'general' },
-        { country: 'tw', size: 2, cat: 'general' },
-        { country: 'hk', size: 2, cat: 'general' },
-        // Africa
-        { country: 'za', size: 3, cat: 'general' },
-        { country: 'ng', size: 3, cat: 'general' },
-        { country: 'ke', size: 2, cat: 'general' },
-        { country: 'ma', size: 2, cat: 'general' },
-        { country: 'et', size: 2, cat: 'general' },
-      ];
+    const allArticles = [...newsApiArticles, ...currentsArticles, ...gdeltArticles];
 
-      const warSearches = [
-        { q: 'war OR military OR troops OR airstrike OR missile', size: 15, label: 'general' },
-        { q: 'aircraft carrier OR navy OR warship OR submarine OR destroyer', size: 10, label: 'general' },
-        { q: 'conflict OR sanctions OR ceasefire OR invasion OR bombing', size: 10, label: 'general' },
-        { q: 'Iran OR "US military" OR "Iran attack" OR "Middle East tensions" OR Hezbollah', size: 10, label: 'general' },
-        { q: 'Ukraine Russia OR Gaza OR "Red Sea" OR "South China Sea" OR Taiwan', size: 10, label: 'general' },
-        { q: 'nuclear OR "ballistic missile" OR ICBM OR "weapons of mass destruction"', size: 8, label: 'general' },
-        { q: 'NATO OR "military alliance" OR "defense pact" OR BRICS', size: 8, label: 'general' },
-        { q: 'coup OR revolution OR protest OR uprising OR civil war', size: 8, label: 'general' },
-        { q: 'oil price OR OPEC OR "energy crisis" OR "gas pipeline" OR sanctions', size: 8, label: 'business' },
-        { q: 'cyber attack OR hacking OR espionage OR intelligence', size: 6, label: 'technology' },
-        { q: '"central bank" OR "interest rate" OR inflation OR recession OR "economic crisis"', size: 8, label: 'business' },
-      ];
+    console.log(`[News] Sources: NewsAPI=${newsApiArticles.length}, Currents=${currentsArticles.length}, GDELT=${gdeltArticles.length}, Total raw=${allArticles.length}`);
 
-      const promises = [
-        ...countryFetches.map(async ({ country, size, cat }) => {
-          const url = `https://newsapi.org/v2/top-headlines?country=${country}&pageSize=${size}&apiKey=${apiKey}`;
-          const res = await fetch(url, { next: { revalidate: 180 } });
-          const data = await res.json();
-          return (data.articles || []).map((a: any) => ({
-            ...a,
-            newsCategory: cat,
-            source: { ...a.source, country },
-          }));
-        }),
-        ...warSearches.map(async ({ q, size, label }) => {
-          const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=${size}&language=en&apiKey=${apiKey}`;
-          const res = await fetch(url, { next: { revalidate: 180 } });
-          const data = await res.json();
-          return (data.articles || []).map((a: any) => ({ ...a, newsCategory: label }));
-        }),
-      ];
-
-      const results = await Promise.all(promises);
-      results.forEach(r => articles.push(...r));
-    }
-
-    // Deduplicate by title
+    // Deduplicate by normalized title
     const seen = new Set<string>();
-    const unique = articles.filter(a => {
-      if (!a.title || a.title === '[Removed]' || seen.has(a.title)) return false;
-      seen.add(a.title);
+    const unique = allArticles.filter(a => {
+      if (!a.title || a.title === '[Removed]') return false;
+      const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
 
@@ -416,20 +460,18 @@ export async function GET(req: NextRequest) {
       const sourceId = article.source?.id || '';
       const country = article.source?.country || '';
       const textCountry = extractCountryFromText(article.title || '', article.description || '');
-      const countryCode = SOURCE_COUNTRY[sourceId] || country?.toLowerCase() || textCountry || 'us';
+      const countryCode = SOURCE_COUNTRY[sourceId] || (country ? country.toLowerCase() : '') || textCountry || '';
       const coords = getCoords(sourceId, country, article.title, article.description);
       const sentiment = analyzeSentiment(article.title || '', article.description || '');
       const ukImpact = isUkImpact(article.title || '', article.description || '');
-      const continent = CONTINENT_MAP[countryCode] || 'Europe';
+      const continent = CONTINENT_MAP[countryCode] || (countryCode ? 'Europe' : '');
 
-      // Add small random offset to prevent exact overlap
       const jitter = () => (Math.random() - 0.5) * 4;
-
       const prophecyRelated = isProphecyRelated(article.title || '', article.description || '');
       const prophecyRef = getProphecyRef(article.title || '', article.description || '');
 
       return {
-        id: `news-${i}-${Date.now()}`,
+        id: `${article._src || 'news'}-${i}-${Date.now()}`,
         title: article.title,
         description: article.description,
         url: article.url,
@@ -438,8 +480,8 @@ export async function GET(req: NextRequest) {
         sourceId,
         publishedAt: article.publishedAt,
         category: article.newsCategory || category || 'general',
-        country: countryCode,
-        continent,
+        country: countryCode || 'us',
+        continent: continent || 'Americas',
         coordinates: coords ? [coords[0] + jitter(), coords[1] + jitter()] : null,
         sentiment,
         ukImpact,
@@ -448,15 +490,21 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // Sort by publishedAt descending (newest first)
+    enriched.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
     const result = {
       articles: enriched,
       total: enriched.length,
+      sources: {
+        newsapi: newsApiArticles.length,
+        currents: currentsArticles.length,
+        gdelt: gdeltArticles.length,
+      },
       fetchedAt: new Date().toISOString(),
     };
 
-    // Cache results
     CACHE[cacheKey] = { data: result, ts: Date.now() };
-
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[News API] Error:', error.message);
