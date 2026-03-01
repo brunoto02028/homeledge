@@ -127,7 +127,7 @@ export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
   ],
   pro: [
     'dashboard', 'statements', 'categories', 'invoices', 'bills',
-    'documents', 'files', 'actions', 'life_events', 'vault', 'settings',
+    'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
     'entities', 'household', 'reports', 'projections', 'properties',
     'product_calculator', 'tax_timeline', 'email', 'transfers',
     'providers', 'services',
