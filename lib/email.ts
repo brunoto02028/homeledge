@@ -35,8 +35,8 @@ function baseTemplate(content: string, preheader: string = '') {
             <td style="background:linear-gradient(135deg,#1e293b,#334155);padding:24px 32px;">
               <table cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background:linear-gradient(135deg,#f59e0b,#d97706);width:36px;height:36px;border-radius:8px;text-align:center;vertical-align:middle;">
-                    <span style="color:#1e293b;font-size:20px;font-weight:bold;">£</span>
+                  <td style="vertical-align:middle;">
+                    <img src="${BASE_URL}/site-logo.png" alt="HomeLedger" width="36" height="36" style="display:block;border-radius:8px;width:36px;height:36px;" />
                   </td>
                   <td style="padding-left:12px;">
                     <span style="color:#ffffff;font-size:20px;font-weight:bold;">HomeLedger</span>
