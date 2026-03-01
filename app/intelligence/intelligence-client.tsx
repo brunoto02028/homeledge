@@ -589,7 +589,7 @@ export default function IntelligenceClient() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#050510]" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+    <div className="relative w-full h-full overflow-hidden bg-[#050510]">
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
       {/* ═══ HUD CORNER BRACKETS ═══ */}
