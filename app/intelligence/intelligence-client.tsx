@@ -6,9 +6,9 @@ import {
   Search, Filter, Globe, Zap, TrendingUp, TrendingDown, Minus,
   X, ExternalLink, Clock, AlertTriangle, Shield, RefreshCw,
   ChevronDown, Newspaper, Activity, Eye, Volume2, VolumeX,
-  Plane, BarChart3, CloudRain,
+  Plane, BarChart3, CloudRain, Menu,
   Anchor, Ship, DollarSign, ChevronRight, ChevronLeft,
-  MapPin, BookOpen, Calendar,
+  MapPin, BookOpen, Calendar, Layers, Radio,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -40,17 +40,25 @@ const CATEGORIES = [
 
 const CONTINENTS = ['All Regions', 'Europe', 'Americas', 'Asia', 'Middle East', 'Africa', 'Oceania'];
 
-const SENTIMENT_COLORS: Record<string, { fill: string; glow: string; label: string; ring: string }> = {
-  negative: { fill: '#ff2d55', glow: 'rgba(255,45,85,0.5)', label: 'Crisis', ring: 'rgba(255,45,85,0.15)' },
-  positive: { fill: '#30d158', glow: 'rgba(48,209,88,0.5)', label: 'Opportunity', ring: 'rgba(48,209,88,0.15)' },
-  neutral: { fill: '#0af', glow: 'rgba(0,170,255,0.4)', label: 'Neutral', ring: 'rgba(0,170,255,0.1)' },
+const SC: Record<string, { fill: string; glow: string; label: string }> = {
+  negative: { fill: '#ff2d55', glow: 'rgba(255,45,85,0.6)', label: 'CRISIS' },
+  positive: { fill: '#30d158', glow: 'rgba(48,209,88,0.6)', label: 'POSITIVE' },
+  neutral: { fill: '#0af', glow: 'rgba(0,170,255,0.5)', label: 'NEUTRAL' },
 };
 
 const MAP_STYLES = [
-  { id: 'dark', label: 'Dark', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
-  { id: 'voyager', label: 'Color', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
-  { id: 'satellite', label: 'Sat', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' },
-  { id: 'topo', label: 'Terrain', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
+  { id: 'voyager', label: 'COLOR', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', sub: 'abcd' },
+  { id: 'dark', label: 'DARK', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', sub: 'abcd' },
+  { id: 'satellite', label: 'SAT', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', sub: undefined },
+  { id: 'topo', label: 'TERRAIN', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', sub: 'abc' },
+];
+
+const OWM_KEY = '9de243494c0b295cca9337e1e96b00e2';
+const WEATHER_LAYERS = [
+  { id: 'clouds', label: 'Clouds', url: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_KEY}` },
+  { id: 'precip', label: 'Rain', url: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}` },
+  { id: 'temp', label: 'Temp', url: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OWM_KEY}` },
+  { id: 'wind', label: 'Wind', url: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OWM_KEY}` },
 ];
 
 type BottomTab = 'none' | 'calendar' | 'naval' | 'cross-ref' | 'stats';
@@ -67,7 +75,7 @@ export default function IntelligenceClient() {
   const conflictMarkersRef = useRef<any[]>([]);
   const weatherLayerRef = useRef<any>(null);
 
-  // Data state
+  // Data
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -79,916 +87,659 @@ export default function IntelligenceClient() {
   const [selectedEarthquake, setSelectedEarthquake] = useState<any>(null);
   const [selectedAircraftDetail, setSelectedAircraftDetail] = useState<any>(null);
   const [selectedVessel, setSelectedVessel] = useState<NavalVessel | null>(null);
+  const [aircraftCount, setAircraftCount] = useState(0);
+  const [quakeCount, setQuakeCount] = useState(0);
+  const [conflictCount, setConflictCount] = useState(0);
 
-  // UI state
+  // UI
   const [searchTerm, setSearchTerm] = useState('');
   const [sentimentFilter, setSentimentFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [continentFilter, setContinentFilter] = useState('All Regions');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapStyle, setMapStyle] = useState('dark');
+  const [mapStyle, setMapStyle] = useState('voyager');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [liveTime, setLiveTime] = useState('');
 
-  // Layer toggles
+  // Layers
   const [showAircraft, setShowAircraft] = useState(true);
   const [showQuakes, setShowQuakes] = useState(true);
   const [showNaval, setShowNaval] = useState(true);
   const [showConflicts, setShowConflicts] = useState(true);
-  const [showWeather, setShowWeather] = useState(false);
+  const [weatherLayer, setWeatherLayer] = useState('');
   const [scanLineOn, setScanLineOn] = useState(true);
   const [sfxOn, setSfxOn] = useState(false);
-
-  // Bottom panel
   const [bottomTab, setBottomTab] = useState<BottomTab>('none');
 
-  // ─── Filter articles ──────────────────────────────────────────────────
+  // ─── Live clock ───────────────────────────────────────────────────────
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setLiveTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' }));
+    };
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  // ─── Filters ──────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    let result = articles;
+    let r = articles;
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
-      result = result.filter(a =>
-        a.title?.toLowerCase().includes(q) ||
-        a.description?.toLowerCase().includes(q) ||
-        a.source?.toLowerCase().includes(q) ||
-        a.country?.toLowerCase().includes(q)
-      );
+      r = r.filter(a => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q) || a.source?.toLowerCase().includes(q) || a.country?.toLowerCase().includes(q));
     }
-    if (sentimentFilter === 'negative' || sentimentFilter === 'positive') {
-      result = result.filter(a => a.sentiment === sentimentFilter);
-    } else if (sentimentFilter === 'uk') {
-      result = result.filter(a => a.ukImpact);
-    } else if (sentimentFilter === 'prophecy') {
-      result = result.filter(a => a.prophecyRelated);
-    }
-    if (categoryFilter) result = result.filter(a => a.category === categoryFilter);
-    if (continentFilter !== 'All Regions') result = result.filter(a => a.continent === continentFilter);
-    return result;
+    if (sentimentFilter === 'negative' || sentimentFilter === 'positive') r = r.filter(a => a.sentiment === sentimentFilter);
+    else if (sentimentFilter === 'uk') r = r.filter(a => a.ukImpact);
+    else if (sentimentFilter === 'prophecy') r = r.filter(a => a.prophecyRelated);
+    if (categoryFilter) r = r.filter(a => a.category === categoryFilter);
+    if (continentFilter !== 'All Regions') r = r.filter(a => a.continent === continentFilter);
+    return r;
   }, [articles, searchTerm, sentimentFilter, categoryFilter, continentFilter]);
 
-  // ─── Stats ────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    total: filtered.length,
-    crisis: filtered.filter(a => a.sentiment === 'negative').length,
+    total: filtered.length, crisis: filtered.filter(a => a.sentiment === 'negative').length,
     opportunity: filtered.filter(a => a.sentiment === 'positive').length,
-    ukImpact: filtered.filter(a => a.ukImpact).length,
-    prophecy: filtered.filter(a => a.prophecyRelated).length,
+    ukImpact: filtered.filter(a => a.ukImpact).length, prophecy: filtered.filter(a => a.prophecyRelated).length,
   }), [filtered]);
 
-  const topCountries = useMemo(() => {
-    const counts: Record<string, number> = {};
-    filtered.forEach(a => {
-      const c = a.country?.toUpperCase() || '??';
-      counts[c] = (counts[c] || 0) + 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  }, [filtered]);
+  const threatLevel = useMemo(() => {
+    if (articles.length === 0) return 0;
+    const crisisRatio = articles.filter(a => a.sentiment === 'negative').length / articles.length;
+    return Math.min(100, Math.round(crisisRatio * 100 + conflictCount * 3 + quakeCount * 0.5));
+  }, [articles, conflictCount, quakeCount]);
 
-  // ─── Sound effects ────────────────────────────────────────────────────
+  const threatColor = threatLevel > 70 ? '#ff2d55' : threatLevel > 40 ? '#f59e0b' : '#30d158';
+
+  // ─── Sound ────────────────────────────────────────────────────────────
   const playBlip = useCallback((freq: number) => {
     if (!sfxOn) return;
     try {
-      const ctx = new AudioContext();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = freq;
-      o.type = 'sine';
-      g.gain.value = 0.08;
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-      o.start(); o.stop(ctx.currentTime + 0.15);
+      const ctx = new AudioContext(); const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.frequency.value = freq; o.type = 'sine';
+      g.gain.value = 0.06; g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      o.start(); o.stop(ctx.currentTime + 0.12);
     } catch {}
   }, [sfxOn]);
 
-  // ─── Fetch news ──────────────────────────────────────────────────────
+  // ─── Fetch news ───────────────────────────────────────────────────────
   const fetchNews = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/news');
-      if (res.ok) {
-        const data = await res.json();
-        setArticles(data.articles || []);
-        playBlip(660);
-      }
+      if (res.ok) { const d = await res.json(); setArticles(d.articles || []); playBlip(660); }
     } catch (e) { console.error('[News]', e); }
     setLoading(false);
   }, [playBlip]);
 
-  // ─── Initialize Leaflet Map ──────────────────────────────────────────
+  // ─── Init Leaflet ─────────────────────────────────────────────────────
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return;
-
     const initMap = () => {
       const L = (window as any).L;
       if (!L) { setTimeout(initMap, 200); return; }
-
       const map = L.map(mapContainerRef.current, {
-        center: [20, 0],
-        zoom: 3,
-        minZoom: 2,
-        maxZoom: 18,
-        zoomControl: false,
-        worldCopyJump: true,
-        attributionControl: false,
+        center: [25, 10], zoom: 3, minZoom: 2, maxZoom: 18,
+        zoomControl: false, worldCopyJump: true, attributionControl: false,
       });
-
-      // Default dark tiles
-      const tile = L.tileLayer(MAP_STYLES[0].url, {
-        maxZoom: 19,
-        subdomains: 'abcd',
-      }).addTo(map);
+      const style = MAP_STYLES.find(s => s.id === 'voyager')!;
+      const tile = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(map);
       tileLayerRef.current = tile;
-
-      // Zoom control bottom-right
       L.control.zoom({ position: 'bottomright' }).addTo(map);
-
       mapRef.current = map;
       setMapLoaded(true);
     };
-
-    // Load Leaflet from CDN
     if (!(window as any).L) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-
+      const link = document.createElement('link'); link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link);
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => setTimeout(initMap, 100);
-      document.head.appendChild(script);
-    } else {
-      initMap();
-    }
-
-    return () => {
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-    };
+      script.onload = () => setTimeout(initMap, 100); document.head.appendChild(script);
+    } else { initMap(); }
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
   }, []);
 
-  // ─── Change map style ────────────────────────────────────────────────
+  // ─── Change map style ─────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !tileLayerRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
+    const L = (window as any).L; if (!L) return;
     const style = MAP_STYLES.find(s => s.id === mapStyle) || MAP_STYLES[0];
     mapRef.current.removeLayer(tileLayerRef.current);
-    tileLayerRef.current = L.tileLayer(style.url, {
-      maxZoom: 19,
-      subdomains: style.id === 'satellite' ? undefined : 'abcd',
-    }).addTo(mapRef.current);
+    tileLayerRef.current = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(mapRef.current);
   }, [mapStyle]);
 
-  // ─── Fetch initial data ──────────────────────────────────────────────
-  useEffect(() => { fetchNews(); }, [fetchNews]);
+  // ─── Weather overlay ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const L = (window as any).L; if (!L) return;
+    if (weatherLayerRef.current) { mapRef.current.removeLayer(weatherLayerRef.current); weatherLayerRef.current = null; }
+    if (!weatherLayer) return;
+    const wl = WEATHER_LAYERS.find(w => w.id === weatherLayer);
+    if (wl) { weatherLayerRef.current = L.tileLayer(wl.url, { opacity: 0.6, maxZoom: 19 }).addTo(mapRef.current); }
+  }, [weatherLayer, mapLoaded]);
 
-  // ─── Plot news markers ───────────────────────────────────────────────
+  // ─── Fetch data ───────────────────────────────────────────────────────
+  useEffect(() => { fetchNews(); }, [fetchNews]);
+  useEffect(() => { const i = setInterval(fetchNews, 60000); return () => clearInterval(i); }, [fetchNews]);
+
+  useEffect(() => {
+    (async () => {
+      try { const r = await fetch('/api/intelligence/economic-calendar'); if (r.ok) { const d = await r.json(); setEconomicEvents(d.upcoming || d.events || []); setEconSummary(d.summary || null); } } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => { try { const r = await fetch('/api/intelligence/world-stats'); if (r.ok) setWorldStats(await r.json()); } catch {} })();
+  }, []);
+
+  // ─── Plot news markers ────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
-
-    // Clear old markers
+    const L = (window as any).L; if (!L) return;
     markersRef.current.forEach(m => mapRef.current.removeLayer(m));
     markersRef.current = [];
-
-    const articlesWithCoords = filtered.filter(a => a.coordinates);
-
-    articlesWithCoords.forEach(article => {
+    filtered.filter(a => a.coordinates).forEach(article => {
       if (!article.coordinates) return;
-      const sc = SENTIMENT_COLORS[article.sentiment] || SENTIMENT_COLORS.neutral;
-      const size = article.ukImpact ? 14 : article.prophecyRelated ? 12 : 10;
-
+      const sc = SC[article.sentiment] || SC.neutral;
+      const sz = article.ukImpact ? 16 : article.prophecyRelated ? 14 : 11;
       const icon = L.divIcon({
-        className: 'custom-marker',
-        html: `<div style="
-          width:${size}px; height:${size}px; border-radius:50%;
-          background:${sc.fill}; box-shadow:0 0 ${size}px ${sc.glow}, 0 0 ${size * 2}px ${sc.ring};
-          animation: pulse-marker 2s ease-in-out infinite;
-          cursor:pointer; position:relative;
-        ">
-          ${article.prophecyRelated ? `<div style="position:absolute;top:-4px;right:-4px;width:6px;height:6px;border-radius:50%;background:#fbbf24;box-shadow:0 0 4px #fbbf24;"></div>` : ''}
+        className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+        html: `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${sc.fill};
+          box-shadow:0 0 ${sz}px ${sc.glow},0 0 ${sz * 3}px ${sc.glow};cursor:pointer;
+          animation:cc-pulse 2s ease-in-out infinite;position:relative;">
+          ${article.prophecyRelated ? `<div style="position:absolute;top:-3px;right:-3px;width:5px;height:5px;border-radius:50%;background:#fbbf24;box-shadow:0 0 6px #fbbf24;"></div>` : ''}
         </div>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
       });
-
-      // Leaflet uses [lat, lng] — API gives [lng, lat]
-      const marker = L.marker([article.coordinates[1], article.coordinates[0]], { icon })
-        .addTo(mapRef.current);
-
-      const tooltipHtml = `
-        <div style="font-family:ui-monospace,monospace;font-size:11px;max-width:280px;padding:8px 10px;
-          background:rgba(10,10,20,0.95);border:1px solid ${sc.fill}40;border-radius:8px;
-          backdrop-filter:blur(20px);color:#ededed;">
-          <div style="font-weight:700;margin-bottom:4px;line-height:1.3;">${article.title?.slice(0, 80)}${(article.title?.length || 0) > 80 ? '...' : ''}</div>
-          <div style="display:flex;gap:6px;align-items:center;font-size:9px;color:#888;">
-            <span style="color:${sc.fill};font-weight:700;">${sc.label.toUpperCase()}</span>
-            <span>·</span>
-            <span>${article.source}</span>
-            <span>·</span>
-            <span>${article.country?.toUpperCase()}</span>
-          </div>
-          ${article.prophecyRef ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:4px;font-size:9px;color:#fbbf24;">📖 ${article.prophecyRef.slice(0, 60)}...</div>` : ''}
-        </div>
-      `;
-
-      marker.bindTooltip(tooltipHtml, {
-        direction: 'top', offset: [0, -8], opacity: 1,
-        className: 'intel-tooltip',
-      });
-
+      const marker = L.marker([article.coordinates[1], article.coordinates[0]], { icon }).addTo(mapRef.current);
+      marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:11px;max-width:300px;padding:10px 12px;background:rgba(5,5,15,0.96);border:1px solid ${sc.fill}50;border-radius:8px;color:#ededed;backdrop-filter:blur(20px);">
+        <div style="font-weight:700;margin-bottom:5px;line-height:1.3;border-left:3px solid ${sc.fill};padding-left:8px;">${article.title?.slice(0, 90)}${(article.title?.length || 0) > 90 ? '...' : ''}</div>
+        <div style="display:flex;gap:8px;align-items:center;font-size:9px;color:#888;"><span style="color:${sc.fill};font-weight:700;">${sc.label}</span><span>·</span><span>${article.source}</span><span>·</span><span>${article.country?.toUpperCase()}</span></div>
+        ${article.prophecyRef ? `<div style="margin-top:6px;padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:4px;font-size:9px;color:#fbbf24;">📖 ${article.prophecyRef.slice(0, 70)}</div>` : ''}
+      </div>`, { direction: 'top', offset: [0, -10], opacity: 1, className: 'cc-tooltip' });
       marker.on('click', () => {
-        setSelectedArticle(article);
-        playBlip(article.sentiment === 'negative' ? 440 : article.ukImpact ? 660 : 880);
-        mapRef.current.flyTo([article.coordinates![1], article.coordinates![0]], 5, { duration: 1 });
+        setSelectedArticle(article); playBlip(article.sentiment === 'negative' ? 440 : 880);
+        mapRef.current.flyTo([article.coordinates![1], article.coordinates![0]], 5, { duration: 1.2 });
       });
-
       markersRef.current.push(marker);
     });
   }, [filtered, mapLoaded, playBlip]);
 
-  // ─── Aircraft layer ──────────────────────────────────────────────────
+  // ─── Aircraft layer ───────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
-
+    const L = (window as any).L; if (!L) return;
     aircraftMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     aircraftMarkersRef.current = [];
-
-    if (!showAircraft) return;
-
+    if (!showAircraft) { setAircraftCount(0); return; }
     const fetchAircraft = async () => {
       try {
-        const res = await fetch('/api/intelligence/aircraft');
-        if (!res.ok) return;
+        const res = await fetch('/api/intelligence/aircraft'); if (!res.ok) return;
         const data = await res.json();
-
+        setAircraftCount(data.aircraft?.length || 0);
+        aircraftMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
+        aircraftMarkersRef.current = [];
         (data.aircraft || []).forEach((ac: any) => {
           const isMil = ac.military;
-          const rotation = ac.heading || 0;
-          const color = isMil ? '#ff4444' : '#facc15';
-
+          const color = isMil ? '#ff4444' : '#00e5ff';
+          const sz = isMil ? 18 : 13;
           const icon = L.divIcon({
-            className: 'aircraft-icon',
-            html: `<div style="transform:rotate(${rotation}deg);width:16px;height:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="${color}" stroke="${color}" stroke-width="1">
-                <path d="M12 2L8 10H2L6 14L4 22L12 18L20 22L18 14L22 10H16L12 2Z"/>
+            className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+            html: `<div style="transform:rotate(${ac.heading || 0}deg);width:${sz}px;height:${sz}px;display:flex;align-items:center;justify-content:center;cursor:pointer;filter:drop-shadow(0 0 4px ${color});">
+              <svg width="${sz - 2}" height="${sz - 2}" viewBox="0 0 24 24" fill="${color}" opacity="${isMil ? 1 : 0.8}">
+                <path d="M12 2c-.5 0-1 .2-1.4.6L8 6v2L2 11v2l6 1v3l-2 2v1l3-1 3 1 3-1-3 1v-1l-2-2v-3l6-1v-2l-6-3V6l-2.6-3.4C13 2.2 12.5 2 12 2z"/>
               </svg>
             </div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
           });
-
           const marker = L.marker([ac.lat, ac.lng], { icon }).addTo(mapRef.current);
-
-          marker.bindTooltip(`
-            <div style="font-family:monospace;font-size:10px;padding:6px 8px;background:rgba(10,10,20,0.95);
-              border:1px solid ${isMil ? 'rgba(255,68,68,0.3)' : 'rgba(250,204,21,0.3)'};border-radius:6px;color:#ededed;">
-              <div style="font-weight:700;color:${color};">${ac.callsign || 'N/A'} ${isMil ? '[MIL]' : ''}</div>
-              <div style="color:#888;font-size:9px;">${ac.country} · ${ac.altitude ? ac.altitude + 'm' : '—'} · ${ac.velocity ? ac.velocity + 'km/h' : '—'}</div>
+          const csLabel = ac.callsign || 'N/A';
+          marker.bindTooltip(`<div style="font-family:'Courier New',monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid ${color}40;border-radius:6px;color:#ededed;backdrop-filter:blur(20px);min-width:180px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-weight:700;color:${color};font-size:12px;">✈ ${csLabel}</span>
+              ${isMil ? '<span style="background:rgba(255,68,68,0.2);color:#ff4444;font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid rgba(255,68,68,0.3);">MILITARY</span>' : ''}
             </div>
-          `, { direction: 'top', offset: [0, -6], opacity: 1, className: 'intel-tooltip' });
-
-          marker.on('click', () => setSelectedAircraftDetail(ac));
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:9px;">
+              <span style="color:#666;">ORIGIN</span><span style="color:#ccc;">${ac.country}</span>
+              <span style="color:#666;">ALT</span><span style="color:#ccc;">${ac.altitude ? ac.altitude.toLocaleString() + ' m' : '—'}</span>
+              <span style="color:#666;">SPEED</span><span style="color:#ccc;">${ac.velocity ? ac.velocity + ' km/h' : '—'}</span>
+              <span style="color:#666;">HDG</span><span style="color:#ccc;">${ac.heading ? ac.heading + '°' : '—'}</span>
+              <span style="color:#666;">ZONE</span><span style="color:#ccc;">${ac.zone}</span>
+            </div>
+          </div>`, { direction: 'top', offset: [0, -8], opacity: 1, className: 'cc-tooltip' });
+          marker.on('click', () => { setSelectedAircraftDetail(ac); mapRef.current?.flyTo([ac.lat, ac.lng], 7, { duration: 1 }); });
           aircraftMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Aircraft]', err); }
     };
-
     fetchAircraft();
-    const interval = setInterval(fetchAircraft, 120000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchAircraft, 90000);
+    return () => clearInterval(i);
   }, [showAircraft, mapLoaded]);
 
-  // ─── Earthquake layer ────────────────────────────────────────────────
+  // ─── Earthquake layer ─────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
-
+    const L = (window as any).L; if (!L) return;
     quakeMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     quakeMarkersRef.current = [];
-
-    if (!showQuakes) return;
-
+    if (!showQuakes) { setQuakeCount(0); return; }
     const fetchQuakes = async () => {
       try {
-        const res = await fetch('/api/intelligence/earthquakes');
-        if (!res.ok) return;
+        const res = await fetch('/api/intelligence/earthquakes'); if (!res.ok) return;
         const data = await res.json();
-
+        setQuakeCount(data.earthquakes?.length || 0);
+        quakeMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
+        quakeMarkersRef.current = [];
         (data.earthquakes || []).forEach((eq: any) => {
           const mag = eq.magnitude || 0;
-          const size = Math.max(10, Math.min(40, mag * 6));
-          const color = mag >= 6 ? '#ef4444' : mag >= 5 ? '#f97316' : mag >= 4 ? '#eab308' : '#22c55e';
-
+          const sz = Math.max(12, Math.min(44, mag * 7));
+          const color = mag >= 6 ? '#ff2d55' : mag >= 5 ? '#ff6b35' : mag >= 4 ? '#f59e0b' : '#22c55e';
           const icon = L.divIcon({
-            className: 'quake-icon',
-            html: `<div style="width:${size}px;height:${size}px;border-radius:50%;
-              background:${color}30;border:2px solid ${color};
-              box-shadow:0 0 ${size}px ${color}40;
-              animation:pulse-marker 1.5s ease-in-out infinite;cursor:pointer;
-              display:flex;align-items:center;justify-content:center;">
-              <span style="font-size:${Math.max(8, size / 3)}px;font-weight:700;color:${color};font-family:monospace;">${mag.toFixed(1)}</span>
+            className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+            html: `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:radial-gradient(circle,${color}40 0%,${color}10 60%,transparent 70%);border:2px solid ${color};box-shadow:0 0 ${sz}px ${color}50;animation:cc-pulse 1.5s ease-in-out infinite;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:${Math.max(9, sz / 3.5)}px;font-weight:800;color:${color};font-family:monospace;text-shadow:0 0 6px ${color};">${mag.toFixed(1)}</span>
             </div>`,
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
           });
-
           const marker = L.marker([eq.lat, eq.lng], { icon }).addTo(mapRef.current);
-
-          marker.bindTooltip(`
-            <div style="font-family:monospace;font-size:10px;padding:6px 8px;background:rgba(10,10,20,0.95);
-              border:1px solid ${color}40;border-radius:6px;color:#ededed;">
-              <div style="font-weight:700;color:${color};">M${mag.toFixed(1)} Earthquake</div>
-              <div style="color:#888;font-size:9px;">${eq.place}</div>
-              <div style="color:#666;font-size:8px;">${eq.depth?.toFixed(1)}km deep · ${new Date(eq.time).toLocaleString()}</div>
-              ${eq.tsunami ? '<div style="color:#06b6d4;font-size:9px;margin-top:2px;">🌊 Tsunami warning</div>' : ''}
-            </div>
-          `, { direction: 'top', offset: [0, -size / 2], opacity: 1, className: 'intel-tooltip' });
-
-          marker.on('click', () => {
-            setSelectedEarthquake(eq);
-            mapRef.current.flyTo([eq.lat, eq.lng], 6, { duration: 1 });
-          });
-
+          marker.bindTooltip(`<div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid ${color}40;border-radius:6px;color:#ededed;backdrop-filter:blur(20px);">
+            <div style="font-weight:700;color:${color};font-size:13px;margin-bottom:3px;">⚡ M${mag.toFixed(1)}</div>
+            <div style="color:#ccc;margin-bottom:2px;">${eq.place}</div>
+            <div style="color:#888;font-size:9px;">${eq.depth?.toFixed(1)}km deep · ${new Date(eq.time).toLocaleString()}</div>
+            ${eq.tsunami ? '<div style="color:#06b6d4;font-size:9px;margin-top:3px;font-weight:700;">🌊 TSUNAMI WARNING</div>' : ''}
+          </div>`, { direction: 'top', offset: [0, -sz / 2], opacity: 1, className: 'cc-tooltip' });
+          marker.on('click', () => { setSelectedEarthquake(eq); mapRef.current?.flyTo([eq.lat, eq.lng], 6, { duration: 1 }); });
           quakeMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Quakes]', err); }
     };
-
     fetchQuakes();
-    const interval = setInterval(fetchQuakes, 300000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchQuakes, 300000);
+    return () => clearInterval(i);
   }, [showQuakes, mapLoaded]);
 
-  // ─── Conflict layer ──────────────────────────────────────────────────
+  // ─── Conflict layer ───────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
-
+    const L = (window as any).L; if (!L) return;
     conflictMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     conflictMarkersRef.current = [];
-
-    if (!showConflicts) return;
-
+    if (!showConflicts) { setConflictCount(0); return; }
     const fetchConflicts = async () => {
       try {
-        const res = await fetch('/api/intelligence/conflicts');
-        if (!res.ok) return;
+        const res = await fetch('/api/intelligence/conflicts'); if (!res.ok) return;
         const data = await res.json();
-
+        setConflictCount(data.conflicts?.length || 0);
+        conflictMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
+        conflictMarkersRef.current = [];
         (data.conflicts || []).forEach((c: any) => {
-          const size = Math.min(20, 8 + (c.eventCount || 1) * 2);
+          const sz = Math.min(24, 10 + (c.eventCount || 1) * 2);
           const icon = L.divIcon({
-            className: 'conflict-icon',
-            html: `<div style="width:${size}px;height:${size}px;border-radius:50%;
-              background:rgba(239,68,68,0.25);border:1.5px solid rgba(239,68,68,0.6);
-              box-shadow:0 0 ${size}px rgba(239,68,68,0.3);cursor:pointer;
-              animation:pulse-marker 2s ease-in-out infinite;"></div>`,
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
+            className: '', iconSize: [sz * 2, sz * 2], iconAnchor: [sz, sz],
+            html: `<div style="width:${sz * 2}px;height:${sz * 2}px;display:flex;align-items:center;justify-content:center;position:relative;">
+              <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.5) 0%,rgba(239,68,68,0.1) 60%,transparent 70%);border:2px solid rgba(239,68,68,0.7);box-shadow:0 0 ${sz * 2}px rgba(239,68,68,0.4);animation:cc-pulse 2s ease-in-out infinite;cursor:pointer;"></div>
+              <div style="position:absolute;width:${sz * 1.8}px;height:${sz * 1.8}px;border:1px solid rgba(239,68,68,0.15);border-radius:50%;animation:cc-ring 3s ease-out infinite;"></div>
+            </div>`,
           });
-
           const marker = L.marker([c.lat, c.lng], { icon }).addTo(mapRef.current);
-          marker.bindTooltip(`
-            <div style="font-family:monospace;font-size:10px;padding:6px 8px;background:rgba(10,10,20,0.95);
-              border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#ededed;">
-              <div style="font-weight:700;color:#ef4444;">⚔ ${c.name}</div>
-              <div style="color:#888;font-size:9px;">${c.eventCount} event(s) reported</div>
-            </div>
-          `, { direction: 'top', offset: [0, -6], opacity: 1, className: 'intel-tooltip' });
-
+          marker.bindTooltip(`<div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#ededed;">
+            <div style="font-weight:700;color:#ef4444;font-size:12px;">⚔ CONFLICT ZONE</div>
+            <div style="color:#ccc;">${c.name}</div>
+            <div style="color:#888;font-size:9px;">${c.eventCount} events (48h)</div>
+          </div>`, { direction: 'top', offset: [0, -sz], opacity: 1, className: 'cc-tooltip' });
           conflictMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Conflicts]', err); }
     };
-
     fetchConflicts();
-    const interval = setInterval(fetchConflicts, 900000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchConflicts, 900000);
+    return () => clearInterval(i);
   }, [showConflicts, mapLoaded]);
 
-  // ─── Naval layer ─────────────────────────────────────────────────────
+  // ─── Naval layer ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
-
+    const L = (window as any).L; if (!L) return;
     navalMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
     navalMarkersRef.current = [];
-
     if (!showNaval) return;
-
     const fetchNaval = async () => {
       try {
-        const res = await fetch('/api/intelligence/naval');
-        if (!res.ok) return;
+        const res = await fetch('/api/intelligence/naval'); if (!res.ok) return;
         const data = await res.json();
-        setNavalVessels(data.vessels || []);
-        setNavalSummary(data.summary || null);
-
+        setNavalVessels(data.vessels || []); setNavalSummary(data.summary || null);
+        navalMarkersRef.current.forEach(m => mapRef.current?.removeLayer(m));
+        navalMarkersRef.current = [];
         (data.vessels || []).forEach((v: NavalVessel) => {
-          const isPatrol = v.type === 'patrol_zone';
-          const isCarrier = v.type === 'carrier';
-          const size = isPatrol ? 24 : isCarrier ? 20 : 14;
-          const emoji = isPatrol ? '🔒' : isCarrier ? '⚓' : v.type === 'amphibious' ? '🚢' : '🔱';
-
+          const isP = v.type === 'patrol_zone'; const isC = v.type === 'carrier';
+          const sz = isP ? 22 : isC ? 20 : 14;
           const icon = L.divIcon({
-            className: 'naval-icon',
-            html: `<div style="width:${size}px;height:${size}px;border-radius:${isPatrol ? '4px' : '50%'};
-              background:${isPatrol ? 'rgba(100,116,139,0.2)' : v.color + '25'};
-              border:${isPatrol ? '1.5px dashed' : '2px solid'} ${isPatrol ? 'rgba(100,116,139,0.5)' : v.color};
-              box-shadow:0 0 ${size}px ${v.color}30;cursor:pointer;
-              display:flex;align-items:center;justify-content:center;font-size:${size * 0.5}px;
-              ${isPatrol ? 'animation:pulse-marker 3s ease-in-out infinite;' : ''}">
-              ${emoji}
+            className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+            html: `<div style="width:${sz}px;height:${sz}px;border-radius:${isP ? '4px' : '50%'};
+              background:${isP ? 'rgba(100,116,139,0.15)' : v.color + '20'};
+              border:${isP ? '1.5px dashed rgba(100,116,139,0.5)' : `2px solid ${v.color}`};
+              box-shadow:0 0 ${sz}px ${v.color}30;cursor:pointer;
+              display:flex;align-items:center;justify-content:center;font-size:${sz * 0.45}px;
+              ${isP ? 'animation:cc-pulse 3s ease-in-out infinite;' : ''}">
+              ${isP ? '🔒' : isC ? '⚓' : v.type === 'amphibious' ? '🚢' : '🔱'}
             </div>`,
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
           });
-
           const marker = L.marker([v.lat, v.lng], { icon }).addTo(mapRef.current);
-
-          marker.bindTooltip(`
-            <div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(10,10,20,0.95);
-              border:1px solid ${v.color}40;border-radius:6px;color:#ededed;max-width:260px;">
-              <div style="font-weight:700;color:${v.color};margin-bottom:3px;">${v.name}</div>
-              <div style="color:#888;font-size:9px;">${v.fleet} · ${v.area}</div>
-              <div style="display:flex;gap:6px;margin-top:4px;">
-                <span style="font-size:8px;padding:1px 4px;border-radius:3px;
-                  background:${v.status === 'deployed' || v.status === 'active' ? 'rgba(34,197,94,0.15)' : v.status === 'high-alert' ? 'rgba(239,68,68,0.15)' : 'rgba(100,116,139,0.15)'};
-                  color:${v.status === 'deployed' || v.status === 'active' ? '#22c55e' : v.status === 'high-alert' ? '#ef4444' : '#94a3b8'};
-                  border:1px solid ${v.status === 'deployed' || v.status === 'active' ? 'rgba(34,197,94,0.3)' : v.status === 'high-alert' ? 'rgba(239,68,68,0.3)' : 'rgba(100,116,139,0.3)'};">
-                  ${v.status.toUpperCase()}
-                </span>
-                <span style="font-size:8px;color:#666;">${v.type}</span>
-              </div>
-              <div style="color:#666;font-size:8px;margin-top:3px;">${v.details}</div>
-            </div>
-          `, { direction: 'top', offset: [0, -size / 2], opacity: 1, className: 'intel-tooltip' });
-
-          marker.on('click', () => {
-            setSelectedVessel(v);
-            mapRef.current.flyTo([v.lat, v.lng], 6, { duration: 1 });
-          });
-
+          const stColor = v.status === 'deployed' || v.status === 'active' ? '#22c55e' : v.status === 'high-alert' ? '#ef4444' : '#94a3b8';
+          marker.bindTooltip(`<div style="font-family:monospace;font-size:10px;padding:8px 10px;background:rgba(5,5,15,0.96);border:1px solid ${v.color}40;border-radius:6px;color:#ededed;max-width:260px;">
+            <div style="font-weight:700;color:${v.color};font-size:12px;margin-bottom:3px;">${v.name}</div>
+            <div style="color:#888;font-size:9px;">${v.fleet} · ${v.area}</div>
+            <div style="margin-top:4px;"><span style="font-size:8px;padding:2px 6px;border-radius:3px;background:${stColor}15;color:${stColor};border:1px solid ${stColor}30;">${v.status.toUpperCase()}</span></div>
+          </div>`, { direction: 'top', offset: [0, -sz / 2], opacity: 1, className: 'cc-tooltip' });
+          marker.on('click', () => { setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); });
           navalMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Naval]', err); }
     };
-
     fetchNaval();
-    const interval = setInterval(fetchNaval, 300000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchNaval, 300000);
+    return () => clearInterval(i);
   }, [showNaval, mapLoaded]);
 
-  // ─── Weather overlay ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
+  const timeAgo = (d: string) => { const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`; };
 
-    if (weatherLayerRef.current) {
-      mapRef.current.removeLayer(weatherLayerRef.current);
-      weatherLayerRef.current = null;
-    }
-
-    if (!showWeather) return;
-
-    const owmKey = ''; // OpenWeatherMap key optional
-    if (!owmKey) {
-      // Use CartoDB's free cloud layer as fallback
-      weatherLayerRef.current = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
-        { opacity: 0.3, subdomains: 'abcd' }
-      ).addTo(mapRef.current);
-    }
-  }, [showWeather, mapLoaded]);
-
-  // ─── Fetch economic calendar ─────────────────────────────────────────
-  useEffect(() => {
-    const fetchEcon = async () => {
-      try {
-        const res = await fetch('/api/intelligence/economic-calendar');
-        if (!res.ok) return;
-        const data = await res.json();
-        setEconomicEvents(data.upcoming || []);
-        setEconSummary(data.summary || null);
-      } catch (err) { console.error('[Econ Calendar]', err); }
-    };
-    fetchEcon();
-  }, []);
-
-  // ─── Fetch world stats ───────────────────────────────────────────────
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch('/api/intelligence/world-stats');
-        if (res.ok) setWorldStats(await res.json());
-      } catch {}
-    };
-    fetchStats();
-  }, []);
-
-  // ─── Auto-refresh news ───────────────────────────────────────────────
-  useEffect(() => {
-    const interval = setInterval(fetchNews, 60000);
-    return () => clearInterval(interval);
-  }, [fetchNews]);
-
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
-  };
-
-  // ─── Cross-reference: group by topic ─────────────────────────────────
   const crossRefGroups = useMemo(() => {
-    const keywords = ['war', 'ukraine', 'russia', 'gaza', 'israel', 'iran', 'china', 'taiwan', 'nato', 'nuclear', 'oil', 'sanctions', 'earthquake', 'famine', 'inflation', 'recession'];
+    const kws = ['war', 'ukraine', 'russia', 'gaza', 'israel', 'iran', 'china', 'taiwan', 'nato', 'nuclear', 'oil', 'sanctions', 'earthquake', 'famine', 'inflation', 'recession'];
     const groups: { keyword: string; articles: NewsArticle[]; prophecyRef?: string }[] = [];
-
-    keywords.forEach(kw => {
-      const matched = articles.filter(a => {
-        const text = `${a.title} ${a.description}`.toLowerCase();
-        return text.includes(kw);
-      });
-      if (matched.length >= 2) {
-        const prophecy = matched.find(a => a.prophecyRef);
-        groups.push({ keyword: kw, articles: matched.slice(0, 10), prophecyRef: prophecy?.prophecyRef || undefined });
-      }
+    kws.forEach(kw => {
+      const matched = articles.filter(a => `${a.title} ${a.description}`.toLowerCase().includes(kw));
+      if (matched.length >= 2) groups.push({ keyword: kw, articles: matched.slice(0, 10), prophecyRef: matched.find(a => a.prophecyRef)?.prophecyRef || undefined });
     });
-
     return groups.sort((a, b) => b.articles.length - a.articles.length).slice(0, 12);
   }, [articles]);
 
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
-    <div className="relative w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] h-[calc(100vh-3.5rem)] -m-4 sm:-m-6 lg:-m-8 overflow-hidden bg-[#0a0a0a]">
-      {/* Map container */}
-      <div ref={mapContainerRef} className="absolute inset-0 z-0" style={{ background: '#0a0a0a' }} />
+    <div className="relative w-screen h-screen overflow-hidden bg-[#050510]" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+      <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,170,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,170,255,0.3) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-        }} />
+      {/* ═══ HUD CORNER BRACKETS ═══ */}
+      <div className="absolute inset-0 z-[2] pointer-events-none">
+        <svg className="absolute top-2 left-2 w-12 h-12 text-cyan-400/30"><path d="M0 20 L0 0 L20 0" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
+        <svg className="absolute top-2 right-2 w-12 h-12 text-cyan-400/30"><path d="M28 0 L48 0 L48 20" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
+        <svg className="absolute bottom-2 left-2 w-12 h-12 text-cyan-400/30"><path d="M0 28 L0 48 L20 48" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
+        <svg className="absolute bottom-2 right-2 w-12 h-12 text-cyan-400/30"><path d="M28 48 L48 48 L48 28" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
+      </div>
 
-      {/* Scan line */}
-      {scanLineOn && (
-        <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-          <div className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent animate-scan-line" />
-        </div>
-      )}
+      {/* ═══ GRID + SCAN ═══ */}
+      <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.025]" style={{ backgroundImage: 'linear-gradient(rgba(0,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.4) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+      {scanLineOn && <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden"><div className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent cc-scan-line" /></div>}
 
-      {/* ═══════════ TOP BAR ═══════════ */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-3 sm:px-6 py-2"
-        style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0) 100%)' }}>
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <h1 className="text-[#ededed] font-mono text-sm sm:text-lg font-bold tracking-wider uppercase">
-              Global Intelligence
-            </h1>
-            <span className="text-cyan-400 font-mono text-[10px]">LIVE</span>
+      {/* ═══ RADAR SWEEP ═══ */}
+      <div className="absolute bottom-20 left-4 z-[2] pointer-events-none hidden lg:block">
+        <div className="relative w-24 h-24">
+          <div className="absolute inset-0 rounded-full border border-cyan-500/10" />
+          <div className="absolute inset-3 rounded-full border border-cyan-500/8" />
+          <div className="absolute inset-6 rounded-full border border-cyan-500/6" />
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <div className="w-full h-full cc-radar-sweep" style={{ background: 'conic-gradient(from 0deg, transparent 0deg, rgba(0,255,255,0.15) 30deg, transparent 60deg)' }} />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs font-mono text-cyan-400">
-              <Clock className="w-3 h-3" />
-              <span>{new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC</span>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,255,255,0.8)]" />
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════ COMMAND BAR ═══════════ */}
+      <div className="absolute top-0 left-0 right-0 z-10" style={{ background: 'linear-gradient(180deg, rgba(5,5,16,0.98) 0%, rgba(5,5,16,0.85) 70%, transparent 100%)' }}>
+        {/* Row 1: Title + Clock + Threat */}
+        <div className="flex items-center justify-between px-3 sm:px-5 py-2 border-b border-cyan-500/10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative w-2.5 h-2.5"><div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-50" /><div className="relative w-2.5 h-2.5 rounded-full bg-red-500" /></div>
+            <h1 className="text-white font-mono text-xs sm:text-base font-black tracking-[0.15em] uppercase">COMMAND CENTER</h1>
+            <span className="text-red-400 font-mono text-[10px] sm:text-xs font-bold tracking-wider animate-pulse">LIVE</span>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-5">
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-[9px] font-mono text-zinc-500 tracking-wider">THREAT</span>
+              <div className="w-20 h-2.5 bg-zinc-800/80 rounded-full overflow-hidden border border-zinc-700/30">
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${threatLevel}%`, background: `linear-gradient(90deg, #22c55e, ${threatColor})`, boxShadow: `0 0 8px ${threatColor}40` }} />
+              </div>
+              <span className="text-xs font-mono font-bold" style={{ color: threatColor }}>{threatLevel}%</span>
             </div>
+            <div className="flex items-center gap-1.5 font-mono">
+              <Clock className="w-3 h-3 text-cyan-400" />
+              <span className="text-cyan-400 text-xs sm:text-sm font-bold tabular-nums tracking-wider">{liveTime}</span>
+              <span className="text-zinc-600 text-[9px]">UTC</span>
+            </div>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden text-zinc-400 hover:text-white p-1">
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {/* Toggle buttons row */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Layer toggles */}
-          {[
-            { key: 'scan', on: scanLineOn, set: setScanLineOn, label: 'SCAN', color: 'cyan' },
-            { key: 'sfx', on: sfxOn, set: setSfxOn, label: 'SFX', color: 'cyan' },
-            { key: 'air', on: showAircraft, set: setShowAircraft, label: 'AIR', color: 'yellow' },
-            { key: 'naval', on: showNaval, set: setShowNaval, label: 'NAVAL', color: 'blue' },
-            { key: 'quake', on: showQuakes, set: setShowQuakes, label: 'QUAKE', color: 'orange' },
-            { key: 'conflict', on: showConflicts, set: setShowConflicts, label: 'CONFLICT', color: 'red' },
-            { key: 'weather', on: showWeather, set: setShowWeather, label: 'WEATHER', color: 'sky' },
-          ].map(btn => (
-            <button
-              key={btn.key}
-              onClick={() => btn.set(!btn.on)}
-              className={`px-2 py-1 rounded text-[10px] font-mono font-bold tracking-wider transition-all border
-                ${btn.on
-                  ? `bg-${btn.color}-500/20 text-${btn.color}-400 border-${btn.color}-500/30`
-                  : 'bg-zinc-800/60 text-zinc-600 border-zinc-700/30 hover:text-zinc-400'}`}
-              style={btn.on ? {
-                background: `rgba(${btn.color === 'cyan' ? '0,255,255' : btn.color === 'yellow' ? '250,204,21' : btn.color === 'blue' ? '59,130,246' : btn.color === 'orange' ? '249,115,22' : btn.color === 'red' ? '239,68,68' : btn.color === 'sky' ? '14,165,233' : '0,170,255'},0.1)`,
-                color: btn.color === 'cyan' ? '#0ff' : btn.color === 'yellow' ? '#facc15' : btn.color === 'blue' ? '#3b82f6' : btn.color === 'orange' ? '#f97316' : btn.color === 'red' ? '#ef4444' : btn.color === 'sky' ? '#0ea5e9' : '#0af',
-                borderColor: `rgba(${btn.color === 'cyan' ? '0,255,255' : btn.color === 'yellow' ? '250,204,21' : btn.color === 'blue' ? '59,130,246' : btn.color === 'orange' ? '249,115,22' : btn.color === 'red' ? '239,68,68' : btn.color === 'sky' ? '14,165,233' : '0,170,255'},0.3)`,
-              } : {}}
-            >
-              {btn.label}
-            </button>
-          ))}
-
-          {/* Map style selector */}
-          <div className="flex items-center border border-zinc-700/30 rounded overflow-hidden ml-1">
-            {MAP_STYLES.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setMapStyle(s.id)}
-                className={`px-2 py-1 text-[9px] font-mono tracking-wider transition-all
-                  ${mapStyle === s.id ? 'bg-cyan-500/20 text-cyan-400' : 'bg-zinc-800/40 text-zinc-600 hover:text-zinc-400'}`}
-              >
-                {s.label.toUpperCase()}
+        {/* Row 2: Controls (desktop) */}
+        <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} sm:flex flex-wrap items-center gap-1 sm:gap-1.5 px-3 sm:px-5 py-1.5`}>
+          {/* Layer group */}
+          <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">LAYERS</span>
+            {([
+              { k: 'air', on: showAircraft, set: setShowAircraft, l: '✈ AIR', c: '#00e5ff', cnt: aircraftCount },
+              { k: 'nav', on: showNaval, set: setShowNaval, l: '⚓ NAV', c: '#3b82f6', cnt: navalVessels.length },
+              { k: 'qk', on: showQuakes, set: setShowQuakes, l: '⚡ QUAKE', c: '#f97316', cnt: quakeCount },
+              { k: 'cf', on: showConflicts, set: setShowConflicts, l: '⚔ WAR', c: '#ef4444', cnt: conflictCount },
+            ] as const).map(b => (
+              <button key={b.k} onClick={() => b.set(!b.on)}
+                className="px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-mono font-bold tracking-wider transition-all relative"
+                style={b.on ? { background: `${b.c}15`, color: b.c, borderColor: `${b.c}30`, border: '1px solid' } : { background: 'transparent', color: '#555', border: '1px solid transparent' }}>
+                {b.l}
+                {b.on && b.cnt > 0 && <span className="ml-1 text-[8px] opacity-60">{b.cnt}</span>}
               </button>
             ))}
           </div>
 
-          {/* Action buttons */}
-          <button onClick={() => fetchNews()} disabled={loading}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800/60 text-cyan-400 text-[10px] font-mono hover:bg-zinc-700/60 transition border border-zinc-700/30">
-            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> REFRESH
-          </button>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800/60 text-[#ededed] text-[10px] font-mono hover:bg-zinc-700/60 transition border border-zinc-700/30">
-            <Filter className="w-3 h-3" /> FILTERS
-          </button>
-          <a href="/dashboard"
-            className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800/60 text-zinc-400 text-[10px] font-mono hover:bg-zinc-700/60 transition border border-zinc-700/30">
-            ← BACK
-          </a>
+          {/* Weather group */}
+          <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">WX</span>
+            {WEATHER_LAYERS.map(w => (
+              <button key={w.id} onClick={() => setWeatherLayer(weatherLayer === w.id ? '' : w.id)}
+                className="px-1.5 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
+                style={weatherLayer === w.id ? { background: 'rgba(14,165,233,0.15)', color: '#0ea5e9', border: '1px solid rgba(14,165,233,0.3)' } : { color: '#555', border: '1px solid transparent' }}>
+                {w.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Map style */}
+          <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
+            <span className="text-[8px] font-mono text-zinc-600 px-1.5 hidden sm:block">MAP</span>
+            {MAP_STYLES.map(s => (
+              <button key={s.id} onClick={() => setMapStyle(s.id)}
+                className="px-1.5 py-1 rounded-md text-[9px] font-mono tracking-wider transition-all"
+                style={mapStyle === s.id ? { background: 'rgba(0,255,255,0.1)', color: '#0ff', border: '1px solid rgba(0,255,255,0.2)' } : { color: '#555', border: '1px solid transparent' }}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Toggles */}
+          <div className="flex items-center gap-0.5 bg-zinc-900/60 rounded-lg border border-zinc-700/20 p-0.5">
+            <button onClick={() => setScanLineOn(!scanLineOn)} className={`px-1.5 py-1 rounded-md text-[9px] font-mono ${scanLineOn ? 'text-cyan-400' : 'text-zinc-600'}`}>SCAN</button>
+            <button onClick={() => setSfxOn(!sfxOn)} className={`px-1.5 py-1 rounded-md text-[9px] font-mono ${sfxOn ? 'text-cyan-400' : 'text-zinc-600'}`}>SFX</button>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 ml-auto">
+            <button onClick={() => fetchNews()} disabled={loading}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-bold text-cyan-400 transition-all border border-cyan-500/20 hover:bg-cyan-500/10" style={{ background: 'rgba(0,255,255,0.05)' }}>
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> REFRESH
+            </button>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-bold text-white transition-all border border-zinc-700/30 hover:bg-zinc-800/50" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <Newspaper className="w-3 h-3" /> INTEL
+            </button>
+            <a href="/dashboard" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono text-zinc-500 border border-zinc-800/30 hover:text-zinc-300 transition">← EXIT</a>
+          </div>
         </div>
       </div>
 
-      {/* ═══════════ STATS STRIP ═══════════ */}
-      <div className="absolute top-[80px] left-3 sm:left-6 z-10 flex gap-1.5 flex-wrap max-w-[calc(100%-24rem)]">
-        {[
-          { label: 'TRACKING', value: stats.total, color: 'text-[#ededed]', bg: 'rgba(39,39,42,0.6)', filter: '' },
-          { label: 'CRISIS', value: stats.crisis, color: 'text-red-400', bg: 'rgba(127,29,29,0.4)', filter: 'negative' },
-          { label: 'OPPORTUNITY', value: stats.opportunity, color: 'text-green-400', bg: 'rgba(20,83,45,0.4)', filter: 'positive' },
-          { label: 'UK IMPACT', value: stats.ukImpact, color: 'text-cyan-400', bg: 'rgba(8,51,68,0.4)', filter: 'uk' },
-          { label: 'PROPHECY', value: stats.prophecy, color: 'text-amber-400', bg: 'rgba(120,53,15,0.4)', filter: 'prophecy' },
-        ].map(s => (
-          <motion.button
-            key={s.label}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={() => setSentimentFilter(sentimentFilter === s.filter ? '' : s.filter)}
-            className={`backdrop-blur-sm border rounded px-2.5 py-1 font-mono cursor-pointer transition-all
-              ${sentimentFilter === s.filter && s.filter ? 'border-white/30 ring-1 ring-white/10 scale-105' : 'border-zinc-700/30 hover:border-zinc-600/50'}`}
-            style={{ background: s.bg }}
-          >
-            <div className="text-[9px] text-zinc-500 tracking-wider">{s.label}</div>
-            <div className={`text-base font-bold ${s.color}`}>{s.value}</div>
-          </motion.button>
+      {/* ═══════════ STATS HUD ═══════════ */}
+      <div className="absolute top-[88px] sm:top-[96px] left-2 sm:left-5 z-10 flex gap-1.5 flex-wrap max-w-[60%] sm:max-w-[55%]">
+        {([
+          { label: 'TRACKING', value: stats.total, color: '#ededed', bg: 'rgba(255,255,255,0.04)', f: '' },
+          { label: 'CRISIS', value: stats.crisis, color: '#ff2d55', bg: 'rgba(255,45,85,0.08)', f: 'negative' },
+          { label: 'POSITIVE', value: stats.opportunity, color: '#30d158', bg: 'rgba(48,209,88,0.08)', f: 'positive' },
+          { label: 'UK IMPACT', value: stats.ukImpact, color: '#0ff', bg: 'rgba(0,255,255,0.06)', f: 'uk' },
+          { label: 'PROPHECY', value: stats.prophecy, color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', f: 'prophecy' },
+        ] as const).map(s => (
+          <button key={s.label} onClick={() => setSentimentFilter(sentimentFilter === s.f ? '' : s.f)}
+            className={`backdrop-blur-md rounded-lg px-2.5 sm:px-3 py-1.5 font-mono cursor-pointer transition-all border
+              ${sentimentFilter === s.f && s.f ? 'border-white/20 scale-105 ring-1 ring-white/5' : 'border-white/5 hover:border-white/10'}`}
+            style={{ background: s.bg }}>
+            <div className="text-[8px] sm:text-[9px] tracking-wider" style={{ color: `${s.color}90` }}>{s.label}</div>
+            <div className="text-sm sm:text-lg font-black tabular-nums" style={{ color: s.color, textShadow: `0 0 12px ${s.color}30` }}>{s.value}</div>
+          </button>
         ))}
-
-        {/* Top country badges */}
-        <div className="flex items-end gap-1 ml-1">
-          {topCountries.map(([code, count]) => (
-            <motion.button key={code}
-              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-              onClick={() => { setContinentFilter('All Regions'); setSearchTerm(code.toLowerCase()); }}
-              className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/20 rounded px-1.5 py-0.5 font-mono hover:border-cyan-500/30 hover:bg-cyan-500/5 transition cursor-pointer"
-              title={`${count} articles from ${code}`}
-            >
-              <div className="text-[8px] text-zinc-500">{code}</div>
-              <div className="text-[10px] font-bold text-zinc-300">{count}</div>
-            </motion.button>
-          ))}
-        </div>
       </div>
 
       {/* ═══════════ BOTTOM TABS ═══════════ */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
-        {/* Tab buttons */}
-        <div className="flex items-center gap-1 px-4 pb-1">
-          {[
-            { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', color: '#22c55e' },
-            { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Tracker', color: '#3b82f6' },
-            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Cross-Reference', color: '#f59e0b' },
-            { id: 'stats' as BottomTab, icon: BarChart3, label: 'World Data', color: '#a855f7' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setBottomTab(bottomTab === tab.id ? 'none' : tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-[10px] font-mono font-bold tracking-wider transition-all border-t border-x
-                ${bottomTab === tab.id
-                  ? 'border-zinc-700/50 text-[#ededed]'
-                  : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}
-              style={bottomTab === tab.id ? { background: 'rgba(10,10,15,0.95)', color: tab.color } : { background: 'rgba(30,30,35,0.6)' }}
-            >
+        <div className="flex items-center gap-0.5 px-2 sm:px-4 pb-0.5">
+          {([
+            { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', c: '#22c55e' },
+            { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Ops', c: '#3b82f6' },
+            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Cross-Ref', c: '#f59e0b' },
+            { id: 'stats' as BottomTab, icon: BarChart3, label: 'World Data', c: '#a855f7' },
+          ] as const).map(tab => (
+            <button key={tab.id} onClick={() => setBottomTab(bottomTab === tab.id ? 'none' : tab.id)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-t-lg text-[9px] sm:text-[10px] font-mono font-bold tracking-wider transition-all"
+              style={bottomTab === tab.id ? { background: 'rgba(5,5,16,0.97)', color: tab.c, borderTop: `2px solid ${tab.c}`, borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)' } : { background: 'rgba(20,20,30,0.5)', color: '#555' }}>
               <tab.icon className="w-3 h-3" />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Tab content */}
         <AnimatePresence>
           {bottomTab !== 'none' && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 280, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden border-t border-zinc-700/30"
-              style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)' }}
-            >
-              <div className="h-[280px] overflow-y-auto px-4 py-3">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 260, opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}
+              className="overflow-hidden" style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="h-[260px] overflow-y-auto px-3 sm:px-5 py-3 cc-scrollbar">
 
-                {/* ECONOMIC CALENDAR TAB */}
+                {/* ECONOMIC CALENDAR */}
                 {bottomTab === 'calendar' && (
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-green-400" />
-                        <span className="text-sm font-mono text-[#ededed] tracking-wider">ECONOMIC CALENDAR</span>
-                        {econSummary && (
-                          <span className="text-[10px] font-mono text-zinc-500">
-                            {econSummary.highImpactUpcoming} HIGH IMPACT · {econSummary.thisWeek} THIS WEEK
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar className="w-4 h-4 text-green-400" />
+                      <span className="text-sm font-mono text-white tracking-wider font-bold">ECONOMIC CALENDAR</span>
+                      {econSummary && <span className="text-[10px] font-mono text-zinc-600">{econSummary.highImpactUpcoming} HIGH IMPACT · {econSummary.thisWeek} THIS WEEK</span>}
                     </div>
-                    <div className="grid gap-1.5">
+                    <div className="grid gap-1">
                       {economicEvents.slice(0, 20).map(ev => {
-                        const isToday = ev.date === new Date().toISOString().slice(0, 10);
-                        const isPast = ev.date < new Date().toISOString().slice(0, 10);
+                        const today = ev.date === new Date().toISOString().slice(0, 10);
                         return (
-                          <div key={ev.id}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg border font-mono text-xs transition-all
-                              ${isToday ? 'bg-green-500/10 border-green-500/20' : isPast ? 'bg-zinc-800/30 border-zinc-800/30 opacity-50' : 'bg-zinc-800/40 border-zinc-700/20 hover:border-zinc-600/40'}`}
-                          >
-                            <div className="w-[70px] shrink-0">
-                              <div className={`text-[10px] ${isToday ? 'text-green-400 font-bold' : 'text-zinc-500'}`}>{ev.date.slice(5)}</div>
-                              <div className="text-[9px] text-zinc-600">{ev.time} UTC</div>
+                          <div key={ev.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg border font-mono text-xs transition-all ${today ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+                            <div className="w-[60px] shrink-0">
+                              <div className={`text-[10px] ${today ? 'text-green-400 font-bold' : 'text-zinc-500'}`}>{ev.date.slice(5)}</div>
+                              <div className="text-[9px] text-zinc-700">{ev.time}</div>
                             </div>
-                            <div className={`w-2 h-2 rounded-full shrink-0 ${ev.impact === 'high' ? 'bg-red-500' : ev.impact === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${ev.impact === 'high' ? 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]' : ev.impact === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />
                             <div className="flex-1 min-w-0">
-                              <div className="text-[#ededed] font-semibold truncate">{ev.event}</div>
-                              <div className="text-zinc-500 text-[10px]">{ev.country}</div>
+                              <div className="text-white font-semibold truncate">{ev.event}</div>
+                              <div className="text-zinc-600 text-[10px]">{ev.country}</div>
                             </div>
-                            <div className={`text-[9px] px-2 py-0.5 rounded border
-                              ${ev.impact === 'high' ? 'text-red-400 bg-red-500/10 border-red-500/20' : ev.impact === 'medium' ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-green-400 bg-green-500/10 border-green-500/20'}`}>
+                            <span className={`text-[8px] px-2 py-0.5 rounded border ${ev.impact === 'high' ? 'text-red-400 border-red-500/20 bg-red-500/5' : ev.impact === 'medium' ? 'text-yellow-400 border-yellow-500/20 bg-yellow-500/5' : 'text-green-400 border-green-500/20 bg-green-500/5'}`}>
                               {ev.impact.toUpperCase()}
-                            </div>
+                            </span>
                           </div>
                         );
                       })}
-                      {economicEvents.length === 0 && (
-                        <div className="text-center text-zinc-600 text-xs font-mono py-8">Loading economic calendar...</div>
-                      )}
                     </div>
                   </div>
                 )}
 
-                {/* NAVAL TRACKER TAB */}
+                {/* NAVAL OPS */}
                 {bottomTab === 'naval' && (
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Anchor className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm font-mono text-[#ededed] tracking-wider">NAVAL DEPLOYMENT TRACKER</span>
+                        <span className="text-sm font-mono text-white tracking-wider font-bold">NAVAL DEPLOYMENTS</span>
                       </div>
-                      {navalSummary && (
-                        <div className="flex items-center gap-3 text-[10px] font-mono">
-                          <span className="text-blue-400">{navalSummary.carriers} CARRIERS</span>
-                          <span className="text-cyan-400">{navalSummary.amphibious} AMPHIBIOUS</span>
-                          <span className="text-amber-400">{navalSummary.patrolZones} PATROL ZONES</span>
-                          <span className="text-green-400">{navalSummary.deployed} DEPLOYED</span>
-                        </div>
-                      )}
+                      {navalSummary && <div className="flex gap-3 text-[10px] font-mono">
+                        <span className="text-blue-400">{navalSummary.carriers} CARRIERS</span>
+                        <span className="text-cyan-400">{navalSummary.amphibious} AMPHIB</span>
+                        <span className="text-green-400">{navalSummary.deployed} DEPLOYED</span>
+                      </div>}
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                       {navalVessels.filter(v => v.type !== 'patrol_zone').slice(0, 18).map((v, i) => (
-                        <button key={i}
-                          onClick={() => {
-                            setSelectedVessel(v);
-                            if (mapRef.current) mapRef.current.flyTo([v.lat, v.lng], 6, { duration: 1 });
-                          }}
-                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800/40 border border-zinc-700/20 hover:border-zinc-600/40 transition text-left font-mono"
-                        >
-                          <div className="w-3 h-3 rounded-full shrink-0" style={{ background: v.color, boxShadow: `0 0 6px ${v.color}40` }} />
+                        <button key={i} onClick={() => { setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); }}
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/5 hover:border-white/10 transition text-left font-mono bg-white/[0.02]">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: v.color, boxShadow: `0 0 8px ${v.color}40` }} />
                           <div className="flex-1 min-w-0">
-                            <div className="text-[10px] text-[#ededed] font-bold truncate">{v.name}</div>
-                            <div className="text-[9px] text-zinc-500 truncate">{v.fleet} · {v.area}</div>
+                            <div className="text-[10px] text-white font-bold truncate">{v.name}</div>
+                            <div className="text-[9px] text-zinc-600 truncate">{v.fleet} · {v.area}</div>
                           </div>
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded border shrink-0
-                            ${v.status === 'deployed' || v.status === 'active' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
-                              v.status === 'high-alert' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                              'text-zinc-500 bg-zinc-800/40 border-zinc-700/30'}`}>
-                            {v.status.toUpperCase().replace('-', ' ')}
-                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* CROSS-REFERENCE TAB */}
+                {/* CROSS-REF */}
                 {bottomTab === 'cross-ref' && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen className="w-4 h-4 text-amber-400" />
-                      <span className="text-sm font-mono text-[#ededed] tracking-wider">NEWS CROSS-REFERENCE</span>
-                      <span className="text-[10px] font-mono text-zinc-500">{crossRefGroups.length} TOPICS TRACKED</span>
+                      <span className="text-sm font-mono text-white tracking-wider font-bold">INTEL CROSS-REFERENCE</span>
+                      <span className="text-[10px] font-mono text-zinc-600">{crossRefGroups.length} TOPICS</span>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-2">
-                      {crossRefGroups.map((group, i) => (
-                        <div key={i} className="rounded-lg bg-zinc-800/40 border border-zinc-700/20 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-mono font-bold text-amber-400 uppercase">{group.keyword}</span>
-                              <span className="text-[9px] font-mono text-zinc-500 bg-zinc-700/30 px-1.5 py-0.5 rounded">{group.articles.length} sources</span>
-                            </div>
+                      {crossRefGroups.map((g, i) => (
+                        <div key={i} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-mono font-bold text-amber-400 uppercase">{g.keyword}</span>
+                            <span className="text-[8px] font-mono text-zinc-600 bg-white/5 px-1.5 py-0.5 rounded">{g.articles.length} sources</span>
                           </div>
-                          {group.prophecyRef && (
-                            <div className="text-[9px] font-mono text-amber-300/60 bg-amber-500/5 border border-amber-500/10 rounded px-2 py-1 mb-2">
-                              📖 {group.prophecyRef}
-                            </div>
-                          )}
-                          <div className="space-y-1">
-                            {group.articles.slice(0, 3).map((a, j) => (
-                              <a key={j} href={a.url} target="_blank" rel="noopener noreferrer"
-                                className="block text-[10px] font-mono text-zinc-400 hover:text-[#ededed] transition truncate">
-                                <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5
-                                  ${a.sentiment === 'negative' ? 'bg-red-400' : a.sentiment === 'positive' ? 'bg-green-400' : 'bg-cyan-400'}`} />
-                                {a.title?.slice(0, 70)}{(a.title?.length || 0) > 70 ? '...' : ''}
-                              </a>
-                            ))}
-                          </div>
+                          {g.prophecyRef && <div className="text-[9px] font-mono text-amber-300/50 bg-amber-500/5 border border-amber-500/10 rounded px-2 py-1 mb-2">📖 {g.prophecyRef}</div>}
+                          <div className="space-y-1">{g.articles.slice(0, 3).map((a, j) => (
+                            <a key={j} href={a.url} target="_blank" rel="noopener noreferrer" className="block text-[10px] font-mono text-zinc-500 hover:text-white transition truncate">
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${a.sentiment === 'negative' ? 'bg-red-400' : a.sentiment === 'positive' ? 'bg-green-400' : 'bg-cyan-400'}`} />
+                              {a.title?.slice(0, 80)}
+                            </a>
+                          ))}</div>
                         </div>
                       ))}
-                      {crossRefGroups.length === 0 && (
-                        <div className="text-center text-zinc-600 text-xs font-mono py-8 col-span-2">Loading cross-references...</div>
-                      )}
                     </div>
                   </div>
                 )}
 
-                {/* WORLD STATS TAB */}
+                {/* WORLD DATA */}
                 {bottomTab === 'stats' && worldStats && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <BarChart3 className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm font-mono text-[#ededed] tracking-wider">WORLD DATA</span>
+                      <span className="text-sm font-mono text-white tracking-wider font-bold">GLOBAL STATISTICS</span>
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
-                      {/* Overview */}
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-zinc-800/40 rounded px-2.5 py-1.5 border border-zinc-700/20">
-                            <div className="text-[9px] text-zinc-500 font-mono">WORLD POP</div>
-                            <div className="text-sm text-[#ededed] font-bold font-mono">{(worldStats.worldPopulation / 1e9).toFixed(2)}B</div>
+                          <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/5">
+                            <div className="text-[8px] text-zinc-600 font-mono">WORLD POP</div>
+                            <div className="text-sm text-white font-bold font-mono">{(worldStats.worldPopulation / 1e9).toFixed(2)}B</div>
                           </div>
-                          <div className="bg-zinc-800/40 rounded px-2.5 py-1.5 border border-zinc-700/20">
-                            <div className="text-[9px] text-zinc-500 font-mono">COUNTRIES</div>
-                            <div className="text-sm text-[#ededed] font-bold font-mono">{worldStats.totalCountries}</div>
+                          <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/5">
+                            <div className="text-[8px] text-zinc-600 font-mono">NATIONS</div>
+                            <div className="text-sm text-white font-bold font-mono">{worldStats.totalCountries}</div>
                           </div>
                         </div>
-                        <div>
-                          <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-1">BY REGION</div>
-                          {worldStats.regionStats && Object.entries(worldStats.regionStats)
-                            .sort((a: any, b: any) => b[1].population - a[1].population)
-                            .map(([region, data]: [string, any]) => (
-                              <div key={region} className="flex items-center justify-between py-0.5">
-                                <span className="text-[10px] text-zinc-400 font-mono">{region}</span>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 h-1.5 bg-zinc-800 rounded overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-purple-500 to-violet-400 rounded" style={{ width: `${(data.population / worldStats.worldPopulation) * 100}%` }} />
-                                  </div>
-                                  <span className="text-[10px] text-zinc-500 font-mono w-10 text-right">{(data.population / 1e9).toFixed(1)}B</span>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                      {/* Top populations */}
-                      <div>
-                        <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-1.5">TOP POPULATION</div>
-                        {worldStats.top15byPopulation?.slice(0, 12).map((c: any) => (
-                          <div key={c.code} className="flex items-center justify-between py-0.5 font-mono">
-                            <span className="text-[10px] text-zinc-400">{c.flag} {c.name}</span>
-                            <span className="text-[10px] text-zinc-500">{(c.population / 1e6).toFixed(0)}M</span>
+                        {worldStats.regionStats && Object.entries(worldStats.regionStats).sort((a: any, b: any) => b[1].population - a[1].population).map(([region, data]: [string, any]) => (
+                          <div key={region} className="flex items-center justify-between py-0.5 font-mono">
+                            <span className="text-[10px] text-zinc-500">{region}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1.5 bg-zinc-800/50 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-purple-500 to-violet-400 rounded-full" style={{ width: `${(data.population / worldStats.worldPopulation) * 100}%` }} /></div>
+                              <span className="text-[9px] text-zinc-600 w-10 text-right">{(data.population / 1e9).toFixed(1)}B</span>
+                            </div>
                           </div>
                         ))}
                       </div>
-                      {/* GDP */}
-                      <div>
-                        <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-1.5">TOP ECONOMIES (GDP)</div>
-                        {worldStats.topGDP?.slice(0, 12).map((g: any, i: number) => (
-                          <div key={g.code} className="flex items-center justify-between py-0.5 font-mono">
-                            <span className="text-[10px] text-zinc-400">{i + 1}. {g.country}</span>
-                            <span className="text-[10px] text-green-400/70">${(g.gdp / 1e12).toFixed(1)}T</span>
-                          </div>
-                        ))}
-                      </div>
+                      <div>{worldStats.top15byPopulation?.slice(0, 12).map((c: any) => (<div key={c.code} className="flex items-center justify-between py-0.5 font-mono"><span className="text-[10px] text-zinc-500">{c.flag} {c.name}</span><span className="text-[10px] text-zinc-600">{(c.population / 1e6).toFixed(0)}M</span></div>))}</div>
+                      <div>{worldStats.topGDP?.slice(0, 12).map((g: any, i: number) => (<div key={g.code} className="flex items-center justify-between py-0.5 font-mono"><span className="text-[10px] text-zinc-500">{i + 1}. {g.country}</span><span className="text-[10px] text-green-400/60">${(g.gdp / 1e12).toFixed(1)}T</span></div>))}</div>
                     </div>
                   </div>
                 )}
@@ -998,98 +749,64 @@ export default function IntelligenceClient() {
         </AnimatePresence>
       </div>
 
-      {/* ═══════════ SIDEBAR / FILTERS ═══════════ */}
+      {/* ═══════════ SIDEBAR ═══════════ */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: 300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 300 }}
-            className="absolute top-0 right-0 bottom-0 z-20 w-[340px] sm:w-[380px] overflow-y-auto"
-            style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}
-          >
+          <motion.div initial={{ opacity: 0, x: 340 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 340 }} transition={{ type: 'spring', damping: 25 }}
+            className="absolute top-0 right-0 bottom-0 z-20 w-[320px] sm:w-[360px] overflow-y-auto cc-scrollbar"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', borderLeft: '1px solid rgba(0,255,255,0.08)' }}>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-mono text-[#ededed] tracking-wider">FILTERS & NEWS</span>
-                <button onClick={() => setSidebarOpen(false)} className="text-zinc-500 hover:text-[#ededed]">
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+                  <span className="text-sm font-mono text-white tracking-wider font-bold">INTELLIGENCE FEED</span>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} className="text-zinc-600 hover:text-white transition"><X className="w-4 h-4" /></button>
               </div>
 
-              {/* Search */}
               <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
-                <input
-                  type="text" value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search news..."
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-800/60 border border-zinc-700/30 text-xs font-mono text-[#ededed] placeholder-zinc-600 focus:outline-none focus:border-cyan-500/30"
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search global intelligence..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/5 text-xs font-mono text-white placeholder-zinc-700 focus:outline-none focus:border-cyan-500/30 transition" />
               </div>
 
-              {/* Region */}
               <div className="mb-3">
-                <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-1.5">REGION</div>
+                <div className="text-[8px] text-zinc-600 font-mono tracking-wider mb-1.5">REGION</div>
                 <div className="flex flex-wrap gap-1">
-                  {CONTINENTS.map(c => (
-                    <button key={c}
-                      onClick={() => setContinentFilter(c)}
-                      className={`px-2 py-1 rounded text-[10px] font-mono transition-all border
-                        ${continentFilter === c ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'bg-zinc-800/40 text-zinc-500 border-zinc-700/20 hover:text-zinc-400'}`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                  {CONTINENTS.map(c => (<button key={c} onClick={() => setContinentFilter(c)}
+                    className={`px-2 py-1 rounded-md text-[10px] font-mono transition-all border ${continentFilter === c ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'text-zinc-600 border-transparent hover:text-zinc-400'}`}>{c}</button>))}
                 </div>
               </div>
-
-              {/* Category */}
               <div className="mb-4">
-                <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-1.5">CATEGORY</div>
+                <div className="text-[8px] text-zinc-600 font-mono tracking-wider mb-1.5">CATEGORY</div>
                 <div className="flex flex-wrap gap-1">
-                  {CATEGORIES.map(cat => (
-                    <button key={cat.id}
-                      onClick={() => setCategoryFilter(categoryFilter === cat.id ? '' : cat.id)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono transition-all border
-                        ${categoryFilter === cat.id ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'bg-zinc-800/40 text-zinc-500 border-zinc-700/20 hover:text-zinc-400'}`}
-                    >
-                      <cat.icon className="w-3 h-3" />
-                      {cat.label}
-                    </button>
-                  ))}
+                  {CATEGORIES.map(cat => (<button key={cat.id} onClick={() => setCategoryFilter(categoryFilter === cat.id ? '' : cat.id)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono transition-all border ${categoryFilter === cat.id ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'text-zinc-600 border-transparent hover:text-zinc-400'}`}>
+                    <cat.icon className="w-3 h-3" />{cat.label}</button>))}
                 </div>
               </div>
 
-              {/* News feed */}
-              <div className="text-[9px] text-zinc-500 font-mono tracking-wider mb-2">NEWS FEED ({filtered.length})</div>
-              <div className="space-y-1.5">
-                {filtered.slice(0, 40).map((article) => {
-                  const sc = SENTIMENT_COLORS[article.sentiment] || SENTIMENT_COLORS.neutral;
+              <div className="text-[8px] text-zinc-600 font-mono tracking-wider mb-2">LIVE FEED ({filtered.length})</div>
+              <div className="space-y-1">
+                {filtered.slice(0, 50).map(article => {
+                  const sc = SC[article.sentiment] || SC.neutral;
                   return (
-                    <button
-                      key={article.id}
-                      onClick={() => {
-                        setSelectedArticle(article);
-                        if (article.coordinates && mapRef.current) {
-                          mapRef.current.flyTo([article.coordinates[1], article.coordinates[0]], 5, { duration: 1 });
-                        }
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg bg-zinc-800/30 border border-zinc-700/10 hover:border-zinc-600/30 transition-all group"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: sc.fill }} />
+                    <button key={article.id} onClick={() => { setSelectedArticle(article); if (article.coordinates && mapRef.current) mapRef.current.flyTo([article.coordinates[1], article.coordinates[0]], 5, { duration: 1 }); }}
+                      className="w-full text-left px-3 py-2.5 rounded-lg border border-white/[0.03] hover:border-white/10 transition-all group bg-white/[0.01] hover:bg-white/[0.03]">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: sc.fill, boxShadow: `0 0 6px ${sc.glow}` }} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[11px] text-[#ededed] leading-tight group-hover:text-cyan-300 transition line-clamp-2">
-                            {article.title}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[9px] text-zinc-500 font-mono">
+                          <div className="text-[11px] text-zinc-300 leading-tight group-hover:text-white transition cc-clamp-2">{article.title}</div>
+                          <div className="flex items-center gap-1.5 mt-1 text-[9px] text-zinc-600 font-mono">
+                            <span style={{ color: sc.fill }}>{sc.label}</span>
+                            <span className="text-zinc-800">·</span>
                             <span>{article.source}</span>
-                            <span>·</span>
+                            <span className="text-zinc-800">·</span>
                             <span>{article.country?.toUpperCase()}</span>
-                            <span>·</span>
+                            <span className="text-zinc-800">·</span>
                             <span>{timeAgo(article.publishedAt)}</span>
-                            {article.prophecyRelated && <span className="text-amber-400">📖</span>}
-                            {article.ukImpact && <span className="text-cyan-400">🇬🇧</span>}
+                            {article.prophecyRelated && <span className="text-amber-500">📖</span>}
+                            {article.ukImpact && <span>🇬🇧</span>}
                           </div>
                         </div>
                       </div>
@@ -1102,211 +819,97 @@ export default function IntelligenceClient() {
         )}
       </AnimatePresence>
 
-      {/* ═══════════ ARTICLE DETAIL POPUP ═══════════ */}
+      {/* ═══════════ POPUPS ═══════════ */}
       <AnimatePresence>
         {selectedArticle && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="absolute top-[130px] left-4 sm:left-6 z-30 w-[420px] max-w-[calc(100%-2rem)] rounded-xl overflow-hidden"
-            style={{
-              background: 'rgba(10,10,15,0.95)',
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${SENTIMENT_COLORS[selectedArticle.sentiment]?.fill || '#0af'}30`,
-            }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[400px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${SC[selectedArticle.sentiment]?.fill || '#0af'}30` }}>
             <div className="relative p-4">
-              <button onClick={() => setSelectedArticle(null)}
-                className="absolute top-3 right-3 w-6 h-6 rounded-full bg-zinc-800/80 text-zinc-400 hover:text-[#ededed] flex items-center justify-center">
-                <X className="w-3.5 h-3.5" />
-              </button>
-
-              {selectedArticle.imageUrl && (
-                <div className="w-full h-32 rounded-lg overflow-hidden mb-3">
-                  <img src={selectedArticle.imageUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
-
-              <h3 className="text-sm font-semibold text-[#ededed] leading-tight mb-2 pr-6">{selectedArticle.title}</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-3 line-clamp-3">{selectedArticle.description}</p>
-
+              <button onClick={() => setSelectedArticle(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center transition"><X className="w-3.5 h-3.5" /></button>
+              {selectedArticle.imageUrl && <div className="w-full h-28 rounded-lg overflow-hidden mb-3"><img src={selectedArticle.imageUrl} alt="" className="w-full h-full object-cover" /></div>}
+              <h3 className="text-sm font-semibold text-white leading-tight mb-2 pr-8">{selectedArticle.title}</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed mb-3 cc-clamp-3">{selectedArticle.description}</p>
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded border"
-                  style={{
-                    color: SENTIMENT_COLORS[selectedArticle.sentiment]?.fill,
-                    background: `${SENTIMENT_COLORS[selectedArticle.sentiment]?.fill}15`,
-                    borderColor: `${SENTIMENT_COLORS[selectedArticle.sentiment]?.fill}30`,
-                  }}>
-                  {SENTIMENT_COLORS[selectedArticle.sentiment]?.label.toUpperCase()}
-                </span>
-                <span className="text-[9px] font-mono text-zinc-500">{selectedArticle.source}</span>
-                <span className="text-[9px] font-mono text-zinc-600">{selectedArticle.country?.toUpperCase()}</span>
-                <span className="text-[9px] font-mono text-zinc-600">{timeAgo(selectedArticle.publishedAt)} ago</span>
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded border" style={{ color: SC[selectedArticle.sentiment]?.fill, background: `${SC[selectedArticle.sentiment]?.fill}10`, borderColor: `${SC[selectedArticle.sentiment]?.fill}25` }}>{SC[selectedArticle.sentiment]?.label}</span>
+                <span className="text-[9px] font-mono text-zinc-600">{selectedArticle.source} · {selectedArticle.country?.toUpperCase()} · {timeAgo(selectedArticle.publishedAt)}</span>
               </div>
-
-              {selectedArticle.prophecyRef && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                  <div className="text-[9px] text-amber-400 font-mono font-bold mb-0.5">📖 PROPHECY CONNECTION</div>
-                  <div className="text-[10px] text-amber-300/70 font-mono">{selectedArticle.prophecyRef}</div>
-                </div>
-              )}
-
-              {selectedArticle.ukImpact && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
-                  <span className="text-[9px] text-cyan-400 font-mono font-bold">🇬🇧 UK MARKET IMPACT DETECTED</span>
-                </div>
-              )}
-
-              <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-mono hover:bg-cyan-500/20 transition border border-cyan-500/20 w-fit">
-                READ FULL ARTICLE <ExternalLink className="w-3 h-3" />
-              </a>
+              {selectedArticle.prophecyRef && <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10"><div className="text-[9px] text-amber-400 font-mono font-bold">📖 PROPHECY</div><div className="text-[10px] text-amber-300/60 font-mono">{selectedArticle.prophecyRef}</div></div>}
+              {selectedArticle.ukImpact && <div className="mb-3 px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10"><span className="text-[9px] text-cyan-400 font-mono font-bold">🇬🇧 UK MARKET IMPACT</span></div>}
+              <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-mono hover:bg-cyan-500/15 transition border border-cyan-500/15 w-fit">READ FULL <ExternalLink className="w-3 h-3" /></a>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ═══════════ EARTHQUAKE POPUP ═══════════ */}
       <AnimatePresence>
         {selectedEarthquake && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[130px] left-4 sm:left-6 z-30 w-[400px] max-w-[calc(100%-2rem)] rounded-xl overflow-hidden"
-            style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,100,0,0.3)' }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[380px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,100,0,0.25)' }}>
             <div className="relative p-4">
-              <button onClick={() => setSelectedEarthquake(null)} className="absolute top-3 right-3 w-6 h-6 rounded-full bg-zinc-800/80 text-zinc-400 hover:text-[#ededed] flex items-center justify-center">
-                <X className="w-3.5 h-3.5" />
-              </button>
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold font-mono
-                  ${selectedEarthquake.magnitude >= 6 ? 'bg-red-500/20 text-red-400' : selectedEarthquake.magnitude >= 5 ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                  M{selectedEarthquake.magnitude?.toFixed(1)}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-[#ededed]">{selectedEarthquake.place}</div>
-                  <div className="text-[10px] font-mono text-zinc-500">{new Date(selectedEarthquake.time).toLocaleString()}</div>
-                </div>
+              <button onClick={() => setSelectedEarthquake(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black font-mono ${selectedEarthquake.magnitude >= 6 ? 'bg-red-500/15 text-red-400' : selectedEarthquake.magnitude >= 5 ? 'bg-orange-500/15 text-orange-400' : 'bg-yellow-500/15 text-yellow-400'}`}>M{selectedEarthquake.magnitude?.toFixed(1)}</div>
+                <div><div className="text-sm font-semibold text-white">{selectedEarthquake.place}</div><div className="text-[10px] font-mono text-zinc-600">{new Date(selectedEarthquake.time).toLocaleString()}</div></div>
               </div>
               <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">DEPTH</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedEarthquake.depth?.toFixed(1)}km</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">SIGNIFICANCE</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedEarthquake.sig || '—'}</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">STATUS</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono capitalize">{selectedEarthquake.status || '—'}</div>
-                </div>
+                {[{ l: 'DEPTH', v: `${selectedEarthquake.depth?.toFixed(1)}km` }, { l: 'SIG', v: selectedEarthquake.sig || '—' }, { l: 'STATUS', v: selectedEarthquake.status || '—' }].map(d => (
+                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2 border border-white/5"><div className="text-[8px] text-zinc-600 font-mono">{d.l}</div><div className="text-sm font-bold text-white font-mono capitalize">{d.v}</div></div>
+                ))}
               </div>
-              {selectedEarthquake.tsunami ? (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-                  <span className="text-cyan-400 font-mono text-xs font-bold">🌊 TSUNAMI WARNING ISSUED</span>
-                </div>
-              ) : null}
+              {selectedEarthquake.tsunami && <div className="mb-3 px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/15"><span className="text-cyan-400 font-mono text-xs font-bold">🌊 TSUNAMI WARNING</span></div>}
               <div className="flex items-center gap-2">
-                <div className="text-[10px] font-mono text-zinc-500">{selectedEarthquake.lat?.toFixed(3)}°, {selectedEarthquake.lng?.toFixed(3)}°</div>
+                <span className="text-[10px] font-mono text-zinc-600">{selectedEarthquake.lat?.toFixed(3)}°, {selectedEarthquake.lng?.toFixed(3)}°</span>
                 <div className="flex-1" />
-                <a href={selectedEarthquake.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded bg-orange-500/10 text-orange-400 text-[10px] font-mono hover:bg-orange-500/20 transition border border-orange-500/20">
-                  USGS DETAILS <ExternalLink className="w-3 h-3" />
-                </a>
+                <a href={selectedEarthquake.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-mono hover:bg-orange-500/15 border border-orange-500/15">USGS <ExternalLink className="w-3 h-3" /></a>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ═══════════ AIRCRAFT POPUP ═══════════ */}
       <AnimatePresence>
         {selectedAircraftDetail && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[130px] left-4 sm:left-6 z-30 w-[360px] max-w-[calc(100%-2rem)] rounded-xl overflow-hidden"
-            style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)', border: `1px solid ${selectedAircraftDetail.military ? 'rgba(255,0,0,0.3)' : 'rgba(250,204,21,0.2)'}` }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[360px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedAircraftDetail.military ? 'rgba(255,68,68,0.25)' : 'rgba(0,229,255,0.2)'}` }}>
             <div className="relative p-4">
-              <button onClick={() => setSelectedAircraftDetail(null)} className="absolute top-3 right-3 w-6 h-6 rounded-full bg-zinc-800/80 text-zinc-400 hover:text-[#ededed] flex items-center justify-center">
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <button onClick={() => setSelectedAircraftDetail(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               <div className="flex items-center gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedAircraftDetail.military ? 'bg-red-500/20' : 'bg-yellow-500/20'}`}>
-                  <Plane className={`w-5 h-5 ${selectedAircraftDetail.military ? 'text-red-400' : 'text-yellow-400'}`} />
-                </div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${selectedAircraftDetail.military ? 'bg-red-500/10' : 'bg-cyan-500/10'}`}><Plane className={`w-6 h-6 ${selectedAircraftDetail.military ? 'text-red-400' : 'text-cyan-400'}`} /></div>
                 <div>
-                  <div className={`text-sm font-bold font-mono ${selectedAircraftDetail.military ? 'text-red-400' : 'text-yellow-400'}`}>
-                    {selectedAircraftDetail.callsign || 'UNKNOWN'} {selectedAircraftDetail.military ? '[MIL]' : ''}
-                  </div>
-                  <div className="text-[10px] font-mono text-zinc-500">{selectedAircraftDetail.country} · Zone: {selectedAircraftDetail.zone}</div>
+                  <div className={`text-base font-black font-mono ${selectedAircraftDetail.military ? 'text-red-400' : 'text-cyan-400'}`}>{selectedAircraftDetail.callsign || 'UNKNOWN'}</div>
+                  <div className="flex items-center gap-2"><span className="text-[10px] font-mono text-zinc-500">{selectedAircraftDetail.country}</span>{selectedAircraftDetail.military && <span className="text-[8px] px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-mono">MILITARY</span>}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">ALTITUDE</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedAircraftDetail.altitude ? `${selectedAircraftDetail.altitude}m` : '—'}</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">SPEED</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedAircraftDetail.velocity ? `${selectedAircraftDetail.velocity}km/h` : '—'}</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">HEADING</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedAircraftDetail.heading ? `${selectedAircraftDetail.heading}°` : '—'}</div>
-                </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[{ l: 'ALT', v: selectedAircraftDetail.altitude ? `${selectedAircraftDetail.altitude.toLocaleString()}m` : '—' }, { l: 'SPD', v: selectedAircraftDetail.velocity ? `${selectedAircraftDetail.velocity}km/h` : '—' }, { l: 'HDG', v: selectedAircraftDetail.heading ? `${selectedAircraftDetail.heading}°` : '—' }, { l: 'ZONE', v: selectedAircraftDetail.zone || '—' }].map(d => (
+                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2 border border-white/5"><div className="text-[7px] text-zinc-600 font-mono">{d.l}</div><div className="text-xs font-bold text-white font-mono">{d.v}</div></div>
+                ))}
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ═══════════ VESSEL POPUP ═══════════ */}
       <AnimatePresence>
         {selectedVessel && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="absolute top-[130px] left-4 sm:left-6 z-30 w-[380px] max-w-[calc(100%-2rem)] rounded-xl overflow-hidden"
-            style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)', border: `1px solid ${selectedVessel.color}40` }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+            className="absolute top-[110px] left-3 sm:left-5 z-30 w-[370px] max-w-[calc(100%-1.5rem)] rounded-xl overflow-hidden"
+            style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(30px)', border: `1px solid ${selectedVessel.color}30` }}>
             <div className="relative p-4">
-              <button onClick={() => setSelectedVessel(null)} className="absolute top-3 right-3 w-6 h-6 rounded-full bg-zinc-800/80 text-zinc-400 hover:text-[#ededed] flex items-center justify-center">
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <button onClick={() => setSelectedVessel(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 text-zinc-500 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${selectedVessel.color}20` }}>
-                  <Anchor className="w-5 h-5" style={{ color: selectedVessel.color }} />
-                </div>
-                <div>
-                  <div className="text-sm font-bold font-mono" style={{ color: selectedVessel.color }}>{selectedVessel.name}</div>
-                  <div className="text-[10px] font-mono text-zinc-500">{selectedVessel.fleet}</div>
-                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${selectedVessel.color}15` }}><Anchor className="w-6 h-6" style={{ color: selectedVessel.color }} /></div>
+                <div><div className="text-sm font-bold font-mono" style={{ color: selectedVessel.color }}>{selectedVessel.name}</div><div className="text-[10px] font-mono text-zinc-600">{selectedVessel.fleet}</div></div>
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">TYPE</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono capitalize">{selectedVessel.type.replace('_', ' ')}</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">AREA</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedVessel.area}</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">STATUS</div>
-                  <div className={`text-sm font-bold font-mono capitalize ${selectedVessel.status === 'deployed' || selectedVessel.status === 'active' ? 'text-green-400' : selectedVessel.status === 'high-alert' ? 'text-red-400' : 'text-zinc-400'}`}>
-                    {selectedVessel.status}
-                  </div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/20">
-                  <div className="text-[9px] text-zinc-500 font-mono">NATION</div>
-                  <div className="text-sm font-bold text-[#ededed] font-mono">{selectedVessel.nation}</div>
-                </div>
+              <div className="grid grid-cols-2 gap-1.5 mb-3">
+                {[{ l: 'TYPE', v: selectedVessel.type.replace('_', ' ') }, { l: 'AREA', v: selectedVessel.area }, { l: 'STATUS', v: selectedVessel.status }, { l: 'NATION', v: selectedVessel.nation }].map(d => (
+                  <div key={d.l} className="bg-white/[0.03] rounded-lg p-2 border border-white/5"><div className="text-[8px] text-zinc-600 font-mono">{d.l}</div><div className="text-sm font-bold text-white font-mono capitalize">{d.v}</div></div>
+                ))}
               </div>
-              <div className="text-xs font-mono text-zinc-400 bg-zinc-800/30 rounded-lg p-2 border border-zinc-700/10">
-                {selectedVessel.details}
-              </div>
+              <div className="text-xs font-mono text-zinc-500 bg-white/[0.02] rounded-lg p-2.5 border border-white/5">{selectedVessel.details}</div>
             </div>
           </motion.div>
         )}
@@ -1314,66 +917,24 @@ export default function IntelligenceClient() {
 
       {/* ═══════════ CSS ═══════════ */}
       <style jsx global>{`
-        .intel-tooltip {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-        }
-        .intel-tooltip .leaflet-tooltip-content {
-          margin: 0 !important;
-        }
-        .leaflet-tooltip-top:before,
-        .leaflet-tooltip-bottom:before,
-        .leaflet-tooltip-left:before,
-        .leaflet-tooltip-right:before {
-          display: none !important;
-        }
-        @keyframes pulse-marker {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.15); }
-        }
-        @keyframes scan-line {
-          0% { top: -2px; }
-          100% { top: 100%; }
-        }
-        .animate-scan-line {
-          animation: scan-line 8s linear infinite;
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .leaflet-control-zoom {
-          border: 1px solid rgba(255,255,255,0.1) !important;
-          border-radius: 8px !important;
-          overflow: hidden !important;
-        }
-        .leaflet-control-zoom a {
-          background: rgba(10,10,15,0.9) !important;
-          color: #ededed !important;
-          border-color: rgba(255,255,255,0.05) !important;
-          width: 30px !important;
-          height: 30px !important;
-          line-height: 30px !important;
-          font-size: 14px !important;
-        }
-        .leaflet-control-zoom a:hover {
-          background: rgba(30,30,40,0.95) !important;
-        }
-        /* scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        .cc-tooltip { background:transparent!important; border:none!important; box-shadow:none!important; padding:0!important; }
+        .cc-tooltip .leaflet-tooltip-content { margin:0!important; }
+        .leaflet-tooltip-top:before,.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before { display:none!important; }
+        @keyframes cc-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.6; transform:scale(1.2); } }
+        @keyframes cc-ring { 0% { opacity:0.5; transform:scale(0.8); } 100% { opacity:0; transform:scale(2); } }
+        @keyframes cc-scan { 0% { top:-2px; } 100% { top:100%; } }
+        @keyframes cc-radar { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+        .cc-scan-line { animation: cc-scan 6s linear infinite; }
+        .cc-radar-sweep { animation: cc-radar 4s linear infinite; }
+        .cc-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .cc-clamp-3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+        .leaflet-control-zoom { border:1px solid rgba(0,255,255,0.1)!important; border-radius:8px!important; overflow:hidden!important; }
+        .leaflet-control-zoom a { background:rgba(5,5,16,0.95)!important; color:#0ff!important; border-color:rgba(0,255,255,0.05)!important; width:32px!important; height:32px!important; line-height:32px!important; font-size:15px!important; }
+        .leaflet-control-zoom a:hover { background:rgba(0,255,255,0.1)!important; }
+        .cc-scrollbar::-webkit-scrollbar { width:3px; }
+        .cc-scrollbar::-webkit-scrollbar-track { background:transparent; }
+        .cc-scrollbar::-webkit-scrollbar-thumb { background:rgba(0,255,255,0.1); border-radius:3px; }
+        .cc-scrollbar::-webkit-scrollbar-thumb:hover { background:rgba(0,255,255,0.2); }
       `}</style>
     </div>
   );
