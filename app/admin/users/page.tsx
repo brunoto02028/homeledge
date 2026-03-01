@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Users, Plus, Shield, ShieldAlert, UserCheck, UserX, Loader2, AlertCircle,
-  Eye, EyeOff, Trash2, Pencil, X, Check, Search, ChevronDown, Lock, Unlock
+  Eye, EyeOff, Trash2, Pencil, X, Check, Search, ChevronDown, Lock, Unlock, Mail, Send
 } from 'lucide-react';
 import { ALL_PERMISSIONS, PERMISSION_LABELS, PLAN_PERMISSIONS, type PermissionKey } from '@/lib/permissions';
 
@@ -57,6 +57,8 @@ export default function AdminUsersPage() {
   const [editPlan, setEditPlan] = useState('');
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [editLoading, setEditLoading] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if ((session?.user as any)?.role !== 'admin') {
@@ -105,6 +107,9 @@ export default function AdminUsersPage() {
         setNewPlan('free');
         setNewPermissions([]);
         fetchUsers();
+        const emailStatus = data.emailSent ? 'Welcome email sent!' : 'User created (email may not have been sent — use Resend Email button)';
+        setToast({ msg: emailStatus, type: data.emailSent ? 'success' : 'error' });
+        setTimeout(() => setToast(null), 6000);
       } else {
         setCreateError(data.error || 'Failed to create user');
       }
@@ -139,6 +144,23 @@ export default function AdminUsersPage() {
       // ignore
     }
     setEditLoading(false);
+  };
+
+  const handleResendEmail = async (userId: string) => {
+    setResendingEmail(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/resend-email`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setToast({ msg: data.message || 'Email sent!', type: 'success' });
+      } else {
+        setToast({ msg: data.error || 'Failed to send email', type: 'error' });
+      }
+    } catch {
+      setToast({ msg: 'Failed to send email', type: 'error' });
+    }
+    setResendingEmail(null);
+    setTimeout(() => setToast(null), 5000);
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
@@ -201,6 +223,14 @@ export default function AdminUsersPage() {
           New User
         </Button>
       </div>
+
+      {toast && (
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${toast.type === 'success' ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'}`}>
+          {toast.type === 'success' ? <Mail className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          {toast.msg}
+          <button onClick={() => setToast(null)} className="ml-auto"><X className="h-3.5 w-3.5" /></button>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -406,6 +436,16 @@ export default function AdminUsersPage() {
                           }}
                         >
                           <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                          onClick={() => handleResendEmail(user.id)}
+                          disabled={resendingEmail === user.id}
+                          title="Resend welcome email with new password"
+                        >
+                          {resendingEmail === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         </Button>
                         <Button
                           size="sm"

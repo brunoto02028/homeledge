@@ -137,6 +137,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      emailSent,
       user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
     });
   } catch (error: any) {
