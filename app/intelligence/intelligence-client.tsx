@@ -620,11 +620,6 @@ export default function IntelligenceClient() {
     <div className="relative w-screen h-screen overflow-hidden bg-[#050510]" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
-      {/* Debug banner - REMOVE after fixing */}
-      <div className="absolute top-1 left-1/2 -translate-x-1/2 z-[99] bg-red-900/90 text-white text-[10px] font-mono px-3 py-1 rounded-full pointer-events-none">
-        {mapDebug}
-      </div>
-
       {/* ═══ HUD CORNER BRACKETS ═══ */}
       <div className="absolute inset-0 z-[2] pointer-events-none">
         <svg className="absolute top-2 left-2 w-12 h-12 text-cyan-400/30"><path d="M0 20 L0 0 L20 0" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
