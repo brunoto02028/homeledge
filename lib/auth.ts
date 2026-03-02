@@ -1,12 +1,10 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from './db';
 import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
   providers: [
     // Google OAuth — only active if env vars are set
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
@@ -113,6 +111,51 @@ export const authOptions: NextAuthOptions = {
     error: '/login',
   },
   callbacks: {
+    async signIn({ user, account }) {
+      // Google OAuth: find or create user in our DB
+      if (account?.provider === 'google') {
+        const email = user.email?.toLowerCase();
+        if (!email) return false;
+
+        let dbUser = await prisma.user.findUnique({ where: { email } });
+
+        if (!dbUser) {
+          // First-time Google sign-in: create user with defaults
+          dbUser = await prisma.user.create({
+            data: {
+              email,
+              fullName: user.name || email.split('@')[0],
+              passwordHash: '',
+              role: 'user',
+              status: 'active',
+              emailVerified: true,
+              onboardingCompleted: false,
+            },
+          });
+          console.log(`[Auth] New Google user created: ${email}`);
+        } else {
+          // Existing user signing in with Google
+          if (dbUser.status === 'suspended') return false;
+          const updates: any = { lastLoginAt: new Date() };
+          if (!dbUser.emailVerified) {
+            updates.emailVerified = true;
+            updates.status = 'active';
+          }
+          await prisma.user.update({ where: { id: dbUser.id }, data: updates });
+        }
+
+        // Attach DB fields to user object for jwt callback
+        user.id = dbUser.id;
+        (user as any).role = dbUser.role;
+        (user as any).permissions = (dbUser as any).permissions || [];
+        (user as any).plan = (dbUser as any).plan || 'free';
+        (user as any).onboardingCompleted = (dbUser as any).onboardingCompleted ?? true;
+        (user as any).mustChangePassword = false;
+        return true;
+      }
+      // Credentials: always allow (authorize already validated)
+      return true;
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
