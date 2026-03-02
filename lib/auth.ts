@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { prisma } from './db';
 import bcrypt from 'bcryptjs';
+import { getPermissionsForPlan } from './permissions';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -120,7 +121,8 @@ export const authOptions: NextAuthOptions = {
         let dbUser = await prisma.user.findUnique({ where: { email } });
 
         if (!dbUser) {
-          // First-time Google sign-in: create user with defaults
+          // First-time Google sign-in: create user with free plan permissions
+          const freePermissions = getPermissionsForPlan('none');
           dbUser = await prisma.user.create({
             data: {
               email,
@@ -130,9 +132,11 @@ export const authOptions: NextAuthOptions = {
               status: 'active',
               emailVerified: true,
               onboardingCompleted: false,
+              plan: 'none',
+              permissions: freePermissions,
             },
           });
-          console.log(`[Auth] New Google user created: ${email}`);
+          console.log(`[Auth] New Google user created: ${email} with plan=none, permissions=${freePermissions.length}`);
         } else {
           // Existing user signing in with Google
           if (dbUser.status === 'suspended') return false;
