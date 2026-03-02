@@ -3,69 +3,60 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   BarChart3, Users, Eye, Clock, MousePointerClick, ArrowDown,
-  Monitor, Smartphone, Tablet, Globe, RefreshCw, ChevronDown,
-  TrendingUp, ExternalLink, Target, Flame, Filter,
+  Monitor, Smartphone, Tablet, Globe, RefreshCw,
+  TrendingUp, ExternalLink, Target, Flame, Filter, Activity,
 } from 'lucide-react';
 
-interface OverviewData {
-  totalVisitors: number;
-  totalPageViews: number;
+interface SummaryData {
   totalEvents: number;
-  avgTimeOnPage: number;
-  avgScrollDepth: number;
+  uniqueSessions: number;
+  pageViews: number;
+  clicks: number;
+  activeUsers: number;
+  avgDuration: number;
+  days: number;
 }
 
 interface TopPage {
-  path: string;
-  views: number;
-  avgTime: number;
-  avgScroll: number;
-}
-
-interface DailyTrend {
-  date: string;
-  views: number;
-  uniqueVisitors: number;
-}
-
-interface ClickPoint {
-  x: number;
-  y: number;
-  type: string;
-  target: string;
-}
-
-interface TopClick {
-  target: string;
+  page: string;
   count: number;
 }
 
-interface Visitor {
-  id: string;
-  ip: string;
-  device: string;
-  browser: string;
-  os: string;
-  referrer: string | null;
-  firstSeen: string;
-  lastSeen: string;
-  totalVisits: number;
-  country: string | null;
-  city: string | null;
-  _count: { pageViews: number; events: number };
+interface HeatmapPoint {
+  x: number;
+  y: number;
+  page: string;
+  elementTag: string | null;
+  elementText: string | null;
+  elementId: string | null;
+}
+
+interface ScrollDepth {
+  page: string;
+  avgDepth: number;
+}
+
+interface DailyPoint {
+  date: string;
+  count: number;
+}
+
+interface RecentSession {
+  sessionId: string;
+  user: string;
+  userId: string | null;
+  viewport: string | null;
+  userAgent: string | null;
+  startedAt: string;
 }
 
 interface DashboardData {
-  period: { days: number; since: string };
-  overview: OverviewData;
+  summary: SummaryData;
   topPages: TopPage[];
-  dailyTrend: DailyTrend[];
-  devices: { device: string; count: number }[];
-  browsers: { browser: string; count: number }[];
-  referrers: { referrer: string; count: number }[];
-  heatmap: { path: string; clicks: ClickPoint[] };
-  topClicks: TopClick[];
-  recentVisitors: Visitor[];
+  heatmapData: HeatmapPoint[];
+  scrollDepths: ScrollDepth[];
+  daily: DailyPoint[];
+  recentSessions: RecentSession[];
 }
 
 const PERIOD_OPTIONS = [
@@ -86,6 +77,22 @@ function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
+function parseDevice(ua: string | null): string {
+  if (!ua) return 'desktop';
+  if (/mobile|android|iphone/i.test(ua)) return 'mobile';
+  if (/tablet|ipad/i.test(ua)) return 'tablet';
+  return 'desktop';
+}
+
+function parseBrowser(ua: string | null): string {
+  if (!ua) return 'Unknown';
+  if (/edg/i.test(ua)) return 'Edge';
+  if (/chrome/i.test(ua) && !/edg/i.test(ua)) return 'Chrome';
+  if (/firefox/i.test(ua)) return 'Firefox';
+  if (/safari/i.test(ua) && !/chrome/i.test(ua)) return 'Safari';
+  return 'Other';
+}
+
 function StatCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string | number; sub?: string; color: string }) {
   return (
     <div className="bg-card border rounded-xl p-5">
@@ -101,13 +108,12 @@ function StatCard({ icon: Icon, label, value, sub, color }: { icon: any; label: 
   );
 }
 
-// Simple bar chart using divs
 function MiniBarChart({ data, maxVal }: { data: { label: string; value: number; color?: string }[]; maxVal: number }) {
   return (
     <div className="space-y-2">
       {data.map((d, i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-24 truncate shrink-0">{d.label}</span>
+          <span className="text-xs text-muted-foreground w-28 truncate shrink-0">{d.label}</span>
           <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full ${d.color || 'bg-primary'} transition-all duration-500`}
@@ -122,7 +128,7 @@ function MiniBarChart({ data, maxVal }: { data: { label: string; value: number; 
 }
 
 // Heatmap canvas component
-function HeatmapCanvas({ clicks, width = 800, height = 1200 }: { clicks: ClickPoint[]; width?: number; height?: number }) {
+function HeatmapCanvas({ clicks, width = 800, height = 1200 }: { clicks: HeatmapPoint[]; width?: number; height?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -132,46 +138,47 @@ function HeatmapCanvas({ clicks, width = 800, height = 1200 }: { clicks: ClickPo
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear
     ctx.clearRect(0, 0, width, height);
-
-    // Draw gradient background representing a page
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, width, height);
 
-    // Draw grid lines
+    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
     for (let y = 0; y < height; y += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
     }
 
-    // Draw each click as a radial gradient dot
-    clicks.forEach((click) => {
-      const cx = (click.x / 100) * width;
-      const cy = (click.y / 100) * height;
-      const radius = 20;
+    // Aggregate nearby clicks for intensity
+    const grid: Record<string, number> = {};
+    clicks.forEach(click => {
+      const gx = Math.round((click.x / 100) * width / 20) * 20;
+      const gy = Math.round((click.y / 100) * height / 20) * 20;
+      const key = `${gx},${gy}`;
+      grid[key] = (grid[key] || 0) + 1;
+    });
+    const maxCount = Math.max(...Object.values(grid), 1);
 
-      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      if (click.type === 'cta_click') {
-        gradient.addColorStop(0, 'rgba(251, 191, 36, 0.8)');
-        gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
-      } else if (click.type === 'rage_click') {
-        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.9)');
+    // Draw heat dots
+    Object.entries(grid).forEach(([key, count]) => {
+      const [gx, gy] = key.split(',').map(Number);
+      const intensity = count / maxCount;
+      const radius = 15 + intensity * 25;
+
+      const gradient = ctx.createRadialGradient(gx, gy, 0, gx, gy, radius);
+      if (intensity > 0.7) {
+        gradient.addColorStop(0, `rgba(239, 68, 68, ${0.6 + intensity * 0.4})`);
         gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
-      } else if (click.type === 'nav_click') {
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.7)');
-        gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      } else if (intensity > 0.4) {
+        gradient.addColorStop(0, `rgba(251, 191, 36, ${0.5 + intensity * 0.3})`);
+        gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
       } else {
-        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.6)');
+        gradient.addColorStop(0, `rgba(16, 185, 129, ${0.3 + intensity * 0.3})`);
         gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
       }
 
       ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.arc(gx, gy, radius, 0, Math.PI * 2);
       ctx.fillStyle = gradient;
       ctx.fill();
     });
@@ -179,27 +186,22 @@ function HeatmapCanvas({ clicks, width = 800, height = 1200 }: { clicks: ClickPo
     // Legend
     ctx.font = '12px system-ui';
     const legend = [
-      { color: '#fbbf24', label: 'CTA Click' },
-      { color: '#ef4444', label: 'Rage Click' },
-      { color: '#38bdf8', label: 'Nav Click' },
-      { color: '#10b981', label: 'Click' },
+      { color: '#ef4444', label: 'Hot (many clicks)' },
+      { color: '#fbbf24', label: 'Warm' },
+      { color: '#10b981', label: 'Cool (few clicks)' },
     ];
     legend.forEach((item, i) => {
-      const lx = 16;
-      const ly = height - 80 + i * 20;
       ctx.fillStyle = item.color;
-      ctx.beginPath();
-      ctx.arc(lx, ly, 5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(16, height - 60 + i * 20, 5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.fillText(item.label, lx + 12, ly + 4);
+      ctx.fillText(item.label, 28, height - 56 + i * 20);
     });
   }, [clicks, width, height]);
 
   if (clicks.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-muted/30 rounded-xl border border-dashed">
-        <p className="text-sm text-muted-foreground">No click data yet for this page. Data will appear once visitors interact with analytics consent enabled.</p>
+        <p className="text-sm text-muted-foreground">No click data yet for this page.</p>
       </div>
     );
   }
@@ -211,21 +213,20 @@ function HeatmapCanvas({ clicks, width = 800, height = 1200 }: { clicks: ClickPo
   );
 }
 
-// Daily trend line chart (simple div-based)
-function DailyTrendChart({ data }: { data: DailyTrend[] }) {
+function DailyTrendChart({ data }: { data: DailyPoint[] }) {
   if (data.length === 0) return <p className="text-sm text-muted-foreground">No data yet.</p>;
-  const maxViews = Math.max(...data.map(d => d.views), 1);
+  const maxVal = Math.max(...data.map(d => d.count), 1);
 
   return (
     <div className="flex items-end gap-1 h-40">
       {data.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border rounded-lg px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-lg">
-            {formatDate(d.date)}: {d.views} views, {d.uniqueVisitors} unique
+            {formatDate(d.date)}: {d.count} events
           </div>
           <div
             className="w-full bg-primary/80 rounded-t hover:bg-primary transition-colors min-h-[2px]"
-            style={{ height: `${(d.views / maxViews) * 100}%` }}
+            style={{ height: `${(d.count / maxVal) * 100}%` }}
           />
           <span className="text-[9px] text-muted-foreground">{formatDate(d.date)}</span>
         </div>
@@ -238,13 +239,14 @@ export function AnalyticsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
-  const [heatmapPath, setHeatmapPath] = useState('/');
-  const [activeTab, setActiveTab] = useState<'overview' | 'heatmap' | 'visitors' | 'clicks'>('overview');
+  const [heatmapPage, setHeatmapPage] = useState('/dashboard');
+  const [activeTab, setActiveTab] = useState<'overview' | 'heatmap' | 'sessions' | 'clicks'>('overview');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/dashboard?days=${days}&path=${encodeURIComponent(heatmapPath)}`);
+      const pageFilter = activeTab === 'heatmap' ? `&page=${encodeURIComponent(heatmapPage)}` : '';
+      const res = await fetch(`/api/analytics?days=${days}${pageFilter}`);
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -254,9 +256,33 @@ export function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [days, heatmapPath]);
+  }, [days, heatmapPage, activeTab]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Derive device/browser stats from sessions
+  const deviceStats = data?.recentSessions.reduce((acc, s) => {
+    const d = parseDevice(s.userAgent);
+    acc[d] = (acc[d] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const browserStats = data?.recentSessions.reduce((acc, s) => {
+    const b = parseBrowser(s.userAgent);
+    acc[b] = (acc[b] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  // Top clicked elements from heatmap data
+  const clicksByElement = data?.heatmapData.reduce((acc, h) => {
+    const key = h.elementText || h.elementId || h.elementTag || 'unknown';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+  const topClicks = Object.entries(clicksByElement)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([target, count]) => ({ target, count }));
 
   const deviceIcon = (d: string) => {
     if (d === 'mobile') return Smartphone;
@@ -271,9 +297,9 @@ export function AnalyticsDashboard() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            Site Analytics
+            User Analytics
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Visitor behavior, click heatmaps, and conversion insights</p>
+          <p className="text-sm text-muted-foreground mt-1">User behavior tracking, click heatmaps, and session insights</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -293,7 +319,7 @@ export function AnalyticsDashboard() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b">
-        {(['overview', 'heatmap', 'visitors', 'clicks'] as const).map(tab => (
+        {(['overview', 'heatmap', 'sessions', 'clicks'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -303,7 +329,7 @@ export function AnalyticsDashboard() {
           >
             {tab === 'overview' && 'Overview'}
             {tab === 'heatmap' && 'Click Heatmap'}
-            {tab === 'visitors' && 'Visitors'}
+            {tab === 'sessions' && 'Sessions'}
             {tab === 'clicks' && 'Top Clicks'}
           </button>
         ))}
@@ -320,21 +346,20 @@ export function AnalyticsDashboard() {
           {/* === OVERVIEW TAB === */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <StatCard icon={Users} label="Unique Visitors" value={data.overview.totalVisitors} color="bg-blue-500" />
-                <StatCard icon={Eye} label="Page Views" value={data.overview.totalPageViews} color="bg-emerald-500" />
-                <StatCard icon={MousePointerClick} label="Total Events" value={data.overview.totalEvents} color="bg-amber-500" />
-                <StatCard icon={Clock} label="Avg. Time on Page" value={formatDuration(data.overview.avgTimeOnPage)} color="bg-purple-500" />
-                <StatCard icon={ArrowDown} label="Avg. Scroll Depth" value={`${data.overview.avgScrollDepth}%`} color="bg-rose-500" />
+                <StatCard icon={Users} label="Active Users" value={data.summary.activeUsers} color="bg-blue-500" />
+                <StatCard icon={Eye} label="Page Views" value={data.summary.pageViews} color="bg-emerald-500" />
+                <StatCard icon={MousePointerClick} label="Clicks" value={data.summary.clicks} color="bg-amber-500" />
+                <StatCard icon={Clock} label="Avg. Session" value={formatDuration(data.summary.avgDuration)} color="bg-purple-500" />
+                <StatCard icon={Activity} label="Sessions" value={data.summary.uniqueSessions} color="bg-rose-500" />
               </div>
 
               {/* Daily Trend */}
               <div className="bg-card border rounded-xl p-5">
                 <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" /> Daily Page Views
+                  <TrendingUp className="h-4 w-4 text-primary" /> Daily Activity
                 </h3>
-                <DailyTrendChart data={data.dailyTrend} />
+                <DailyTrendChart data={data.daily} />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -350,71 +375,73 @@ export function AnalyticsDashboard() {
                       data.topPages.slice(0, 10).map((p, i) => (
                         <div key={i} className="flex items-center justify-between text-sm">
                           <button
-                            onClick={() => { setHeatmapPath(p.path); setActiveTab('heatmap'); }}
-                            className="text-left hover:text-primary transition-colors truncate max-w-[60%] font-mono text-xs"
+                            onClick={() => { setHeatmapPage(p.page); setActiveTab('heatmap'); }}
+                            className="text-left hover:text-primary transition-colors truncate max-w-[70%] font-mono text-xs"
                           >
-                            {p.path}
+                            {p.page}
                           </button>
-                          <div className="flex items-center gap-4 text-muted-foreground text-xs">
-                            <span>{p.views} views</span>
-                            <span>{formatDuration(p.avgTime)}</span>
-                            <span>{p.avgScroll}% scroll</span>
-                          </div>
+                          <span className="text-xs text-muted-foreground">{p.count} views</span>
                         </div>
                       ))
                     )}
                   </div>
                 </div>
 
-                {/* Devices & Browsers */}
-                <div className="space-y-6">
-                  <div className="bg-card border rounded-xl p-5">
-                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                      <Monitor className="h-4 w-4 text-primary" /> Devices
-                    </h3>
-                    {data.devices.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No data yet.</p>
-                    ) : (
-                      <div className="flex gap-4">
-                        {data.devices.map((d, i) => {
-                          const Icon = deviceIcon(d.device);
-                          const total = data.devices.reduce((s, x) => s + x.count, 0);
-                          return (
-                            <div key={i} className="flex-1 text-center p-3 bg-muted/30 rounded-lg">
-                              <Icon className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                              <p className="text-lg font-bold">{total > 0 ? Math.round((d.count / total) * 100) : 0}%</p>
-                              <p className="text-xs text-muted-foreground capitalize">{d.device || 'Unknown'}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-card border rounded-xl p-5">
-                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-primary" /> Browsers
-                    </h3>
+                {/* Scroll Depths */}
+                <div className="bg-card border rounded-xl p-5">
+                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <ArrowDown className="h-4 w-4 text-primary" /> Scroll Depth by Page
+                  </h3>
+                  {data.scrollDepths.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No scroll data yet.</p>
+                  ) : (
                     <MiniBarChart
-                      data={data.browsers.map(b => ({ label: b.browser, value: b.count, color: 'bg-blue-500' }))}
-                      maxVal={Math.max(...data.browsers.map(b => b.count), 1)}
+                      data={data.scrollDepths.slice(0, 8).map(s => ({
+                        label: s.page,
+                        value: s.avgDepth,
+                        color: s.avgDepth > 70 ? 'bg-emerald-500' : s.avgDepth > 40 ? 'bg-amber-500' : 'bg-red-500'
+                      }))}
+                      maxVal={100}
                     />
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Referrers */}
-              {data.referrers.length > 0 && (
+              {/* Devices & Browsers */}
+              <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-card border rounded-xl p-5">
                   <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4 text-primary" /> Top Referrers
+                    <Monitor className="h-4 w-4 text-primary" /> Devices
+                  </h3>
+                  {Object.keys(deviceStats).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No data yet.</p>
+                  ) : (
+                    <div className="flex gap-4">
+                      {Object.entries(deviceStats).map(([device, count], i) => {
+                        const Icon = deviceIcon(device);
+                        const total = Object.values(deviceStats).reduce((s, c) => s + c, 0);
+                        return (
+                          <div key={i} className="flex-1 text-center p-3 bg-muted/30 rounded-lg">
+                            <Icon className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-lg font-bold">{total > 0 ? Math.round((count / total) * 100) : 0}%</p>
+                            <p className="text-xs text-muted-foreground capitalize">{device}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-card border rounded-xl p-5">
+                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-primary" /> Browsers
                   </h3>
                   <MiniBarChart
-                    data={data.referrers.map(r => ({ label: r.referrer || 'Direct', value: r.count, color: 'bg-emerald-500' }))}
-                    maxVal={Math.max(...data.referrers.map(r => r.count), 1)}
+                    data={Object.entries(browserStats).sort((a, b) => b[1] - a[1]).map(([b, c]) => ({ label: b, value: c, color: 'bg-blue-500' }))}
+                    maxVal={Math.max(...Object.values(browserStats), 1)}
                   />
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -424,14 +451,14 @@ export function AnalyticsDashboard() {
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium">Page:</label>
                 <select
-                  value={heatmapPath}
-                  onChange={(e) => setHeatmapPath(e.target.value)}
+                  value={heatmapPage}
+                  onChange={(e) => setHeatmapPage(e.target.value)}
                   className="px-3 py-2 rounded-lg border bg-background text-sm flex-1 max-w-md"
                 >
                   {data.topPages.map((p, i) => (
-                    <option key={i} value={p.path}>{p.path} ({p.views} views)</option>
+                    <option key={i} value={p.page}>{p.page} ({p.count} views)</option>
                   ))}
-                  {data.topPages.length === 0 && <option value="/">/ (homepage)</option>}
+                  {data.topPages.length === 0 && <option value="/dashboard">/dashboard</option>}
                 </select>
                 <button onClick={fetchData} className="px-3 py-2 rounded-lg border text-sm hover:bg-muted transition-colors">
                   Load Heatmap
@@ -439,30 +466,29 @@ export function AnalyticsDashboard() {
               </div>
               <div className="grid lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <h3 className="text-sm font-semibold mb-3">Click Heatmap — {data.heatmap.path}</h3>
+                  <h3 className="text-sm font-semibold mb-3">Click Heatmap — {heatmapPage}</h3>
                   <p className="text-xs text-muted-foreground mb-3">
-                    {data.heatmap.clicks.length} clicks recorded.
+                    {data.heatmapData.length} clicks recorded.
                     <span className="inline-flex items-center gap-1 ml-2">
-                      <span className="inline-block w-2 h-2 rounded-full bg-amber-400" /> CTA
-                      <span className="inline-block w-2 h-2 rounded-full bg-red-400 ml-2" /> Rage
-                      <span className="inline-block w-2 h-2 rounded-full bg-sky-400 ml-2" /> Nav
-                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-2" /> Other
+                      <span className="inline-block w-2 h-2 rounded-full bg-red-400" /> Hot
+                      <span className="inline-block w-2 h-2 rounded-full bg-amber-400 ml-2" /> Warm
+                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-2" /> Cool
                     </span>
                   </p>
-                  <HeatmapCanvas clicks={data.heatmap.clicks} />
+                  <HeatmapCanvas clicks={data.heatmapData} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <Target className="h-4 w-4 text-primary" /> Top Clicked Elements
                   </h3>
                   <div className="space-y-2">
-                    {data.topClicks.length === 0 ? (
+                    {topClicks.length === 0 ? (
                       <p className="text-sm text-muted-foreground">No click data yet.</p>
                     ) : (
-                      data.topClicks.slice(0, 15).map((c, i) => (
+                      topClicks.slice(0, 15).map((c, i) => (
                         <div key={i} className="flex items-start gap-2 text-xs p-2 rounded-lg bg-muted/30">
                           <span className="font-bold text-primary shrink-0">{c.count}×</span>
-                          <span className="text-muted-foreground font-mono break-all">{c.target}</span>
+                          <span className="text-muted-foreground break-all">{c.target}</span>
                         </div>
                       ))
                     )}
@@ -472,54 +498,44 @@ export function AnalyticsDashboard() {
             </div>
           )}
 
-          {/* === VISITORS TAB === */}
-          {activeTab === 'visitors' && (
+          {/* === SESSIONS TAB === */}
+          {activeTab === 'sessions' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold">Recent Visitors ({data.recentVisitors.length})</h3>
+              <h3 className="text-sm font-semibold">Recent Sessions ({data.recentSessions.length})</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">IP</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Location</th>
+                      <th className="py-3 pr-4 font-medium text-muted-foreground">User</th>
+                      <th className="py-3 pr-4 font-medium text-muted-foreground">Session ID</th>
                       <th className="py-3 pr-4 font-medium text-muted-foreground">Device</th>
                       <th className="py-3 pr-4 font-medium text-muted-foreground">Browser</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">OS</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Referrer</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Visits</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Pages</th>
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Events</th>
-                      <th className="py-3 font-medium text-muted-foreground">Last Seen</th>
+                      <th className="py-3 pr-4 font-medium text-muted-foreground">Viewport</th>
+                      <th className="py-3 font-medium text-muted-foreground">Started</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.recentVisitors.length === 0 ? (
-                      <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">No visitors recorded yet.</td></tr>
+                    {data.recentSessions.length === 0 ? (
+                      <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">No sessions recorded yet.</td></tr>
                     ) : (
-                      data.recentVisitors.map((v) => {
-                        const Icon = deviceIcon(v.device);
+                      data.recentSessions.map((s, i) => {
+                        const Icon = deviceIcon(parseDevice(s.userAgent));
                         return (
-                          <tr key={v.id} className="border-b hover:bg-muted/30 transition-colors">
-                            <td className="py-3 pr-4 font-mono text-xs">{v.ip}</td>
-                            <td className="py-3 pr-4 text-xs">
-                              {v.country ? (
-                                <span>{v.city ? `${v.city}, ` : ''}{v.country}</span>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                            </td>
+                          <tr key={i} className="border-b hover:bg-muted/30 transition-colors">
                             <td className="py-3 pr-4">
-                              <span className="inline-flex items-center gap-1.5 capitalize">
-                                <Icon className="h-3.5 w-3.5 text-muted-foreground" /> {v.device}
+                              <span className={`text-sm ${s.userId ? 'font-medium' : 'text-muted-foreground'}`}>
+                                {s.user}
                               </span>
                             </td>
-                            <td className="py-3 pr-4">{v.browser}</td>
-                            <td className="py-3 pr-4">{v.os}</td>
-                            <td className="py-3 pr-4 text-xs max-w-[150px] truncate">{v.referrer || '—'}</td>
-                            <td className="py-3 pr-4 font-medium">{v.totalVisits}</td>
-                            <td className="py-3 pr-4">{v._count.pageViews}</td>
-                            <td className="py-3 pr-4">{v._count.events}</td>
-                            <td className="py-3 text-xs text-muted-foreground">{new Date(v.lastSeen).toLocaleString('en-GB')}</td>
+                            <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">{s.sessionId.slice(0, 16)}…</td>
+                            <td className="py-3 pr-4">
+                              <span className="inline-flex items-center gap-1.5 capitalize text-xs">
+                                <Icon className="h-3.5 w-3.5 text-muted-foreground" /> {parseDevice(s.userAgent)}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4 text-xs">{parseBrowser(s.userAgent)}</td>
+                            <td className="py-3 pr-4 text-xs font-mono text-muted-foreground">{s.viewport || '—'}</td>
+                            <td className="py-3 text-xs text-muted-foreground">{new Date(s.startedAt).toLocaleString('en-GB')}</td>
                           </tr>
                         );
                       })
@@ -536,13 +552,13 @@ export function AnalyticsDashboard() {
               <div className="flex items-center gap-3 mb-4">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <select
-                  value={heatmapPath}
-                  onChange={(e) => setHeatmapPath(e.target.value)}
+                  value={heatmapPage}
+                  onChange={(e) => setHeatmapPage(e.target.value)}
                   className="px-3 py-2 rounded-lg border bg-background text-sm max-w-md"
                 >
-                  <option value="/">All pages</option>
+                  <option value="">All pages</option>
                   {data.topPages.map((p, i) => (
-                    <option key={i} value={p.path}>{p.path}</option>
+                    <option key={i} value={p.page}>{p.page}</option>
                   ))}
                 </select>
               </div>
@@ -551,11 +567,11 @@ export function AnalyticsDashboard() {
                   <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                     <MousePointerClick className="h-4 w-4 text-primary" /> Most Clicked Elements
                   </h3>
-                  {data.topClicks.length === 0 ? (
+                  {topClicks.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No click data yet.</p>
                   ) : (
                     <div className="space-y-3">
-                      {data.topClicks.map((c, i) => (
+                      {topClicks.map((c, i) => (
                         <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                           <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-sm shrink-0">
                             {i + 1}
@@ -571,21 +587,22 @@ export function AnalyticsDashboard() {
                 </div>
                 <div className="bg-card border rounded-xl p-5">
                   <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                    <Flame className="h-4 w-4 text-red-500" /> Rage Clicks
+                    <Flame className="h-4 w-4 text-red-500" /> Click Intensity
                   </h3>
                   <p className="text-xs text-muted-foreground mb-4">
-                    Rage clicks indicate user frustration — 3+ rapid clicks on the same area. Investigate these elements for UX issues.
+                    Elements with the highest click concentration. High-click areas may indicate important features or UX friction points.
                   </p>
-                  {data.heatmap.clicks.filter(c => c.type === 'rage_click').length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No rage clicks detected. Good UX!</p>
+                  {topClicks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No click data yet.</p>
                   ) : (
-                    <div className="space-y-2">
-                      {Array.from(new Set(data.heatmap.clicks.filter(c => c.type === 'rage_click').map(c => c.target))).slice(0, 10).map((target, i) => (
-                        <div key={i} className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400 break-all">
-                          {target}
-                        </div>
-                      ))}
-                    </div>
+                    <MiniBarChart
+                      data={topClicks.slice(0, 10).map(c => ({
+                        label: c.target.slice(0, 30),
+                        value: c.count,
+                        color: c.count > 50 ? 'bg-red-500' : c.count > 20 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }))}
+                      maxVal={Math.max(...topClicks.map(c => c.count), 1)}
+                    />
                   )}
                 </div>
               </div>

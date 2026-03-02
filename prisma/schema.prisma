@@ -711,6 +711,7 @@ model User {
   invoiceSubmissions InvoiceSubmission[]
   emailAccounts     EmailAccount[]
   emailSignatures   EmailSignature[]
+  analyticsEvents   AnalyticsEvent[]
 
   @@index([email])
   @@index([status])
@@ -1861,4 +1862,34 @@ model EmailSignature {
 
   @@index([userId])
   @@map("email_signatures")
+}
+
+// User Analytics & Heatmap Tracking
+model AnalyticsEvent {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  sessionId     String   @map("session_id")
+  eventType     String   @map("event_type") // page_view, click, session_start, session_end
+  page          String   // /dashboard, /files, /invoices, etc.
+  x             Float?   // click x position (percentage of viewport width)
+  y             Float?   // click y position (percentage of viewport height)
+  elementTag    String?  @map("element_tag") // button, a, input, div, etc.
+  elementText   String?  @map("element_text") // visible text of clicked element
+  elementId     String?  @map("element_id") // DOM id if present
+  viewport      String?  // "1920x1080" viewport dimensions
+  duration      Int?     // time on page in seconds (sent on page_view end)
+  scrollDepth   Int?     @map("scroll_depth") // max scroll depth percentage (0-100)
+  referrer      String?  // previous page
+  userAgent     String?  @map("user_agent")
+  metadata      Json?    // extra data
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([page])
+  @@index([createdAt])
+  @@map("analytics_events")
 }

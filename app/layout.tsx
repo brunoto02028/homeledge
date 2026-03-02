@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers"
 import { AppShell } from "@/components/header"
 import { CookieBanner } from "@/components/cookie-banner"
 import { SiteTracker } from "@/components/site-tracker"
+import { AnalyticsTracker } from "@/components/analytics-tracker"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
 
@@ -101,6 +102,7 @@ export default function RootLayout({
           </AppShell>
           <CookieBanner />
           <SiteTracker />
+          <AnalyticsTracker />
         </Providers>
       </body>
     </html>
