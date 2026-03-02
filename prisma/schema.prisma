@@ -705,6 +705,7 @@ model User {
   categorizationRules CategorizationRule[] @relation("UserCategorizationRules")
   categorizationFeedback CategorizationFeedback[] @relation("UserCategorizationFeedback")
   categorizationMode String @default("smart") @map("categorization_mode") // "conservative" | "smart" | "autonomous"
+  notificationPreferences Json? @map("notification_preferences") // { loginAlerts, deadlineReminders, budgetAlerts }
   mustChangePassword Boolean @default(false) @map("must_change_password")
   submissionProfiles SubmissionProfile[]
   invoiceSubmissions InvoiceSubmission[]

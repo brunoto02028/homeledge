@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendDeadlineReminderEmail, sendBudgetAlertEmail } from '@/lib/email';
+import { sendDeadlineReminderEmail, sendBudgetAlertEmail, getNotificationPrefs } from '@/lib/email';
 
 // Cron secret to prevent unauthorized access
 const CRON_SECRET = process.env.CRON_SECRET || 'homeledger-cron-2024';
@@ -45,9 +45,9 @@ export async function POST(request: Request) {
     const results = { deadlineEmails: 0, budgetEmails: 0, errors: [] as string[] };
 
     // Get all active users
-    const users = await prisma.user.findMany({
+    const users = await (prisma as any).user.findMany({
       where: { status: 'active' },
-      select: { id: true, email: true, fullName: true },
+      select: { id: true, email: true, fullName: true, notificationPreferences: true },
     });
 
     // ─── 1. Deadline Reminders ─────────────────────────────────────────
@@ -102,7 +102,8 @@ export async function POST(request: Request) {
           })
           .filter(Boolean) as any[];
 
-        if (relevantDeadlines.length > 0) {
+        const deadlinePrefs = getNotificationPrefs(user.notificationPreferences);
+        if (relevantDeadlines.length > 0 && deadlinePrefs.deadlineReminders) {
           await sendDeadlineReminderEmail(
             user.email,
             user.fullName || 'User',
@@ -172,7 +173,8 @@ export async function POST(request: Request) {
           }
         }
 
-        if (alerts.length > 0) {
+        const budgetPrefs = getNotificationPrefs(user.notificationPreferences);
+        if (alerts.length > 0 && budgetPrefs.budgetAlerts) {
           await sendBudgetAlertEmail(user.email, user.fullName || 'User', alerts);
           results.budgetEmails++;
         }

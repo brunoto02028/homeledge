@@ -289,14 +289,16 @@ export async function POST(
 
     // Send email notification (non-blocking)
     try {
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, fullName: true } });
+      const user = await (prisma as any).user.findUnique({ where: { id: userId }, select: { email: true, fullName: true, notificationPreferences: true } });
       const entity = connection.entityId
         ? await (prisma as any).entity.findUnique({ where: { id: connection.entityId }, select: { name: true } })
         : null;
       const companyName = entity?.name || companyNumber;
       const userName = user?.fullName || 'User';
 
-      if (user?.email) {
+      const { getNotificationPrefs } = await import('@/lib/email');
+      const prefs = getNotificationPrefs(user?.notificationPreferences);
+      if (user?.email && prefs.filingNotifications) {
         if (status === 'submitted') {
           const formSummary = filingType === 'change_registered_office'
             ? [formData.premises, formData.addressLine1, formData.addressLine2, formData.city, formData.region, formData.postcode, formData.country].filter(Boolean).join(', ')

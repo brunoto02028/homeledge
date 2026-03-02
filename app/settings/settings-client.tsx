@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import {
-  Settings, User, Lock, Palette, BarChart3, Loader2, CheckCircle, Mail,
+  Settings, User, Lock, Palette, BarChart3, Loader2, CheckCircle, Mail, Bell, BellOff,
   Calendar, Shield, FileText, Receipt, Landmark, KeyRound, ArrowLeftRight, Link2, Download, Image, Trash2,
   CreditCard, Sparkles, Crown, Zap, ExternalLink, Brain, ShieldCheck, Cpu, Eye,
 } from 'lucide-react';
@@ -30,6 +30,12 @@ interface UserProfile {
   idVerifiedAt?: string;
   amlRiskLevel?: string;
   amlScreenedAt?: string;
+  notificationPreferences?: {
+    loginAlerts?: boolean;
+    deadlineReminders?: boolean;
+    budgetAlerts?: boolean;
+    filingNotifications?: boolean;
+  } | null;
   _count: {
     bills: number;
     invoices: number;
@@ -56,6 +62,13 @@ export function SettingsClient() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [notifPrefs, setNotifPrefs] = useState({
+    loginAlerts: false,
+    deadlineReminders: true,
+    budgetAlerts: true,
+    filingNotifications: true,
+  });
+  const [savingNotif, setSavingNotif] = useState(false);
 
   useEffect(() => {
     // Load logo from server
@@ -71,6 +84,9 @@ export function SettingsClient() {
       .then(d => {
         setProfile(d);
         setFullName(d.fullName || '');
+        if (d.notificationPreferences) {
+          setNotifPrefs(prev => ({ ...prev, ...d.notificationPreferences }));
+        }
       })
       .catch(() => toast({ title: t('common.errorLoading'), variant: 'destructive' }))
       .finally(() => setLoading(false));
@@ -392,6 +408,68 @@ export function SettingsClient() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             {t('settings.changePassword')}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Email Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Bell className="h-5 w-5" /> Email Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Choose which email notifications you want to receive. Transactional emails (verification codes, password resets) are always sent.
+          </p>
+          {[
+            { key: 'loginAlerts' as const, label: 'Login Alerts', desc: 'Receive an email every time someone signs into your account.', defaultOff: true },
+            { key: 'deadlineReminders' as const, label: 'Deadline Reminders', desc: 'Daily email about upcoming tax deadlines and filing due dates.' },
+            { key: 'budgetAlerts' as const, label: 'Budget Alerts', desc: 'Email when your spending approaches or exceeds a budget limit.' },
+            { key: 'filingNotifications' as const, label: 'Filing Notifications', desc: 'Email when Companies House filings are submitted or rejected.' },
+          ].map(({ key, label, desc, defaultOff }) => (
+            <button
+              key={key}
+              disabled={savingNotif}
+              onClick={async () => {
+                const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+                setNotifPrefs(updated);
+                setSavingNotif(true);
+                try {
+                  const res = await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notificationPreferences: updated }),
+                  });
+                  if (!res.ok) throw new Error();
+                  toast({ title: `${label} ${updated[key] ? 'enabled' : 'disabled'}` });
+                } catch {
+                  setNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+                  toast({ title: 'Failed to update', variant: 'destructive' });
+                } finally { setSavingNotif(false); }
+              }}
+              className={`w-full text-left p-3 rounded-lg border transition-all flex items-center justify-between gap-3 ${
+                notifPrefs[key]
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-border hover:bg-muted/30'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {notifPrefs[key] ? <Bell className="h-4 w-4 text-emerald-500 flex-shrink-0" /> : <BellOff className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                <div className="min-w-0">
+                  <p className={`text-sm font-medium ${notifPrefs[key] ? '' : 'text-muted-foreground'}`}>{label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{desc}</p>
+                </div>
+              </div>
+              <div className={`w-10 h-5 rounded-full flex-shrink-0 transition-colors relative ${
+                notifPrefs[key] ? 'bg-emerald-500' : 'bg-muted'
+              }`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                  notifPrefs[key] ? 'left-[22px]' : 'left-0.5'
+                }`} />
+              </div>
+            </button>
+          ))}
         </CardContent>
       </Card>
 

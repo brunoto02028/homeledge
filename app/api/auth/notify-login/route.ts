@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { sendLoginAlertEmail } from '@/lib/email';
+import { sendLoginAlertEmail, getNotificationPrefs } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'Unknown Device';
 
     // Get user details
-    const user = await prisma.user.findUnique({
+    const user = await (prisma as any).user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, fullName: true, email: true }
+      select: { id: true, fullName: true, email: true, notificationPreferences: true }
     });
 
     if (!user) {
@@ -51,12 +51,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send login notification email (don't block on failure)
-    try {
-      await sendLoginAlertEmail(user.email, user.fullName, ipAddress, userAgent, new Date());
-    } catch (emailError) {
-      console.error('Failed to send login notification:', emailError);
-      // Don't fail if email fails
+    // Send login notification email only if user opted in
+    const prefs = getNotificationPrefs(user.notificationPreferences);
+    if (prefs.loginAlerts) {
+      try {
+        await sendLoginAlertEmail(user.email, user.fullName, ipAddress, userAgent, new Date());
+      } catch (emailError) {
+        console.error('Failed to send login notification:', emailError);
+      }
     }
 
     return NextResponse.json({ success: true });

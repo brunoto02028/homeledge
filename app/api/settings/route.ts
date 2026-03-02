@@ -25,6 +25,7 @@ export async function GET() {
         amlRiskLevel: true,
         amlScreenedAt: true,
         categorizationMode: true,
+        notificationPreferences: true,
         _count: {
           select: {
             bills: true,
@@ -53,7 +54,7 @@ export async function PUT(request: Request) {
   try {
     const userId = await requireUserId();
     const body = await request.json();
-    const { fullName, currentPassword, newPassword, categorizationMode } = body;
+    const { fullName, currentPassword, newPassword, categorizationMode, notificationPreferences } = body;
 
     const updateData: Record<string, unknown> = {};
 
@@ -74,6 +75,14 @@ export async function PUT(request: Request) {
 
     if (categorizationMode && ['conservative', 'smart', 'autonomous'].includes(categorizationMode)) {
       updateData.categorizationMode = categorizationMode;
+    }
+
+    if (notificationPreferences !== undefined) {
+      // Validate shape
+      const valid = typeof notificationPreferences === 'object' && notificationPreferences !== null;
+      if (valid) {
+        updateData.notificationPreferences = notificationPreferences;
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

@@ -207,9 +207,7 @@ export async function sendDeadlineReminderEmail(
       ${deadlineRows}
     </table>
     ${buttonHtml('View Tax Timeline', `${BASE_URL}/tax-timeline`)}
-    <p style="margin:0;font-size:13px;color:#94a3b8;">
-      You can manage notification preferences in your account settings.
-    </p>
+    ${unsubscribeFooter()}
   `, `${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need your attention`);
 
   return sendEmail(email, `HomeLedger: ${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need attention`, html);
@@ -244,6 +242,7 @@ export async function sendBudgetAlertEmail(
       ${alertRows}
     </table>
     ${buttonHtml('View Budgets', `${BASE_URL}/reports`)}
+    ${unsubscribeFooter()}
   `, `${alerts.length} budget alert${alerts.length > 1 ? 's' : ''}`);
 
   return sendEmail(email, `HomeLedger: Budget Alert — ${alerts.length} budget${alerts.length > 1 ? 's' : ''} at limit`, html);
@@ -321,6 +320,7 @@ export async function sendLoginAlertEmail(
     <p style="margin:16px 0;padding:12px 16px;background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">
       <strong>Wasn't you?</strong> Change your password immediately and contact support.
     </p>
+    ${unsubscribeFooter()}
   `, 'New login detected on your HomeLedger account');
 
   return sendEmail(email, 'New login detected on your HomeLedger account', html);
@@ -525,4 +525,37 @@ async function sendEmail(to: string, subject: string, html: string) {
 /** Check if email sending is configured */
 export function isEmailConfigured(): boolean {
   return !!(process.env.RESEND_API_KEY || (process.env.SMTP_USER && process.env.SMTP_PASS));
+}
+
+// ─── Notification Preferences ─────────────────────────────────────────────
+export interface NotificationPrefs {
+  loginAlerts: boolean;
+  deadlineReminders: boolean;
+  budgetAlerts: boolean;
+  filingNotifications: boolean;
+}
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  loginAlerts: false,        // OFF by default — most annoying
+  deadlineReminders: true,
+  budgetAlerts: true,
+  filingNotifications: true,
+};
+
+export function getNotificationPrefs(raw: any): NotificationPrefs {
+  if (!raw || typeof raw !== 'object') return { ...DEFAULT_PREFS };
+  return {
+    loginAlerts: raw.loginAlerts ?? DEFAULT_PREFS.loginAlerts,
+    deadlineReminders: raw.deadlineReminders ?? DEFAULT_PREFS.deadlineReminders,
+    budgetAlerts: raw.budgetAlerts ?? DEFAULT_PREFS.budgetAlerts,
+    filingNotifications: raw.filingNotifications ?? DEFAULT_PREFS.filingNotifications,
+  };
+}
+
+function unsubscribeFooter() {
+  return `
+    <p style="margin:16px 0 0;font-size:11px;color:#94a3b8;text-align:center;">
+      You can manage your email notification preferences in
+      <a href="${BASE_URL}/settings" style="color:#64748b;text-decoration:underline;">Settings</a>.
+    </p>`;
 }
