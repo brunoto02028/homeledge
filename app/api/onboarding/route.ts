@@ -94,7 +94,6 @@ export async function PUT(request: Request) {
               userId,
               name: fullName || updated.fullName || 'Personal',
               type: isBusiness ? 'sole_trader' : 'individual',
-              status: 'active',
               isDefault: true,
             },
           });
@@ -106,7 +105,6 @@ export async function PUT(request: Request) {
                 userId,
                 name: businessName || updated.businessName,
                 type: 'limited_company',
-                status: 'active',
                 isDefault: false,
               },
             });
