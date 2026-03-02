@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUserId } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { deleteFile } from '@/lib/s3';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,8 @@ export async function GET(req: NextRequest) {
         documentType: true,
         senderName: true,
         status: true,
+        entityId: true,
+        entity: { select: { name: true, type: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -91,9 +94,9 @@ export async function GET(req: NextRequest) {
         category: 'document',
         date: d.createdAt,
         detail: d.senderName || d.documentType || '',
-        entityId: null,
-        entityName: null,
-        entityType: null,
+        entityId: (d as any).entityId || null,
+        entityName: (d as any).entity?.name || null,
+        entityType: (d as any).entity?.type || null,
         fileType: guessFileType(d.fileName),
         status: d.status,
       });
@@ -134,6 +137,55 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching files:', error);
     return NextResponse.json({ error: 'Failed to fetch files' }, { status: 500 });
+  }
+}
+
+// DELETE /api/files — Delete a file by id and category
+export async function DELETE(req: NextRequest) {
+  try {
+    const userId = await requireUserId();
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id, category } = await req.json();
+    if (!id || !category) {
+      return NextResponse.json({ error: 'id and category are required' }, { status: 400 });
+    }
+
+    let cloudStoragePath: string | null = null;
+
+    if (category === 'statement') {
+      const record = await prisma.bankStatement.findFirst({ where: { id, userId } });
+      if (!record) return NextResponse.json({ error: 'Statement not found' }, { status: 404 });
+      cloudStoragePath = record.cloudStoragePath;
+      // BankTransactions cascade-delete automatically
+      await prisma.bankStatement.delete({ where: { id } });
+    } else if (category === 'document') {
+      const record = await prisma.scannedDocument.findFirst({ where: { id, userId } });
+      if (!record) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+      cloudStoragePath = record.cloudStoragePath;
+      await prisma.scannedDocument.delete({ where: { id } });
+    } else if (category === 'invoice') {
+      const record = await prisma.invoice.findFirst({ where: { id, userId } });
+      if (!record) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      cloudStoragePath = record.cloudStoragePath;
+      await prisma.invoice.delete({ where: { id } });
+    } else {
+      return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
+    }
+
+    // Delete from storage (S3 or local)
+    if (cloudStoragePath) {
+      try {
+        await deleteFile(cloudStoragePath);
+      } catch (storageErr) {
+        console.warn('[Files Delete] Storage cleanup failed (non-fatal):', storageErr);
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('[Files Delete] Error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete file' }, { status: 500 });
   }
 }
 

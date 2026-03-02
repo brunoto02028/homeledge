@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   FileText, FileSpreadsheet, ImageIcon, File, Search,
   Download, Eye, Loader2, FolderOpen, Building2, User,
-  Filter, Calendar, SortDesc, Upload, X, Check
+  Filter, Calendar, SortDesc, Upload, X, Check, Trash2, AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -61,6 +61,8 @@ export default function FilesClient() {
   const [showUpload, setShowUpload] = useState(false);
   const [uploadEntityId, setUploadEntityId] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<FileItem | null>(null);
   const { toast } = useToast();
 
   const fetchFiles = async () => {
@@ -112,13 +114,37 @@ export default function FilesClient() {
 
   const handleDownload = async (file: FileItem) => {
     try {
-      const res = await fetch(`/api/upload/get-url?path=${encodeURIComponent(file.path)}`);
+      const res = await fetch('/api/upload/get-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cloudStoragePath: file.path, isPublic: false }),
+      });
       if (res.ok) {
         const data = await res.json();
         window.open(data.url, '_blank');
       }
     } catch {
-      console.error('Failed to get download URL');
+      toast({ title: 'Download failed', variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async (file: FileItem) => {
+    setDeletingId(file.id);
+    try {
+      const res = await fetch('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: file.id, category: file.category }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      toast({ title: 'File deleted', description: file.name });
+      setConfirmDelete(null);
+      fetchFiles();
+    } catch (err: any) {
+      toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -328,21 +354,78 @@ export default function FilesClient() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleDownload(file)}
-                        title="Download / View"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleDownload(file)}
+                          title="Download / View"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          onClick={() => setConfirmDelete(file)}
+                          title="Delete"
+                          disabled={deletingId === file.id}
+                        >
+                          {deletingId === file.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Delete File</h3>
+                  <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <div className="font-medium truncate">{confirmDelete.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {confirmDelete.category === 'statement' && 'This will also delete all transactions from this statement.'}
+                  {confirmDelete.category === 'document' && 'This will permanently remove this document.'}
+                  {confirmDelete.category === 'invoice' && 'This will permanently remove this invoice.'}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)} disabled={!!deletingId}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(confirmDelete)}
+                  disabled={!!deletingId}
+                >
+                  {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
