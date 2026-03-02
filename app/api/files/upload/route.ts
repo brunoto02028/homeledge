@@ -34,12 +34,9 @@ export async function POST(req: NextRequest) {
       data: {
         userId,
         entityId: entityId && entityId !== 'none' ? entityId : null,
-        originalFileName: fileName,
+        fileName,
         cloudStoragePath,
-        mimeType: contentType,
-        fileSize: buffer.length,
-        status: 'uploaded',
-        extractedData: {},
+        status: 'pending',
       },
     });
 
