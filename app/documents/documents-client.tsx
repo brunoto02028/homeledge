@@ -150,14 +150,12 @@ export function DocumentsClient() {
       if (res.ok) {
         const data = await res.json()
         setEntities(data.map((e: any) => ({ id: e.id, name: e.name, type: e.type })))
-        if (data.length > 0 && !selectedEntityId) {
-          setSelectedEntityId(data[0].id)
-        }
+        // Don't auto-select — start with 'all' so unassigned docs are visible
       }
     } catch (error) {
       console.error('Error fetching entities:', error)
     }
-  }, [selectedEntityId])
+  }, [])
 
   useEffect(() => {
     fetchDocuments()
@@ -536,11 +534,12 @@ export function DocumentsClient() {
         <div className="flex items-center gap-2">
           {/* Entity Selector */}
           {entities.length > 0 && (
-            <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
+            <Select value={selectedEntityId || 'all'} onValueChange={(v) => setSelectedEntityId(v === 'all' ? '' : v)}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select entity" />
+                <SelectValue placeholder="All Entities" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Entities</SelectItem>
                 {entities.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
                     {e.name}
@@ -914,6 +913,39 @@ export function DocumentsClient() {
                   </div>
                 </div>
               )}
+
+              {/* Assign Entity */}
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="text-sm font-medium mb-2">Assign to Entity</div>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedDoc.entityId || 'none'}
+                    onValueChange={async (v) => {
+                      const newEntityId = v === 'none' ? null : v;
+                      try {
+                        const res = await fetch(`/api/documents/${selectedDoc.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ entityId: newEntityId }),
+                        });
+                        if (res.ok) {
+                          toast({ title: 'Entity updated' });
+                          fetchDocuments();
+                          setSelectedDoc({ ...selectedDoc, entityId: newEntityId });
+                        }
+                      } catch { toast({ title: 'Error updating entity', variant: 'destructive' }); }
+                    }}
+                  >
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="No entity" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No entity</SelectItem>
+                      {entities.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
               {/* Send to Correspondence */}
               {selectedDoc.documentType === 'official_notice' && (
