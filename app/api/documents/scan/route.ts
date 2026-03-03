@@ -20,22 +20,24 @@ The user lives in the UK. Common providers include Council Tax offices, Anglian 
 Analyze the provided image and extract the following fields into a strict JSON format:
 
 1. **sender_name**: The organization or person sending the letter. Look for letterheads, logos, sender addresses.
-2. **document_type**: Classify as one of: ["bill", "reminder", "fine", "information", "contract", "tax_return", "official_notice", "check", "other"]. Use "official_notice" for government/HMRC notices, CT603, SA302, penalty notices, Companies House letters, and any formal correspondence from authorities.
-3. **summary**: A 1-sentence summary of what the document is about (e.g., "Council Tax bill for the 2026/2027 period").
-4. **action_required**: Boolean. True if the user needs to do something (pay, sign, reply). False if it's just for filing.
-5. **suggested_task_title**: If action is required, suggest a task title (e.g., "Pay Council Tax", "Sign Tenancy Agreement", "Reply to HMRC by 15/03").
-6. **financial_data**:
+2. **sender_category**: Classify the sender as ONE of: ["utility_water", "utility_gas", "utility_electric", "utility_council_tax", "telecom", "government_hmrc", "government_council", "government_companies_house", "government_dvla", "bank", "insurance", "legal", "employer", "medical", "landlord", "other"]. Use the most specific match.
+3. **document_type**: Classify as one of: ["bill", "reminder", "fine", "information", "contract", "tax_return", "official_notice", "check", "other"]. Use "official_notice" for government/HMRC notices, CT603, SA302, penalty notices, Companies House letters, and any formal correspondence from authorities.
+4. **routing_suggestion**: Suggest where this document should go: ["bills", "correspondence", "insurance", "archive"]. Use "bills" for recurring utility/telecom/council tax bills. Use "correspondence" for official government/legal/bank letters. Use "insurance" for insurance documents. Use "archive" for informational documents.
+5. **summary**: A 1-sentence summary of what the document is about (e.g., "Council Tax bill for the 2026/2027 period").
+6. **action_required**: Boolean. True if the user needs to do something (pay, sign, reply). False if it's just for filing.
+7. **suggested_task_title**: If action is required, suggest a task title (e.g., "Pay Council Tax", "Sign Tenancy Agreement", "Reply to HMRC by 15/03").
+8. **financial_data**:
    - "amount_due": Float (0.0 if none).
    - "currency": "GBP" (always use GBP for UK documents).
    - "due_date": "YYYY-MM-DD" (or null if not found).
    - "issue_date": "YYYY-MM-DD" (or null if not found).
-7. **extracted_details**:
+9. **extracted_details**:
    - "account_number": Any reference/account number found (Council Tax ref, customer number, etc.).
    - "sort_code": If bank sort code is present (format: XX-XX-XX).
    - "bank_account_number": If bank account number is present.
    - "reference_number": Any payment reference, invoice number, etc.
-8. **confidence_score**: 0.0 to 1.0 (How readable and clear is the document?).
-9. **tags**: Array of relevant tags like ["tax_document", "utility", "government", "insurance", "urgent"].
+10. **confidence_score**: 0.0 to 1.0 (How readable and clear is the document?).
+11. **tags**: Array of relevant tags like ["tax_document", "utility", "government", "insurance", "urgent", "water", "gas", "electric", "telecom", "council_tax", "bank", "medical", "legal"].
 
 # HANDLING EDGE CASES
 - If the date is in UK format (DD/MM/YYYY), convert it to ISO format (YYYY-MM-DD).
@@ -44,7 +46,12 @@ Analyze the provided image and extract the following fields into a strict JSON f
 - For Council Tax, extract the band if visible.
 - For HMRC documents, always add "tax_document" to tags.
 - For HMRC notices (CT603, SA302, etc.), classify as "official_notice" and add "hmrc", "government" to tags. Extract the UTR, payment reference, and filing deadline as due_date.
-- For utility bills, note the meter readings if visible.
+- For utility bills, note the meter readings if visible. Classify water (Anglian Water, Thames Water, etc.) as utility_water, gas (British Gas, etc.) as utility_gas, electricity (EDF, SSE, etc.) as utility_electric.
+- For telecom (BT, Sky, Virgin Media, O2, EE, Three, Vodafone, TalkTalk), classify as telecom.
+- For bank correspondence (Barclays, HSBC, Lloyds, NatWest, Monzo, Starling, etc.), classify as bank.
+- For insurance (Aviva, Admiral, Direct Line, AA, etc.), classify as insurance.
+- For NHS/medical letters, classify as medical.
+- For landlord/letting agent letters, classify as landlord.
 
 # UK-SPECIFIC IDENTIFIERS
 - Council Tax Reference: Usually 8-9 digits
@@ -59,7 +66,9 @@ Return ONLY the raw JSON object. Do not include markdown formatting (no \`\`\`js
 Example output:
 {
   "sender_name": "Ipswich Borough Council",
+  "sender_category": "utility_council_tax",
   "document_type": "bill",
+  "routing_suggestion": "bills",
   "summary": "Council Tax bill for property at 123 High Street for the 2026/2027 tax year, Band D.",
   "action_required": true,
   "suggested_task_title": "Pay Council Tax - £1,850",
@@ -203,29 +212,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Update document with extracted data
+    const updateData: any = {
+      senderName: extractedData.sender_name || null,
+      senderCategory: extractedData.sender_category || null,
+      documentType: documentType as any,
+      summary: extractedData.summary || null,
+      actionRequired: extractedData.action_required || false,
+      suggestedTaskTitle: extractedData.suggested_task_title || null,
+      amountDue: extractedData.financial_data?.amount_due || null,
+      currency: extractedData.financial_data?.currency || 'GBP',
+      dueDate: extractedData.financial_data?.due_date ? new Date(extractedData.financial_data.due_date) : null,
+      issueDate: extractedData.financial_data?.issue_date ? new Date(extractedData.financial_data.issue_date) : null,
+      accountNumber: extractedData.extracted_details?.account_number || null,
+      sortCode: extractedData.extracted_details?.sort_code || null,
+      bankAccountNumber: extractedData.extracted_details?.bank_account_number || null,
+      referenceNumber: extractedData.extracted_details?.reference_number || null,
+      confidenceScore: extractedData.confidence_score || null,
+      tags: extractedData.tags || [],
+      rawExtraction: extractedData,
+      entityId: finalEntityId,
+      status: extractedData.action_required ? 'action_required' : 'processed',
+      processedAt: new Date(),
+    };
     const updatedDocument = await prisma.scannedDocument.update({
       where: { id: document.id },
-      data: {
-        senderName: extractedData.sender_name || null,
-        documentType: documentType as any,
-        summary: extractedData.summary || null,
-        actionRequired: extractedData.action_required || false,
-        suggestedTaskTitle: extractedData.suggested_task_title || null,
-        amountDue: extractedData.financial_data?.amount_due || null,
-        currency: extractedData.financial_data?.currency || 'GBP',
-        dueDate: extractedData.financial_data?.due_date ? new Date(extractedData.financial_data.due_date) : null,
-        issueDate: extractedData.financial_data?.issue_date ? new Date(extractedData.financial_data.issue_date) : null,
-        accountNumber: extractedData.extracted_details?.account_number || null,
-        sortCode: extractedData.extracted_details?.sort_code || null,
-        bankAccountNumber: extractedData.extracted_details?.bank_account_number || null,
-        referenceNumber: extractedData.extracted_details?.reference_number || null,
-        confidenceScore: extractedData.confidence_score || null,
-        tags: extractedData.tags || [],
-        rawExtraction: extractedData,
-        entityId: finalEntityId,
-        status: extractedData.action_required ? 'action_required' : 'processed',
-        processedAt: new Date(),
-      },
+      data: updateData,
     });
 
     return NextResponse.json({

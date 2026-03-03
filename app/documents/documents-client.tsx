@@ -24,6 +24,7 @@ interface ScannedDocument {
   cloudStoragePath: string
   fileName: string
   senderName: string | null
+  senderCategory: string | null
   documentType: string
   summary: string | null
   actionRequired: boolean
@@ -41,6 +42,7 @@ interface ScannedDocument {
   linkedBillId: string | null
   linkedActionId: string | null
   entityId: string | null
+  rawExtraction: any
   createdAt: string
   processedAt: string | null
 }
@@ -67,6 +69,37 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   official_notice: 'Official Notice',
   check: 'Cheque',
   other: 'Other',
+}
+
+const SENDER_CATEGORY_CONFIG: Record<string, { label: string; color: string; group: string }> = {
+  utility_water: { label: '💧 Water', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300', group: 'utilities' },
+  utility_gas: { label: '🔥 Gas', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300', group: 'utilities' },
+  utility_electric: { label: '⚡ Electric', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300', group: 'utilities' },
+  utility_council_tax: { label: '🏛️ Council Tax', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300', group: 'government' },
+  telecom: { label: '📱 Telecom', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300', group: 'utilities' },
+  government_hmrc: { label: '🏛️ HMRC', color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300', group: 'government' },
+  government_council: { label: '🏛️ Council', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300', group: 'government' },
+  government_companies_house: { label: '🏢 Companies House', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300', group: 'government' },
+  government_dvla: { label: '🚗 DVLA', color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300', group: 'government' },
+  bank: { label: '🏦 Bank', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300', group: 'financial' },
+  insurance: { label: '🛡️ Insurance', color: 'bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-300', group: 'financial' },
+  legal: { label: '⚖️ Legal', color: 'bg-slate-100 dark:bg-slate-900/30 text-slate-800 dark:text-slate-300', group: 'other' },
+  employer: { label: '💼 Employer', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300', group: 'other' },
+  medical: { label: '🏥 Medical', color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300', group: 'other' },
+  landlord: { label: '🏠 Landlord', color: 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300', group: 'other' },
+  other: { label: '📄 Other', color: 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300', group: 'other' },
+}
+
+function getRoutingSuggestion(doc: ScannedDocument): string {
+  const cat = doc.senderCategory || ''
+  const routing = doc.rawExtraction?.routing_suggestion
+  if (routing) return routing
+  if (cat.startsWith('utility_') || cat === 'telecom') return 'bills'
+  if (cat.startsWith('government_') || cat === 'bank' || cat === 'legal') return 'correspondence'
+  if (cat === 'insurance') return 'insurance'
+  if (doc.documentType === 'bill') return 'bills'
+  if (doc.documentType === 'official_notice') return 'correspondence'
+  return 'archive'
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -513,13 +546,30 @@ export function DocumentsClient() {
     setQrLoading(false)
   }
 
+  const catOf = (doc: ScannedDocument) => {
+    if (doc.senderCategory) return doc.senderCategory
+    // Fallback for older docs without senderCategory
+    const s = (doc.senderName || '').toLowerCase()
+    const t = doc.tags || []
+    if (t.includes('hmrc') || s.includes('hmrc') || s.includes('hm revenue')) return 'government_hmrc'
+    if (t.includes('companies_house') || s.includes('companies house')) return 'government_companies_house'
+    if (s.includes('water') || t.includes('water')) return 'utility_water'
+    if (s.includes('gas') || t.includes('gas')) return 'utility_gas'
+    if (s.includes('electric') || s.includes('edf') || s.includes('sse') || t.includes('electric')) return 'utility_electric'
+    if (s.includes('council tax')) return 'utility_council_tax'
+    if (s.includes('bt') || s.includes('sky') || s.includes('virgin') || s.includes('vodafone') || s.includes('o2') || s.includes('ee') || s.includes('three') || t.includes('telecom')) return 'telecom'
+    if (t.includes('bank') || s.includes('bank') || s.includes('barclays') || s.includes('hsbc') || s.includes('lloyds') || s.includes('natwest') || s.includes('monzo')) return 'bank'
+    if (t.includes('insurance') || s.includes('insurance') || s.includes('aviva') || s.includes('admiral')) return 'insurance'
+    return 'other'
+  }
+
   const filteredDocuments = documents.filter(doc => {
     if (activeTab === 'all') return true
     if (activeTab === 'action') return doc.status === 'action_required'
     if (activeTab === 'filed') return doc.status === 'filed' || doc.status === 'processed'
-    if (activeTab === 'hmrc') return doc.tags?.some(t => t === 'hmrc' || t === 'tax_document') || doc.senderName?.toLowerCase().includes('hmrc') || doc.senderName?.toLowerCase().includes('hm revenue')
-    if (activeTab === 'companies_house') return doc.tags?.some(t => t === 'companies_house') || doc.senderName?.toLowerCase().includes('companies house')
-    if (activeTab === 'official') return doc.documentType === 'official_notice'
+    if (activeTab === 'utilities') { const c = catOf(doc); return c.startsWith('utility_') || c === 'telecom' }
+    if (activeTab === 'government') { const c = catOf(doc); return c.startsWith('government_') || c === 'utility_council_tax' }
+    if (activeTab === 'financial') { const c = catOf(doc); return c === 'bank' || c === 'insurance' }
     return true
   })
 
@@ -636,14 +686,14 @@ export function DocumentsClient() {
             <TabsTrigger value="action" className="text-red-600">
               Action ({documents.filter(d => d.status === 'action_required').length})
             </TabsTrigger>
-            <TabsTrigger value="hmrc">
-              HMRC ({documents.filter(d => d.tags?.some(t => t === 'hmrc' || t === 'tax_document') || d.senderName?.toLowerCase().includes('hmrc')).length})
+            <TabsTrigger value="utilities">
+              Utilities ({documents.filter(d => { const c = catOf(d); return c.startsWith('utility_') || c === 'telecom' }).length})
             </TabsTrigger>
-            <TabsTrigger value="companies_house">
-              Companies House ({documents.filter(d => d.tags?.some(t => t === 'companies_house') || d.senderName?.toLowerCase().includes('companies house')).length})
+            <TabsTrigger value="government">
+              Government ({documents.filter(d => { const c = catOf(d); return c.startsWith('government_') || c === 'utility_council_tax' }).length})
             </TabsTrigger>
-            <TabsTrigger value="official">
-              Official ({documents.filter(d => d.documentType === 'official_notice').length})
+            <TabsTrigger value="financial">
+              Financial ({documents.filter(d => { const c = catOf(d); return c === 'bank' || c === 'insurance' }).length})
             </TabsTrigger>
             <TabsTrigger value="filed">
               Filed ({documents.filter(d => d.status === 'filed' || d.status === 'processed').length})
@@ -655,6 +705,10 @@ export function DocumentsClient() {
               {filteredDocuments.map((doc) => {
                 const statusConfig = STATUS_CONFIG[doc.status] || STATUS_CONFIG.pending
                 const StatusIcon = statusConfig.icon
+
+                const docCat = catOf(doc)
+                const catConfig = SENDER_CATEGORY_CONFIG[docCat] || SENDER_CATEGORY_CONFIG.other
+                const routing = getRoutingSuggestion(doc)
 
                 return (
                   <Card key={doc.id} className="hover:shadow-md transition-shadow">
@@ -668,10 +722,15 @@ export function DocumentsClient() {
                             {DOCUMENT_TYPE_LABELS[doc.documentType] || doc.documentType}
                           </CardDescription>
                         </div>
-                        <Badge className={`${statusConfig.color} flex-shrink-0 ml-2`}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {statusConfig.label}
-                        </Badge>
+                        <div className="flex flex-col gap-1 items-end flex-shrink-0 ml-2">
+                          <Badge className={statusConfig.color}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {statusConfig.label}
+                          </Badge>
+                          <Badge className={catConfig.color} variant="secondary">
+                            {catConfig.label}
+                          </Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -702,18 +761,6 @@ export function DocumentsClient() {
                         </div>
                       )}
 
-                      {/* Tags */}
-                      {doc.tags && doc.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {doc.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              <Tag className="h-2 w-2 mr-1" />
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
                       {/* Linked Indicator */}
                       {(doc.linkedBillId || doc.linkedActionId) && (
                         <div className="flex items-center gap-2 text-xs text-green-600">
@@ -723,8 +770,18 @@ export function DocumentsClient() {
                         </div>
                       )}
 
+                      {/* Smart Routing Suggestion */}
+                      {doc.status !== 'filed' && doc.status !== 'processed' && !doc.linkedBillId && !doc.linkedActionId && (
+                        <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded text-xs text-blue-700 dark:text-blue-300">
+                          {routing === 'bills' && 'AI suggests: Create a recurring Bill'}
+                          {routing === 'correspondence' && 'AI suggests: Send to Correspondence'}
+                          {routing === 'insurance' && 'AI suggests: Link to Insurance'}
+                          {routing === 'archive' && 'AI suggests: Archive for records'}
+                        </div>
+                      )}
+
                       {/* Actions */}
-                      <div className="flex gap-2 pt-2 border-t">
+                      <div className="flex gap-2 pt-2 border-t flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
@@ -734,7 +791,8 @@ export function DocumentsClient() {
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
-                        {doc.status === 'action_required' && !doc.linkedBillId && (
+                        {/* Smart routing button — show primary action based on AI suggestion */}
+                        {routing === 'bills' && !doc.linkedBillId && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -742,7 +800,18 @@ export function DocumentsClient() {
                             className="flex-1"
                           >
                             <Receipt className="h-3 w-3 mr-1" />
-                            Bill
+                            Create Bill
+                          </Button>
+                        )}
+                        {(routing === 'correspondence' || doc.documentType === 'official_notice') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendToCorrespondence(doc)}
+                            className="flex-1"
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Correspondence
                           </Button>
                         )}
                         {doc.status === 'action_required' && !doc.linkedActionId && (
@@ -754,17 +823,6 @@ export function DocumentsClient() {
                           >
                             <ListTodo className="h-3 w-3 mr-1" />
                             Task
-                          </Button>
-                        )}
-                        {doc.documentType === 'official_notice' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSendToCorrespondence(doc)}
-                            className="flex-1"
-                          >
-                            <FileText className="h-3 w-3 mr-1" />
-                            Correspondence
                           </Button>
                         )}
                         <Button

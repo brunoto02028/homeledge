@@ -1079,6 +1079,7 @@ model ScannedDocument {
   fileName           String         @map("file_name")
   // AI Extracted Data
   senderName         String?        @map("sender_name")
+  senderCategory     String?        @map("sender_category") // utility_water, utility_gas, utility_electric, telecom, government_hmrc, government_council, government_companies_house, bank, insurance, legal, employer, medical, other
   documentType       DocumentType   @default(other) @map("document_type")
   summary            String?
   actionRequired     Boolean        @default(false) @map("action_required")
