@@ -172,11 +172,11 @@ export const authOptions: NextAuthOptions = {
         token.lastRefreshed = Date.now();
       }
 
-      // Refresh user data from DB every 60 seconds or on explicit session update
-      // This ensures admin permission changes propagate quickly without re-login
+      // Refresh user data from DB every 10 seconds or on explicit session update
+      // This ensures admin permission/visibility changes propagate quickly without re-login
       const now = Date.now();
       const lastRefreshed = (token.lastRefreshed as number) || 0;
-      const shouldRefresh = trigger === 'update' || (now - lastRefreshed) > 60 * 1000;
+      const shouldRefresh = trigger === 'update' || (now - lastRefreshed) > 10 * 1000;
 
       if (shouldRefresh && token.id) {
         try {
