@@ -30,6 +30,7 @@ export async function GET() {
         emailVerified: true,
         plan: true,
         permissions: true,
+        hiddenModules: true,
         mustChangePassword: true,
         createdAt: true,
         lastLoginAt: true,

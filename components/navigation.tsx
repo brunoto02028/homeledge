@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Eye, EyeOff } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { ROUTE_PERMISSION_MAP, hasPermission, ADMIN_ONLY_MODULES, type PermissionKey } from "@/lib/permissions"
@@ -51,7 +51,6 @@ const adminItems = [
 ]
 
 const NAV_ORDER_KEY = 'homeledger-nav-order'
-const HIDE_LOCKED_KEY = 'homeledger-hide-locked'
 
 function getStoredOrder(): string[] | null {
   if (typeof window === 'undefined') return null
@@ -73,10 +72,10 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
   const userPermissions: string[] = (session?.user as any)?.permissions || []
   const isAdmin = userRole === 'admin'
   const isAccountant = userRole === 'accountant'
+  const hiddenModules: string[] = (session?.user as any)?.hiddenModules || []
   const [orderedItems, setOrderedItems] = useState(navItems)
   const [reorderMode, setReorderMode] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [hideLockedItems, setHideLockedItems] = useState(false)
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
 
@@ -91,10 +90,9 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
     saveOrder(sorted.map(i => i.href))
   }, [t])
 
-  // Load order + locked visibility on mount
+  // Load order on mount
   useEffect(() => {
     setMounted(true)
-    try { const h = localStorage.getItem(HIDE_LOCKED_KEY); if (h === 'true') setHideLockedItems(true) } catch {}
     const stored = getStoredOrder()
     if (stored && stored.length > 0) {
       const map = new Map(navItems.map(item => [item.href, item]))
@@ -140,17 +138,10 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
     setLocale(locale === 'en' ? 'pt-BR' : 'en')
   }
 
-  const toggleHideLocked = () => {
-    const next = !hideLockedItems
-    setHideLockedItems(next)
-    try { localStorage.setItem(HIDE_LOCKED_KEY, String(next)) } catch {}
-  }
-
-  // Filter out admin-only modules for non-admin users (completely hidden)
-  // Optionally hide locked modules when toggle is on
+  // Filter out admin-only modules and admin-hidden modules for non-admin users
   const visibleItems = orderedItems.filter(item => {
     if (ADMIN_ONLY_MODULES.includes(item.permission) && !isAdmin) return false
-    if (hideLockedItems && !isAdmin && !hasPermission(userRole, userPermissions, item.permission)) return false
+    if (!isAdmin && hiddenModules.includes(item.permission)) return false
     return true
   })
 
@@ -180,21 +171,6 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
             <ArrowDownAZ className="h-3 w-3" />
             A-Z
           </button>
-          {!isAdmin && (
-            <button
-              onClick={toggleHideLocked}
-              title={hideLockedItems ? 'Show locked items' : 'Hide locked items'}
-              className={cn(
-                "flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-medium transition-colors ml-auto",
-                hideLockedItems
-                  ? "bg-primary/20 text-primary"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-              )}
-            >
-              {hideLockedItems ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-              {hideLockedItems ? 'Show' : 'Hide'}
-            </button>
-          )}
         </div>
       )}
       {visibleItems.map((item, index) => {

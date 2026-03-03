@@ -44,6 +44,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (Array.isArray(body.permissions)) {
       updateData.permissions = body.permissions;
     }
+    if (Array.isArray(body.hiddenModules)) {
+      updateData.hiddenModules = body.hiddenModules;
+    }
 
     const updated = await prisma.user.update({
       where: { id },

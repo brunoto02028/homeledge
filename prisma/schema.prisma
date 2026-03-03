@@ -669,6 +669,7 @@ model User {
   plan              String      @default("free")
   planExpiresAt     DateTime?   @map("plan_expires_at")
   permissions       String[]    @default([])
+  hiddenModules     String[]    @default([]) @map("hidden_modules")
   logoUrl           String?     @map("logo_url")
   idVerified        Boolean     @default(false) @map("id_verified")
   idVerifiedAt      DateTime?   @map("id_verified_at")

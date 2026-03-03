@@ -22,6 +22,7 @@ interface UserItem {
   emailVerified: boolean;
   plan: string;
   permissions: string[];
+  hiddenModules: string[];
   mustChangePassword: boolean;
   createdAt: string;
   lastLoginAt: string | null;
@@ -56,6 +57,7 @@ export default function AdminUsersPage() {
   const [editPassword, setEditPassword] = useState('');
   const [editPlan, setEditPlan] = useState('');
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [editHiddenModules, setEditHiddenModules] = useState<string[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -128,6 +130,7 @@ export default function AdminUsersPage() {
       if (editPassword) body.newPassword = editPassword;
       if (editPlan) body.plan = editPlan;
       body.permissions = editPermissions;
+      body.hiddenModules = editHiddenModules;
 
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
@@ -433,6 +436,7 @@ export default function AdminUsersPage() {
                             setEditPassword('');
                             setEditPlan(user.plan || 'free');
                             setEditPermissions(user.permissions || []);
+                            setEditHiddenModules(user.hiddenModules || []);
                           }}
                         >
                           <Pencil className="h-4 w-4" />
@@ -510,19 +514,24 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  {/* Permissions Section */}
+                  {/* Permissions Section — 3 states: Granted / Locked (visible) / Hidden */}
                   <div className="mt-3 pt-3 border-t">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-xs font-semibold flex items-center gap-1">
                         <Lock className="h-3 w-3" />
                         Feature Permissions
                         {editPermissions.length === 0 && <span className="text-green-600 font-normal ml-1">(All access)</span>}
-                        {editPermissions.length > 0 && <span className="text-amber-600 font-normal ml-1">({editPermissions.length}/{ALL_PERMISSIONS.length})</span>}
+                        {editPermissions.length > 0 && (
+                          <span className="text-amber-600 font-normal ml-1">
+                            ({editPermissions.length}/{ALL_PERMISSIONS.length} granted
+                            {editHiddenModules.length > 0 && `, ${editHiddenModules.length} hidden`})
+                          </span>
+                        )}
                       </Label>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <button
                           type="button"
-                          onClick={() => setEditPermissions([])}
+                          onClick={() => { setEditPermissions([]); setEditHiddenModules([]); }}
                           className="text-[10px] px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200"
                         >
                           All Access
@@ -531,7 +540,7 @@ export default function AdminUsersPage() {
                           <button
                             key={plan}
                             type="button"
-                            onClick={() => { setEditPermissions([...PLAN_PERMISSIONS[plan]]); setEditPlan(plan); }}
+                            onClick={() => { setEditPermissions([...PLAN_PERMISSIONS[plan]]); setEditPlan(plan); setEditHiddenModules([]); }}
                             className={`text-[10px] px-2 py-0.5 rounded capitalize ${
                               editPlan === plan && editPermissions.length > 0
                                 ? 'bg-blue-600 text-white'
@@ -543,36 +552,60 @@ export default function AdminUsersPage() {
                         ))}
                       </div>
                     </div>
+                    <div className="flex items-center gap-4 mb-2 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><Unlock className="h-3 w-3 text-green-500" /> Granted</span>
+                      <span className="flex items-center gap-1"><Lock className="h-3 w-3 text-red-500" /> Locked (visible)</span>
+                      <span className="flex items-center gap-1"><EyeOff className="h-3 w-3 text-slate-500" /> Hidden</span>
+                      <span className="ml-auto italic">Click to cycle state</span>
+                    </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1.5">
                       {ALL_PERMISSIONS.map(perm => {
-                        const checked = editPermissions.length === 0 || editPermissions.includes(perm);
-                        const isRestricted = editPermissions.length > 0 && !editPermissions.includes(perm);
+                        const isGranted = editPermissions.length === 0 || editPermissions.includes(perm);
+                        const isHidden = editHiddenModules.includes(perm);
+                        // 3 states: granted → locked → hidden → granted
+                        const state: 'granted' | 'locked' | 'hidden' = isGranted ? 'granted' : isHidden ? 'hidden' : 'locked';
+
+                        const cycleState = () => {
+                          if (state === 'granted') {
+                            // granted → locked (remove from permissions, not hidden)
+                            if (editPermissions.length === 0) {
+                              setEditPermissions(ALL_PERMISSIONS.filter(p => p !== perm) as string[]);
+                            } else {
+                              setEditPermissions(editPermissions.filter(p => p !== perm));
+                            }
+                            setEditHiddenModules(editHiddenModules.filter(p => p !== perm));
+                          } else if (state === 'locked') {
+                            // locked → hidden (add to hiddenModules)
+                            setEditHiddenModules([...editHiddenModules, perm]);
+                          } else {
+                            // hidden → granted (add to permissions, remove from hidden)
+                            if (editPermissions.length === 0) {
+                              // Already all access, just remove from hidden
+                            } else {
+                              setEditPermissions([...editPermissions, perm]);
+                            }
+                            setEditHiddenModules(editHiddenModules.filter(p => p !== perm));
+                          }
+                        };
+
                         return (
-                          <label
+                          <button
                             key={perm}
-                            className={`flex items-center gap-1.5 text-[11px] rounded px-2 py-1 cursor-pointer transition-colors ${
-                              isRestricted
-                                ? 'bg-red-50 dark:bg-red-950/20 text-red-500 line-through'
-                                : 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400'
+                            type="button"
+                            onClick={cycleState}
+                            className={`flex items-center gap-1.5 text-[11px] rounded px-2 py-1.5 cursor-pointer transition-colors text-left ${
+                              state === 'granted'
+                                ? 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400'
+                                : state === 'locked'
+                                  ? 'bg-red-50 dark:bg-red-950/20 text-red-500 line-through'
+                                  : 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 line-through opacity-60'
                             }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => {
-                                if (editPermissions.length === 0) {
-                                  // Switch from "all" to explicit: select all except this one
-                                  setEditPermissions(ALL_PERMISSIONS.filter(p => p !== perm) as string[]);
-                                } else if (editPermissions.includes(perm)) {
-                                  setEditPermissions(editPermissions.filter(p => p !== perm));
-                                } else {
-                                  setEditPermissions([...editPermissions, perm]);
-                                }
-                              }}
-                              className="h-3 w-3 rounded"
-                            />
+                            {state === 'granted' && <Unlock className="h-3 w-3 text-green-500 shrink-0" />}
+                            {state === 'locked' && <Lock className="h-3 w-3 text-red-500 shrink-0" />}
+                            {state === 'hidden' && <EyeOff className="h-3 w-3 text-slate-400 shrink-0" />}
                             {PERMISSION_LABELS[perm]}
-                          </label>
+                          </button>
                         );
                       })}
                     </div>
