@@ -18,8 +18,10 @@ import { useEntityContext } from '@/components/entity-context';
 import {
   Shield, Plus, Pencil, Trash2, Loader2, Car, Heart, Home, Plane,
   Stethoscope, Dog, Briefcase, MoreHorizontal, Calendar, AlertTriangle,
-  CheckCircle2, PoundSterling, Clock, Bike,
+  CheckCircle2, PoundSterling, Clock, Bike, Phone, FileText, ExternalLink,
+  HelpCircle, TrendingDown, TrendingUp, Minus, ChevronRight, Lightbulb, Scale,
 } from 'lucide-react';
+import { getClaimGuide, getComparisonLinks, getPriceAssessment, RENEWAL_TIPS, type ClaimGuide } from '@/lib/insurance-data';
 
 const POLICY_TYPES = [
   { value: 'car', label: 'Car Insurance', icon: Car, color: 'bg-blue-500' },
@@ -97,6 +99,10 @@ export function InsuranceClient() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [filterType, setFilterType] = useState('all');
+  const [claimGuidePolicy, setClaimGuidePolicy] = useState<InsurancePolicy | null>(null);
+  const [emergencyPolicy, setEmergencyPolicy] = useState<InsurancePolicy | null>(null);
+  const [comparePolicy, setComparePolicy] = useState<InsurancePolicy | null>(null);
+  const [renewalTipsOpen, setRenewalTipsOpen] = useState(false);
 
   const fetchPolicies = useCallback(async () => {
     try {
@@ -242,9 +248,16 @@ export function InsuranceClient() {
           </h1>
           <p className="text-muted-foreground mt-1">Manage all your insurance policies in one place</p>
         </div>
-        <Button onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Add Policy
-        </Button>
+        <div className="flex gap-2">
+          {activePolicies.length > 0 && (
+            <Button variant="outline" onClick={() => setRenewalTipsOpen(true)} className="gap-1.5">
+              <Lightbulb className="h-4 w-4" /> Renewal Tips
+            </Button>
+          )}
+          <Button onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Policy
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -430,6 +443,54 @@ export function InsuranceClient() {
                     )}
                   </div>
 
+                  {/* Price Assessment */}
+                  {(() => {
+                    const monthly = policy.premiumFrequency === 'monthly' ? policy.premiumAmount
+                      : policy.premiumFrequency === 'quarterly' ? policy.premiumAmount / 3
+                      : policy.premiumAmount / 12;
+                    const assessment = getPriceAssessment(policy.type, monthly);
+                    return (
+                      <div className={`flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-md ${
+                        assessment.status === 'low' ? 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300' :
+                        assessment.status === 'high' ? 'bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300' :
+                        'bg-muted/50 text-muted-foreground'
+                      }`}>
+                        {assessment.status === 'low' && <TrendingDown className="h-3 w-3 flex-shrink-0" />}
+                        {assessment.status === 'high' && <TrendingUp className="h-3 w-3 flex-shrink-0" />}
+                        {assessment.status === 'typical' && <Minus className="h-3 w-3 flex-shrink-0" />}
+                        <span className="truncate">{assessment.message}</span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-1.5 pt-1 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs gap-1"
+                      onClick={() => setClaimGuidePolicy(policy)}
+                    >
+                      <HelpCircle className="h-3 w-3" /> How to Claim
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs gap-1 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      onClick={() => setEmergencyPolicy(policy)}
+                    >
+                      <Phone className="h-3 w-3" /> Emergency
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                      onClick={() => setComparePolicy(policy)}
+                    >
+                      <Scale className="h-3 w-3" /> Compare
+                    </Button>
+                  </div>
+
                   {policy.entity && (
                     <div className="pt-1 border-t">
                       <span className="text-xs text-muted-foreground">{policy.entity.name}</span>
@@ -613,6 +674,300 @@ export function InsuranceClient() {
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editId ? 'Update' : 'Add Policy'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══ CLAIM GUIDE MODAL ═══ */}
+      {claimGuidePolicy && (() => {
+        const guide = getClaimGuide(claimGuidePolicy.type);
+        return (
+          <Dialog open={!!claimGuidePolicy} onOpenChange={(open) => { if (!open) setClaimGuidePolicy(null); }}>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <HelpCircle className="h-5 w-5 text-primary" />
+                  {guide.title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-5">
+                {/* Time limit warning */}
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50">
+                  <Clock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">{guide.timeLimit}</span>
+                </div>
+
+                {/* Your policy info */}
+                <div className="p-3 rounded-lg bg-muted/50 text-sm space-y-1">
+                  <div className="font-semibold">{claimGuidePolicy.providerName}</div>
+                  {claimGuidePolicy.policyNumber && <div>Policy #: <span className="font-mono">{claimGuidePolicy.policyNumber}</span></div>}
+                  {claimGuidePolicy.coverageAmount && <div>Coverage: {formatCurrency(claimGuidePolicy.coverageAmount)}</div>}
+                  {claimGuidePolicy.excessAmount && <div>Excess: {formatCurrency(claimGuidePolicy.excessAmount)}</div>}
+                </div>
+
+                {/* Steps */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <ChevronRight className="h-4 w-4" /> Step-by-Step Guide
+                  </h4>
+                  {guide.steps.map((step) => (
+                    <div key={step.step} className={`flex gap-3 p-3 rounded-lg ${step.important ? 'bg-red-50 dark:bg-red-950/20 border border-red-200/50' : 'bg-muted/30'}`}>
+                      <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${step.important ? 'bg-red-500 text-white' : 'bg-primary/10 text-primary'}`}>
+                        {step.step}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">{step.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{step.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Documents Needed */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Documents You Will Need
+                  </h4>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {guide.documentsNeeded.map((doc, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                        {doc}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tips */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-amber-500" /> Important Tips
+                  </h4>
+                  <div className="space-y-1.5">
+                    {guide.tips.map((tip, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs">
+                        <span className="text-amber-500 mt-0.5 flex-shrink-0">•</span>
+                        <span className="text-muted-foreground">{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setClaimGuidePolicy(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* ═══ EMERGENCY INFO MODAL ═══ */}
+      {emergencyPolicy && (() => {
+        const guide = getClaimGuide(emergencyPolicy.type);
+        return (
+          <Dialog open={!!emergencyPolicy} onOpenChange={(open) => { if (!open) setEmergencyPolicy(null); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <Phone className="h-5 w-5" /> Emergency Information
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Big emergency number */}
+                <div className="text-center p-6 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/50">
+                  <div className="text-3xl font-bold text-red-600 dark:text-red-400">{guide.emergencyNumber}</div>
+                  <div className="text-sm text-red-700/70 dark:text-red-300/70 mt-1">{guide.emergencyLabel}</div>
+                </div>
+
+                {/* Policy details at a glance */}
+                <div className="p-4 rounded-xl bg-muted/50 space-y-2">
+                  <div className="font-bold text-lg">{emergencyPolicy.providerName}</div>
+                  {emergencyPolicy.policyNumber && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Policy Number</span>
+                      <span className="font-mono font-bold text-lg">{emergencyPolicy.policyNumber}</span>
+                    </div>
+                  )}
+                  {emergencyPolicy.holderName && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Policy Holder</span>
+                      <span className="font-semibold">{emergencyPolicy.holderName}</span>
+                    </div>
+                  )}
+                  {emergencyPolicy.coverageAmount && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Coverage</span>
+                      <span className="font-semibold">{formatCurrency(emergencyPolicy.coverageAmount)}</span>
+                    </div>
+                  )}
+                  {emergencyPolicy.excessAmount && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Excess</span>
+                      <span className="font-semibold">{formatCurrency(emergencyPolicy.excessAmount)}</span>
+                    </div>
+                  )}
+                  {(emergencyPolicy.type === 'car' || emergencyPolicy.type === 'motorcycle') && emergencyPolicy.vehicleReg && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Vehicle</span>
+                      <span className="font-semibold">{emergencyPolicy.vehicleReg}</span>
+                    </div>
+                  )}
+                  {emergencyPolicy.coverType && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">Cover</span>
+                      <span className="font-semibold">{COVER_TYPES.find(c => c.value === emergencyPolicy.coverType)?.label}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick first steps */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">First Steps:</h4>
+                  {guide.steps.slice(0, 3).map((step) => (
+                    <div key={step.step} className="flex items-start gap-2 text-sm">
+                      <div className="h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                        {step.step}
+                      </div>
+                      <span className="text-muted-foreground">{step.title}: {step.description.split('.')[0]}.</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEmergencyPolicy(null)}>Close</Button>
+                <Button onClick={() => { setEmergencyPolicy(null); setClaimGuidePolicy(emergencyPolicy); }}>
+                  Full Claim Guide <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* ═══ COMPARE PRICES MODAL ═══ */}
+      {comparePolicy && (() => {
+        const links = getComparisonLinks(comparePolicy.type);
+        const typeConfig = POLICY_TYPES.find(pt => pt.value === comparePolicy.type);
+        const monthly = comparePolicy.premiumFrequency === 'monthly' ? comparePolicy.premiumAmount
+          : comparePolicy.premiumFrequency === 'quarterly' ? comparePolicy.premiumAmount / 3
+          : comparePolicy.premiumAmount / 12;
+        const assessment = getPriceAssessment(comparePolicy.type, monthly);
+        return (
+          <Dialog open={!!comparePolicy} onOpenChange={(open) => { if (!open) setComparePolicy(null); }}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Scale className="h-5 w-5 text-blue-600" /> Compare Prices — {typeConfig?.label}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Current premium vs market */}
+                <div className={`p-4 rounded-xl text-sm ${
+                  assessment.status === 'low' ? 'bg-green-50 dark:bg-green-950/20 border border-green-200/50' :
+                  assessment.status === 'high' ? 'bg-red-50 dark:bg-red-950/20 border border-red-200/50' :
+                  'bg-muted/50'
+                }`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    {assessment.status === 'low' && <TrendingDown className="h-4 w-4 text-green-600" />}
+                    {assessment.status === 'high' && <TrendingUp className="h-4 w-4 text-red-600" />}
+                    {assessment.status === 'typical' && <Minus className="h-4 w-4" />}
+                    <span className="font-semibold">Your Premium: {formatCurrency(monthly)}/month</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{assessment.message}</p>
+                </div>
+
+                {/* Comparison sites */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Compare on these sites:</h4>
+                  {links.map((link) => (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group"
+                    >
+                      <span className="font-medium text-sm">{link.name}</span>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                    </a>
+                  ))}
+                </div>
+
+                {/* Smart tips */}
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb className="h-4 w-4 text-amber-600" />
+                    <span className="font-semibold text-sm text-amber-800 dark:text-amber-200">Pro Tips</span>
+                  </div>
+                  <ul className="space-y-1 text-xs text-amber-700/80 dark:text-amber-300/80">
+                    <li>• Compare at least 3 sites — prices vary significantly</li>
+                    <li>• Call your current insurer with the best quote — they often match it</li>
+                    <li>• Start comparing 3-4 weeks before renewal</li>
+                    <li>• Pay annually to save 15-20% vs monthly</li>
+                  </ul>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setComparePolicy(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* ═══ RENEWAL TIPS MODAL ═══ */}
+      <Dialog open={renewalTipsOpen} onOpenChange={setRenewalTipsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-amber-500" /> Renewal & Savings Tips
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Policies expiring soon */}
+            {activePolicies.filter(p => isExpiringSoon(p.endDate)).length > 0 && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50">
+                <h4 className="font-semibold text-sm text-amber-800 dark:text-amber-200 mb-2">
+                  <AlertTriangle className="h-4 w-4 inline mr-1" /> Expiring Soon
+                </h4>
+                {activePolicies.filter(p => isExpiringSoon(p.endDate)).map(p => {
+                  const typeConfig = POLICY_TYPES.find(pt => pt.value === p.type);
+                  return (
+                    <div key={p.id} className="flex items-center justify-between text-sm py-1">
+                      <span>{typeConfig?.label} — {p.providerName}</span>
+                      <Badge variant="outline" className="text-amber-600">{new Date(p.endDate!).toLocaleDateString('en-GB')}</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* General tips */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Money-Saving Tips:</h4>
+              {RENEWAL_TIPS.general.map((tip, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-muted-foreground">{tip}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Annual savings estimate */}
+            {totalAnnualPremium > 0 && (
+              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/50">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Your total annual insurance spend: </span>
+                  <span className="font-bold text-lg">{formatCurrency(totalAnnualPremium)}</span>
+                </div>
+                <div className="text-xs text-green-700/80 dark:text-green-300/80 mt-1">
+                  By comparing and switching, UK consumers save an average of 20-30% — that could be <strong>{formatCurrency(totalAnnualPremium * 0.25)}/year</strong> for you!
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenewalTipsOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

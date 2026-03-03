@@ -11,7 +11,7 @@ HomeLedger is a UK household finance management app. Key features and navigation
 - **Categories**: HMRC-aligned categories with deductibility percentages. Smart Rules auto-categorise transactions using 4-layer engine (deterministic rules, pattern matching, AI, feedback loop).
 - **Bills**: Track recurring bills, subscriptions, direct debits.
 - **Invoices**: Create and manage invoices, track payments.
-- **Insurance**: Manage insurance policies (motor, life, home, health).
+- **Insurance**: Full insurance management — 9 types (car, motorcycle, life, home, health, travel, pet, business, other). Each policy card shows: provider, premium, coverage, excess, renewal date, NCD, vehicle details, price assessment vs UK market average. Action buttons: "How to Claim" (step-by-step guide per type), "Emergency" (quick access to emergency numbers + policy details), "Compare" (smart links to GoCompare, CompareTheMarket, MoneySupermarket, Confused.com, uSwitch). "Renewal Tips" button shows money-saving advice. AI Price Estimator compares user's premium against typical UK ranges from ABI data.
 - **Correspondence**: Track letters and correspondence with entities.
 - **Documents (Capture & Classify)**: Scan documents via camera/QR code, AI extracts data.
 - **Vault**: Secure credential storage for logins and reference numbers.
