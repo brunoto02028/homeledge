@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   TrendingUp, TrendingDown, Wallet, PiggyBank, CreditCard, Target,
   Plus, Trash2, Pencil, Check, X, Loader2, ArrowUpRight, ArrowDownRight,
@@ -155,6 +156,7 @@ export function ProjectionsClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="projections" />
       <div>
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <BarChart3 className="h-7 w-7 text-blue-700" />

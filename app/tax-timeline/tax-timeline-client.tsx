@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/loading-spinner';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   CalendarClock, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle,
   CheckCircle, Clock, Calendar, Building2, Receipt, Landmark, FileText,
@@ -86,6 +87,7 @@ export function TaxTimelineClient() {
 
   return (
     <div className="p-6 space-y-6">
+      <ModuleGuide moduleKey="taxTimeline" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

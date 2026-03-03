@@ -17,6 +17,7 @@ import { LoadingSpinner } from '@/components/loading-spinner'
 import { useTranslation } from '@/lib/i18n'
 import { EmptyState } from '@/components/empty-state'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { ModuleGuide } from '@/components/module-guide'
 
 interface ScannedDocument {
   id: string
@@ -476,6 +477,7 @@ export function DocumentsClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="documents" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

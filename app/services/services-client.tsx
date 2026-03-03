@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   ShoppingBag, Loader2, Star, Clock, CheckCircle2, Package,
   CreditCard, ArrowRight, FileText, AlertCircle, ExternalLink,
@@ -142,6 +143,7 @@ export function ServicesClient() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <ModuleGuide moduleKey="services" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-3">

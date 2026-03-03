@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import { ModuleGuide } from '@/components/module-guide';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,6 +158,7 @@ export function SettingsClient() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl mx-auto">
+      <ModuleGuide moduleKey="settings" />
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Settings className="h-7 w-7 text-primary" />

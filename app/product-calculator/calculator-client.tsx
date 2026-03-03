@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/lib/i18n';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   Calculator, Plus, Trash2, Info, Package, Truck, Clock, PoundSterling,
   TrendingUp, BarChart3, HelpCircle, ChevronDown, ChevronUp, Save,
@@ -269,6 +270,7 @@ export function ProductCalculatorClient() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <ModuleGuide moduleKey="productCalculator" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

@@ -16,6 +16,7 @@ import { useTranslation } from "@/lib/i18n"
 import { ScanUploadButton } from "@/components/scan-upload-button"
 import { useEntityContext } from "@/components/entity-context"
 import { Badge } from "@/components/ui/badge"
+import { ModuleGuide } from '@/components/module-guide'
 
 export function BillsClient() {
   const { t } = useTranslation()
@@ -165,6 +166,7 @@ export function BillsClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="bills" />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">{t('bills.title')}</h2>

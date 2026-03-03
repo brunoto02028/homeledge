@@ -17,6 +17,7 @@ import {
   ChevronRight, Download, Eye, Send, PlusCircle, UserPlus, UserMinus,
   Pencil, Trash2, CalendarDays, History, AlertCircle, Info
 } from 'lucide-react';
+import { ModuleGuide } from '@/components/module-guide';
 
 interface GovConnection {
   id: string;
@@ -269,6 +270,7 @@ export default function ConnectionsClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="connections" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

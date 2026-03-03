@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   KeyRound, Plus, Search, Star, StarOff, Eye, EyeOff, Copy, Check,
   Trash2, Pencil, X, ExternalLink, Loader2, Shield, Landmark, Zap,
@@ -190,6 +191,7 @@ export function VaultClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="vault" />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
+import { ModuleGuide } from '@/components/module-guide';
 import { formatDate } from '@/lib/utils';
 
 interface FileItem {
@@ -175,6 +176,7 @@ export default function FilesClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="files" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

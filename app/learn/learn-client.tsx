@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/lib/i18n';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   GraduationCap, Search, Send, Loader2, BookOpen, Home, Briefcase, Building2,
   Receipt, Calculator, FileText, Landmark, ChevronDown, ChevronUp, Bot,
@@ -183,6 +184,7 @@ export function LearnClient() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <ModuleGuide moduleKey="learn" />
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <GraduationCap className="h-7 w-7 text-primary" />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { ModuleGuide } from '@/components/module-guide';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1023,6 +1024,7 @@ export default function StatementsClient() {
 
   return (
     <div className="p-6 space-y-6">
+      <ModuleGuide moduleKey="statements" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

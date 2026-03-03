@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ModuleGuide } from '@/components/module-guide';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
@@ -2065,6 +2066,7 @@ export default function ReportsClient() {
   return (
     <TooltipProvider>
     <div className="space-y-6">
+      <ModuleGuide moduleKey="reports" />
 
       {/* Category Transactions Modal */}
       <Dialog open={showCategoryModal} onOpenChange={(open) => {

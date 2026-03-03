@@ -21,6 +21,7 @@ import {
 import { CEFR_LEVELS, QUICK_TOPICS, UK_EXAMS, ESOL_INFO, VOCABULARY_SETS, LIFE_IN_UK_FACTS, CONVERSATION_SCENARIOS, IELTS_WRITING_TEMPLATES, PHRASAL_VERBS, PRONUNCIATION_GUIDE, DAILY_CHALLENGES, type ChatMessage, type CEFRLevel } from './data/constants';
 import { LIFE_IN_UK_QUESTIONS, LIFE_IN_UK_CHAPTERS, type LifeInUKQuestion } from './data/life-in-uk-questions';
 import { GRAMMAR_LESSONS, type GrammarLesson } from './data/grammar-lessons';
+import { ModuleGuide } from '@/components/module-guide';
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -287,6 +288,7 @@ export default function EnglishHubClient() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <ModuleGuide moduleKey="englishHub" />
       {/* Header */}
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white">
         <div className="relative z-10">

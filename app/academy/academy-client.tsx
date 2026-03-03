@@ -11,6 +11,7 @@ import {
   Play, Lock, CheckCircle2, Target, Briefcase, PoundSterling,
   Loader2, Award, BarChart3, Sparkles, ArrowRight, FileText,
 } from 'lucide-react';
+import { ModuleGuide } from '@/components/module-guide';
 
 interface BestAttempt {
   id: string;
@@ -89,6 +90,7 @@ export function AcademyClient() {
 
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
+      <ModuleGuide moduleKey="academy" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-3">

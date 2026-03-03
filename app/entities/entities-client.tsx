@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/components/ui/use-toast';
 import { Building2, User, Plus, Pencil, Trash2, Search, Loader2, Star, MapPin, FileText, Calendar, Shield, Landmark, CheckCircle, LayoutGrid, List, Circle, AlertTriangle, Image, Wand2, X, RefreshCw, Users, Clock, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { ModuleGuide } from '@/components/module-guide';
 
 interface Entity {
   id: string;
@@ -399,6 +400,7 @@ export default function EntitiesClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="entities" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('entities.title')}</h1>

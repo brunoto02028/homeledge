@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/empty-state"
 import { useToast } from "@/hooks/use-toast"
 import type { Action, ActionStatus, ActionPriority } from "@/lib/types"
 import { useTranslation } from "@/lib/i18n"
+import { ModuleGuide } from '@/components/module-guide'
 
 export function ActionsClient() {
   const { t } = useTranslation()
@@ -117,6 +118,7 @@ export function ActionsClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="actions" />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">{t('actions.title')}</h2>

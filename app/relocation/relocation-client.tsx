@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { ModuleGuide } from '@/components/module-guide';
 import {
   Globe, Send, Loader2, Bot, User, AlertTriangle, ExternalLink,
   ShieldAlert, ArrowRight, BookOpen, CreditCard, Building2,
@@ -91,6 +92,7 @@ export function RelocationClient() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <ModuleGuide moduleKey="relocation" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-3">

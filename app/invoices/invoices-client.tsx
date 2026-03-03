@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { ModuleGuide } from '@/components/module-guide';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Invoice, Category, InvoiceStatus, ExpenseType, EXPENSE_TYPE_LABELS } from '@/lib/types';
@@ -646,6 +647,7 @@ export default function InvoicesClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="invoices" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('invoices.title')}</h1>

@@ -8,6 +8,7 @@ import {
   AlertCircle, Check, Clock, Eye, EyeOff, Settings, Pen, ArrowLeft,
   FolderOpen, StarOff, MailOpen, Loader2,
 } from 'lucide-react';
+import { ModuleGuide } from '@/components/module-guide';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 interface EmailAccount {
@@ -292,6 +293,7 @@ export function EmailClient() {
 
   return (
     <div className="space-y-4">
+      <ModuleGuide moduleKey="email" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

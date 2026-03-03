@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Category, CategoryType, CATEGORY_TYPE_LABELS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
+import { ModuleGuide } from '@/components/module-guide';
 import { Plus, Pencil, Trash2, Tag, Loader2, Zap, Phone, Building, Shield, Tv, Car, ShoppingCart, Home, Heart, Music, Monitor, MoreHorizontal, CreditCard, Briefcase, TrendingUp, PiggyBank, Building2, RotateCcw, Landmark, ArrowDownCircle, ArrowUpCircle, LayoutGrid, List, MapPin, Users, Package, Megaphone, Scale, FileText, ShoppingBag, GraduationCap, Sparkles, Baby, ArrowLeftRight, Banknote, PieChart, UtensilsCrossed, Shirt } from 'lucide-react';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -333,6 +334,7 @@ export default function CategoriesClient() {
 
   return (
     <div className="space-y-6">
+      <ModuleGuide moduleKey="categories" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('categories.title')}</h1>
