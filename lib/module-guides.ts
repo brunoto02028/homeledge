@@ -415,6 +415,20 @@ export const MODULE_GUIDES: Record<string, ModuleGuideData> = {
     whyImportant: 'Insurance is essential protection but also a significant expense. Tracking all policies prevents gaps in coverage, catches auto-renewals at inflated prices, and ensures you are adequately protected.',
     whyImportantPt: 'Seguro é proteção essencial mas também uma despesa significativa. Rastrear todas as apólices previne lacunas na cobertura, detecta renovações automáticas com preços inflados e garante proteção adequada.',
   },
+  correspondence: {
+    title: 'Correspondence — Official Mail Registry',
+    titlePt: 'Correspondência — Registro de Correio Oficial',
+    description: 'Track and archive all official correspondence — HMRC notices, Companies House letters, council tax documents, bank letters, insurance renewals, and legal notices. Never lose track of deadlines or important references.',
+    descriptionPt: 'Rastreie e arquive toda correspondência oficial — avisos do HMRC, cartas da Companies House, documentos de council tax, cartas bancárias, renovações de seguros e avisos legais. Nunca perca prazos ou referências importantes.',
+    steps: [
+      { label: 'Scan a letter via Capture & Classify — it auto-creates a Correspondence entry', labelPt: 'Escaneie uma carta via Capture & Classify — cria automaticamente uma entrada de Correspondência' },
+      { label: 'Set the status workflow: Received → Under Review → Action Taken → Resolved', labelPt: 'Defina o workflow de status: Recebido → Em Análise → Ação Tomada → Resolvido' },
+      { label: 'Track deadlines and get reminders before they expire', labelPt: 'Rastreie prazos e receba lembretes antes de vencerem' },
+      { label: 'Reply to correspondence and build a chain of communication', labelPt: 'Responda correspondências e construa uma cadeia de comunicação' },
+    ],
+    whyImportant: 'Official correspondence often contains critical deadlines, payment references, and legal obligations. Missing an HMRC filing deadline can result in automatic penalties. A proper registry ensures nothing falls through the cracks.',
+    whyImportantPt: 'Correspondência oficial frequentemente contém prazos críticos, referências de pagamento e obrigações legais. Perder um prazo do HMRC pode resultar em multas automáticas. Um registro adequado garante que nada seja esquecido.',
+  },
   settings: {
     title: 'Settings — Personalise Your Experience',
     titlePt: 'Configurações — Personalize Sua Experiência',

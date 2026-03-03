@@ -33,6 +33,7 @@ export const ALL_PERMISSIONS = [
   'email',
   'intelligence',
   'insurance',
+  'correspondence',
   'settings',
 ] as const;
 
@@ -67,6 +68,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/email': 'email',
   '/intelligence': 'intelligence',
   '/insurance': 'insurance',
+  '/correspondence': 'correspondence',
   '/settings': 'settings',
 };
 
@@ -99,6 +101,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   email: 'Email',
   intelligence: 'Global Intelligence',
   insurance: 'Insurance',
+  correspondence: 'Correspondence',
   settings: 'Settings',
 };
 
@@ -133,7 +136,7 @@ export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
     'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
     'entities', 'household', 'reports', 'projections', 'properties',
     'product_calculator', 'tax_timeline', 'email', 'transfers',
-    'providers', 'services', 'insurance',
+    'providers', 'services', 'insurance', 'correspondence',
   ],
   business: [...CUSTOMER_MODULES] as PermissionKey[],
   managed: [...CUSTOMER_MODULES] as PermissionKey[],

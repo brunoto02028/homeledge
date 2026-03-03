@@ -38,6 +38,7 @@ const navItems = [
   { href: "/transfers", labelKey: "nav.transfers", icon: ArrowLeftRight, permission: 'transfers' as PermissionKey },
   { href: "/vault", labelKey: "nav.vault", icon: KeyRound, permission: 'vault' as PermissionKey },
   { href: "/insurance", labelKey: "nav.insurance", icon: Shield, permission: 'insurance' as PermissionKey },
+  { href: "/correspondence", labelKey: "nav.correspondence", icon: FileText, permission: 'correspondence' as PermissionKey },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, permission: 'settings' as PermissionKey },
 ]
 

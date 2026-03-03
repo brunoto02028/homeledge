@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Camera, Upload, FileText, AlertCircle, CheckCircle, Clock, Tag, Plus, Receipt, ListTodo, Trash2, Eye, X, Loader2, ImageIcon, QrCode, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,7 @@ interface ScannedDocument {
   notes: string | null
   linkedBillId: string | null
   linkedActionId: string | null
+  entityId: string | null
   createdAt: string
   processedAt: string | null
 }
@@ -77,6 +78,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 
 export function DocumentsClient() {
   const { t } = useTranslation()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [documents, setDocuments] = useState<ScannedDocument[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -350,6 +352,52 @@ export function DocumentsClient() {
       dueDate: doc.dueDate || '',
     })
     setCreateTaskDialogOpen(true)
+  }
+
+  const handleSendToCorrespondence = async (doc: ScannedDocument) => {
+    const categoryMap: Record<string, string> = {
+      'hmrc': 'hmrc', 'hm revenue': 'hmrc', 'companies house': 'companies_house',
+      'council': 'council', 'borough': 'council', 'district': 'council',
+      'bank': 'bank', 'barclays': 'bank', 'hsbc': 'bank', 'lloyds': 'bank', 'natwest': 'bank', 'monzo': 'bank',
+      'insurance': 'insurance', 'aviva': 'insurance', 'admiral': 'insurance', 'direct line': 'insurance',
+      'solicitor': 'legal', 'law': 'legal', 'court': 'legal',
+      'water': 'utility', 'gas': 'utility', 'electric': 'utility', 'energy': 'utility',
+    }
+    const senderLower = (doc.senderName || '').toLowerCase()
+    let senderCategory = 'other'
+    for (const [keyword, cat] of Object.entries(categoryMap)) {
+      if (senderLower.includes(keyword)) { senderCategory = cat; break }
+    }
+    try {
+      const res = await fetch('/api/correspondence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          direction: 'incoming',
+          senderCategory,
+          senderName: doc.senderName || 'Unknown',
+          subject: doc.summary || doc.suggestedTaskTitle || `Document from ${doc.senderName}`,
+          summary: doc.summary || null,
+          referenceNumber: doc.referenceNumber || doc.accountNumber || null,
+          status: doc.actionRequired ? 'received' : 'resolved',
+          priority: doc.actionRequired ? 'high' : 'normal',
+          dateReceived: doc.issueDate || doc.createdAt,
+          deadlineDate: doc.dueDate || null,
+          amountDue: doc.amountDue || null,
+          documentId: doc.id,
+          tags: doc.tags || [],
+          entityId: doc.entityId || null,
+        }),
+      })
+      if (res.ok) {
+        toast({ title: 'Sent to Correspondence', description: 'Document registered in Correspondence module' })
+        router.push('/correspondence')
+      } else {
+        throw new Error('Failed')
+      }
+    } catch {
+      toast({ title: 'Error sending to Correspondence', variant: 'destructive' })
+    }
   }
 
   const submitCreateBill = async () => {
@@ -697,6 +745,17 @@ export function DocumentsClient() {
                             Task
                           </Button>
                         )}
+                        {doc.documentType === 'official_notice' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendToCorrespondence(doc)}
+                            className="flex-1"
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Correspondence
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -853,6 +912,17 @@ export function DocumentsClient() {
                   <div className="font-medium text-yellow-900 dark:text-yellow-200">
                     {selectedDoc.suggestedTaskTitle}
                   </div>
+                </div>
+              )}
+
+              {/* Send to Correspondence */}
+              {selectedDoc.documentType === 'official_notice' && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                  <div className="text-sm text-blue-800 dark:text-blue-300 mb-2">Official Correspondence Detected</div>
+                  <Button size="sm" onClick={() => { setViewDialogOpen(false); handleSendToCorrespondence(selectedDoc); }}>
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />
+                    Send to Correspondence
+                  </Button>
                 </div>
               )}
             </div>

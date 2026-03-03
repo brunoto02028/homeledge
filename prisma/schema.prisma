@@ -179,6 +179,7 @@ model Entity {
   scannedDocuments      ScannedDocument[]
   history               EntityHistory[]
   insurancePolicies     InsurancePolicy[]
+  correspondence        Correspondence[]
 
   @@index([userId])
   @@index([companyNumber])
@@ -716,6 +717,7 @@ model User {
   emailSignatures   EmailSignature[]
   analyticsEvents   AnalyticsEvent[]
   insurancePolicies InsurancePolicy[]
+  correspondence    Correspondence[]
 
   @@index([email])
   @@index([status])
@@ -1897,6 +1899,59 @@ model AnalyticsEvent {
   @@index([page])
   @@index([createdAt])
   @@map("analytics_events")
+}
+
+/// Official Correspondence — HMRC, Companies House, councils, banks, legal
+model Correspondence {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  entityId        String?   @map("entity_id")
+  // Core fields
+  direction       String    @default("incoming") // incoming, outgoing
+  senderCategory  String    @map("sender_category") // hmrc, companies_house, council, bank, insurance, legal, utility, employer, other
+  senderName      String    @map("sender_name")
+  recipientName   String?   @map("recipient_name")
+  subject         String
+  summary         String?
+  // Reference & tracking
+  referenceNumber String?   @map("reference_number")
+  utr             String?
+  paymentRef      String?   @map("payment_ref")
+  // Status workflow
+  status          String    @default("received") // received, under_review, action_taken, responded, resolved, archived
+  priority        String    @default("normal") // low, normal, high, urgent
+  // Dates
+  dateReceived    DateTime  @map("date_received")
+  deadlineDate    DateTime? @map("deadline_date")
+  resolvedDate    DateTime? @map("resolved_date")
+  // Financial
+  amountDue       Float?    @map("amount_due")
+  amountPaid      Float?    @map("amount_paid")
+  // Document link
+  documentId      String?   @map("document_id") // link to ScannedDocument id
+  attachmentUrl   String?   @map("attachment_url")
+  // Chain tracking
+  parentId        String?   @map("parent_id")
+  // Linked records
+  linkedActionId  String?   @map("linked_action_id")
+  notes           String?
+  tags            String[]  @default([])
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity          Entity?   @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  parent          Correspondence? @relation("CorrespondenceChain", fields: [parentId], references: [id])
+  replies         Correspondence[] @relation("CorrespondenceChain")
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([senderCategory])
+  @@index([status])
+  @@index([deadlineDate])
+  @@index([parentId])
+  @@map("correspondence")
 }
 
 /// Insurance policies — life, car, motorcycle, home, health, travel, pet
