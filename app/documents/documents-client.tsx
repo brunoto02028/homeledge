@@ -517,6 +517,9 @@ export function DocumentsClient() {
     if (activeTab === 'all') return true
     if (activeTab === 'action') return doc.status === 'action_required'
     if (activeTab === 'filed') return doc.status === 'filed' || doc.status === 'processed'
+    if (activeTab === 'hmrc') return doc.tags?.some(t => t === 'hmrc' || t === 'tax_document') || doc.senderName?.toLowerCase().includes('hmrc') || doc.senderName?.toLowerCase().includes('hm revenue')
+    if (activeTab === 'companies_house') return doc.tags?.some(t => t === 'companies_house') || doc.senderName?.toLowerCase().includes('companies house')
+    if (activeTab === 'official') return doc.documentType === 'official_notice'
     return true
   })
 
@@ -628,10 +631,19 @@ export function DocumentsClient() {
       {/* Tabs */}
       {documents.length > 0 && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="all">All ({documents.length})</TabsTrigger>
             <TabsTrigger value="action" className="text-red-600">
-              Action Required ({documents.filter(d => d.status === 'action_required').length})
+              Action ({documents.filter(d => d.status === 'action_required').length})
+            </TabsTrigger>
+            <TabsTrigger value="hmrc">
+              HMRC ({documents.filter(d => d.tags?.some(t => t === 'hmrc' || t === 'tax_document') || d.senderName?.toLowerCase().includes('hmrc')).length})
+            </TabsTrigger>
+            <TabsTrigger value="companies_house">
+              Companies House ({documents.filter(d => d.tags?.some(t => t === 'companies_house') || d.senderName?.toLowerCase().includes('companies house')).length})
+            </TabsTrigger>
+            <TabsTrigger value="official">
+              Official ({documents.filter(d => d.documentType === 'official_notice').length})
             </TabsTrigger>
             <TabsTrigger value="filed">
               Filed ({documents.filter(d => d.status === 'filed' || d.status === 'processed').length})
