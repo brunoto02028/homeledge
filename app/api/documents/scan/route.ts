@@ -20,7 +20,7 @@ The user lives in the UK. Common providers include Council Tax offices, Anglian 
 Analyze the provided image and extract the following fields into a strict JSON format:
 
 1. **sender_name**: The organization or person sending the letter. Look for letterheads, logos, sender addresses.
-2. **document_type**: Classify as one of: ["bill", "reminder", "fine", "information", "contract", "tax_return", "check", "other"].
+2. **document_type**: Classify as one of: ["bill", "reminder", "fine", "information", "contract", "tax_return", "official_notice", "check", "other"]. Use "official_notice" for government/HMRC notices, CT603, SA302, penalty notices, Companies House letters, and any formal correspondence from authorities.
 3. **summary**: A 1-sentence summary of what the document is about (e.g., "Council Tax bill for the 2026/2027 period").
 4. **action_required**: Boolean. True if the user needs to do something (pay, sign, reply). False if it's just for filing.
 5. **suggested_task_title**: If action is required, suggest a task title (e.g., "Pay Council Tax", "Sign Tenancy Agreement", "Reply to HMRC by 15/03").
@@ -43,6 +43,7 @@ Analyze the provided image and extract the following fields into a strict JSON f
 - If multiple amounts are listed, look for "Total Due", "Amount Payable", "Balance Carried Forward", or "Total Outstanding".
 - For Council Tax, extract the band if visible.
 - For HMRC documents, always add "tax_document" to tags.
+- For HMRC notices (CT603, SA302, etc.), classify as "official_notice" and add "hmrc", "government" to tags. Extract the UTR, payment reference, and filing deadline as due_date.
 - For utility bills, note the meter readings if visible.
 
 # UK-SPECIFIC IDENTIFIERS
@@ -175,6 +176,7 @@ export async function POST(request: NextRequest) {
       'information': 'information',
       'contract': 'contract',
       'tax_return': 'tax_return',
+      'official_notice': 'official_notice',
       'check': 'check',
     };
     const documentType = documentTypeMap[extractedData.document_type] || 'other';

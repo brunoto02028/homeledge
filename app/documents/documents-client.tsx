@@ -63,6 +63,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   information: 'Information',
   contract: 'Contract',
   tax_return: 'Tax Document',
+  official_notice: 'Official Notice',
   check: 'Cheque',
   other: 'Other',
 }

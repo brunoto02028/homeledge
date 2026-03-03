@@ -102,6 +102,7 @@ enum DocumentType {
   information
   contract
   tax_return
+  official_notice
   check
   other
 }
