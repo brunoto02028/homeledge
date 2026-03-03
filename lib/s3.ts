@@ -28,7 +28,15 @@ export async function generatePresignedUploadUrl(
   isPublic: boolean = false
 ): Promise<{ uploadUrl: string; cloudStoragePath: string }> {
   const prefix = isPublic ? `${folderPrefix}public/uploads` : `${folderPrefix}uploads`;
-  const cloudStoragePath = `${prefix}/${Date.now()}-${fileName}`;
+  const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const cloudStoragePath = `${prefix}/${Date.now()}-${safeFileName}`;
+
+  // Local storage fallback when S3 is not configured
+  if (!isS3Configured()) {
+    const localCloudPath = `local://${cloudStoragePath}`;
+    const uploadUrl = `/api/upload/local?path=${encodeURIComponent(cloudStoragePath)}`;
+    return { uploadUrl, cloudStoragePath: localCloudPath };
+  }
 
   const command = new PutObjectCommand({
     Bucket: bucketName,
