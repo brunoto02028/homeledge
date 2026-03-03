@@ -137,6 +137,7 @@ export function AnalyticsDashboard() {
   const [days, setDays] = useState(7);
   const [heatmapPage, setHeatmapPage] = useState('/dashboard');
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [userHeatPage, setUserHeatPage] = useState('/dashboard');
 
   const fetchOverview = useCallback(async () => {
     setLoading(true);
@@ -195,7 +196,6 @@ export function AnalyticsDashboard() {
     const navFlow: NavFlowItem[] = ud.navFlow || [];
     const timeline: TimelinePoint[] = ud.activityTimeline || [];
     const userHeatPages = [...new Set(heatClicks.map(c => c.page))];
-    const [userHeatPage, setUserHeatPage] = useState(userHeatPages[0] || '/dashboard');
     const filteredHeatClicks = heatClicks.filter(c => c.page === userHeatPage);
 
     const topClicks: Record<string, number> = {};
