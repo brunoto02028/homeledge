@@ -370,7 +370,7 @@ const emptyProfile: TaxpayerProfile = {
 
 export default function ReportsClient() {
   const { t } = useTranslation();
-  const { selectedEntity, loading: entityLoading } = useEntityContext();
+  const { entities, selectedEntityId, setSelectedEntityId, selectedEntity, loading: entityLoading } = useEntityContext();
   const [entityRegime, setEntityRegime] = useState<string>('hmrc');
   const [reportSummary, setReportSummary] = useState<ReportSummary | null>(null);
   const [accounts, setAccounts] = useState<{id: string; name: string; bank: string}[]>([]);
@@ -2192,6 +2192,27 @@ export default function ReportsClient() {
             <p className="text-muted-foreground">{entityRegime === 'companies_house' ? 'Company accounts, CT600 and financial reports' : 'Financial reports and HMRC tax calculations'}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Entity Filter */}
+            {entities.length > 0 && (
+              <Select value={selectedEntityId || '__none__'} onValueChange={(v) => setSelectedEntityId(v === '__none__' ? null : v)}>
+                <SelectTrigger className={`w-[220px] ${!selectedEntityId ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-primary/30'}`}>
+                  <div className="flex items-center gap-2 truncate">
+                    <Building className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <SelectValue placeholder="Select entity *" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {entities.map((e: { id: string; name: string; isDefault: boolean }) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{e.name}</span>
+                        {e.isDefault && <Badge className="bg-blue-100 text-blue-700 border-0 text-[9px] h-4 px-1">Default</Badge>}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {/* Account Filter */}
             {accounts.length > 1 && (
               <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
