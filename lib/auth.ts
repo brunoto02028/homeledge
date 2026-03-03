@@ -168,13 +168,20 @@ export const authOptions: NextAuthOptions = {
         token.plan = (user as any).plan || 'free';
         token.onboardingCompleted = (user as any).onboardingCompleted ?? true;
         token.mustChangePassword = (user as any).mustChangePassword ?? false;
+        token.lastRefreshed = Date.now();
       }
-      // Refresh user data when session is updated
-      if (trigger === 'update') {
+
+      // Refresh user data from DB every 60 seconds or on explicit session update
+      // This ensures admin permission changes propagate quickly without re-login
+      const now = Date.now();
+      const lastRefreshed = (token.lastRefreshed as number) || 0;
+      const shouldRefresh = trigger === 'update' || (now - lastRefreshed) > 60 * 1000;
+
+      if (shouldRefresh && token.id) {
         try {
           const dbUser: any = await (prisma as any).user.findUnique({
             where: { id: token.id as string },
-            select: { onboardingCompleted: true, fullName: true, permissions: true, plan: true, role: true, mustChangePassword: true },
+            select: { onboardingCompleted: true, fullName: true, permissions: true, plan: true, role: true, mustChangePassword: true, status: true },
           });
           if (dbUser) {
             token.onboardingCompleted = dbUser.onboardingCompleted;
@@ -183,6 +190,7 @@ export const authOptions: NextAuthOptions = {
             token.plan = dbUser.plan || 'free';
             token.role = dbUser.role;
             token.mustChangePassword = dbUser.mustChangePassword ?? false;
+            token.lastRefreshed = now;
           }
         } catch {}
       }
