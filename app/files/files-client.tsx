@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +64,9 @@ export default function FilesClient() {
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<FileItem | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const { toast } = useToast();
 
   const fetchFiles = async () => {
@@ -105,6 +108,11 @@ export default function FilesClient() {
     fetchFiles();
   }, [categoryFilter, entityFilter]);
 
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedFiles(new Set());
+  }, [categoryFilter, entityFilter, searchTerm]);
+
   const filteredFiles = files.filter(f => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -127,6 +135,52 @@ export default function FilesClient() {
     } catch {
       toast({ title: 'Download failed', variant: 'destructive' });
     }
+  };
+
+  // Selection helpers
+  const fileKey = (f: FileItem) => `${f.category}:${f.id}`;
+
+  const toggleSelect = (file: FileItem) => {
+    const key = fileKey(file);
+    setSelectedFiles(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFiles.size === filteredFiles.length && filteredFiles.length > 0) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(filteredFiles.map(f => fileKey(f))));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const items = filteredFiles.filter(f => selectedFiles.has(fileKey(f)));
+    let deleted = 0;
+    let failed = 0;
+    for (const file of items) {
+      try {
+        const res = await fetch('/api/files', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: file.id, category: file.category }),
+        });
+        if (res.ok) deleted++; else failed++;
+      } catch { failed++; }
+    }
+    toast({
+      title: `Deleted ${deleted} file${deleted !== 1 ? 's' : ''}`,
+      description: failed > 0 ? `${failed} failed to delete` : undefined,
+      variant: failed > 0 ? 'destructive' : 'default',
+    });
+    setSelectedFiles(new Set());
+    setConfirmBulkDelete(false);
+    setBulkDeleting(false);
+    fetchFiles();
   };
 
   const handleDelete = async (file: FileItem) => {
@@ -303,6 +357,15 @@ export default function FilesClient() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 accent-primary cursor-pointer"
+                    checked={filteredFiles.length > 0 && selectedFiles.size === filteredFiles.length}
+                    onChange={toggleSelectAll}
+                    ref={(el) => { if (el) el.indeterminate = selectedFiles.size > 0 && selectedFiles.size < filteredFiles.length; }}
+                  />
+                </th>
                 <th className="text-left font-medium px-4 py-3">File</th>
                 <th className="text-left font-medium px-4 py-3 hidden md:table-cell">Type</th>
                 <th className="text-left font-medium px-4 py-3 hidden lg:table-cell">Entity</th>
@@ -317,7 +380,15 @@ export default function FilesClient() {
                 const FileIcon = FILE_TYPE_ICONS[file.fileType] || File;
 
                 return (
-                  <tr key={`${file.category}-${file.id}`} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
+                  <tr key={`${file.category}-${file.id}`} className={`border-b last:border-b-0 hover:bg-muted/20 transition-colors ${selectedFiles.has(fileKey(file)) ? 'bg-blue-50 dark:bg-blue-950/20' : ''}`}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 accent-primary cursor-pointer"
+                        checked={selectedFiles.has(fileKey(file))}
+                        onChange={() => toggleSelect(file)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -387,6 +458,66 @@ export default function FilesClient() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Bulk Actions Bar */}
+      {selectedFiles.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+          <div className="flex items-center gap-3 px-5 py-3 bg-card border shadow-lg rounded-full">
+            <span className="text-sm font-medium">{selectedFiles.size} selected</span>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={bulkDeleting}
+              className="gap-1.5"
+            >
+              {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Delete Selected
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedFiles(new Set())}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {confirmBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Delete {selectedFiles.size} Files</h3>
+                  <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <div className="text-xs text-muted-foreground">
+                  Statements will also delete all their transactions. All selected files will be permanently removed.
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setConfirmBulkDelete(false)} disabled={bulkDeleting}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                >
+                  {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+                  Delete {selectedFiles.size} Files
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
