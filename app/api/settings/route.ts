@@ -69,6 +69,17 @@ export async function PUT(request: Request) {
       if (newPassword.length < 8) {
         return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
       }
+      if (!currentPassword) {
+        return NextResponse.json({ error: 'Current password is required to set a new password' }, { status: 400 });
+      }
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+      if (!user?.passwordHash) {
+        return NextResponse.json({ error: 'Cannot verify current password' }, { status: 400 });
+      }
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) {
+        return NextResponse.json({ error: 'Current password is incorrect' }, { status: 403 });
+      }
 
       updateData.passwordHash = await bcrypt.hash(newPassword, 12);
     }

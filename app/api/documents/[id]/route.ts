@@ -72,6 +72,41 @@ export async function PUT(
   }
 }
 
+// PATCH: Partial update (entity assignment, status change, etc.)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const userId = await requireUserId();
+    const { id } = await params;
+    const body = await request.json();
+
+    const userIds = await getAccessibleUserIds(userId);
+    const existing = await prisma.scannedDocument.findFirst({ where: { id, userId: { in: userIds } } });
+    if (!existing) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+
+    const updateData: any = {};
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.linkedBillId !== undefined) updateData.linkedBillId = body.linkedBillId;
+    if (body.linkedActionId !== undefined) updateData.linkedActionId = body.linkedActionId;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.entityId !== undefined) updateData.entityId = body.entityId;
+    if (body.senderCategory !== undefined) updateData.senderCategory = body.senderCategory;
+
+    const document = await prisma.scannedDocument.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json({ document });
+  } catch (error) {
+    console.error('Error patching document:', error);
+    return NextResponse.json({ error: 'Failed to update document' }, { status: 500 });
+  }
+}
+
 // DELETE: Remove a scanned document
 export async function DELETE(
   request: NextRequest,
