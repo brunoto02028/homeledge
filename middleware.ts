@@ -9,6 +9,8 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
 const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect', '/api/news'];
 const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/'];
+// Mobile upload flow — these routes authenticate via mobileToken internally
+const mobileUploadApiRoutes = ['/api/upload/presigned', '/api/upload/local', '/api/documents/scan', '/api/bills/scan', '/api/invoices/process'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,6 +28,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   if (publicApiDynamic.some(prefix => pathname.startsWith(prefix) && pathname !== prefix.slice(0, -1))) {
+    return NextResponse.next();
+  }
+  if (mobileUploadApiRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     return NextResponse.next();
   }
   
