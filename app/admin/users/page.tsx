@@ -566,8 +566,9 @@ export default function AdminUsersPage() {
                         const state: 'granted' | 'locked' | 'hidden' = isGranted ? 'granted' : isHidden ? 'hidden' : 'locked';
 
                         const cycleState = () => {
+                          const label = PERMISSION_LABELS[perm] || perm;
                           if (state === 'granted') {
-                            // granted → locked (remove from permissions, not hidden)
+                            if (!confirm(`Lock "${label}"?\n\nThe user will see it with a padlock but cannot access it.`)) return;
                             if (editPermissions.length === 0) {
                               setEditPermissions(ALL_PERMISSIONS.filter(p => p !== perm) as string[]);
                             } else {
@@ -575,10 +576,10 @@ export default function AdminUsersPage() {
                             }
                             setEditHiddenModules(editHiddenModules.filter(p => p !== perm));
                           } else if (state === 'locked') {
-                            // locked → hidden (add to hiddenModules)
+                            if (!confirm(`Hide "${label}"?\n\nThe user will NOT see this module at all in the sidebar.`)) return;
                             setEditHiddenModules([...editHiddenModules, perm]);
                           } else {
-                            // hidden → granted (add to permissions, remove from hidden)
+                            if (!confirm(`Grant access to "${label}"?\n\nThe user will have full access to this module.`)) return;
                             if (editPermissions.length === 0) {
                               // Already all access, just remove from hidden
                             } else {

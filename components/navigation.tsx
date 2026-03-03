@@ -68,11 +68,21 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
   const pathname = usePathname()
   const { data: session } = useSession()
   const { t, locale, setLocale } = useTranslation()
-  const userRole = (session?.user as any)?.role || 'user'
-  const userPermissions: string[] = (session?.user as any)?.permissions || []
-  const isAdmin = userRole === 'admin'
-  const isAccountant = userRole === 'accountant'
-  const hiddenModules: string[] = (session?.user as any)?.hiddenModules || []
+  const sessionRole = (session?.user as any)?.role || 'user'
+  const sessionPermissions: string[] = (session?.user as any)?.permissions || []
+  const sessionHidden: string[] = (session?.user as any)?.hiddenModules || []
+  const isAdmin = sessionRole === 'admin'
+  const isAccountant = sessionRole === 'accountant'
+
+  // Live permissions from DB (bypasses JWT cache for instant admin updates)
+  const [livePermissions, setLivePermissions] = useState<string[] | null>(null)
+  const [liveHidden, setLiveHidden] = useState<string[] | null>(null)
+
+  // Use live data when available, fallback to session
+  const userRole = sessionRole
+  const userPermissions = livePermissions ?? sessionPermissions
+  const hiddenModules = liveHidden ?? sessionHidden
+
   const [orderedItems, setOrderedItems] = useState(navItems)
   const [reorderMode, setReorderMode] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -89,6 +99,25 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
     setOrderedItems(sorted)
     saveOrder(sorted.map(i => i.href))
   }, [t])
+
+  // Poll fresh permissions from DB every 5s (non-admin only)
+  useEffect(() => {
+    if (isAdmin || !session?.user) return
+    let active = true
+    const fetchPerms = async () => {
+      try {
+        const res = await fetch('/api/auth/permissions')
+        if (res.ok && active) {
+          const data = await res.json()
+          setLivePermissions(data.permissions || [])
+          setLiveHidden(data.hiddenModules || [])
+        }
+      } catch {}
+    }
+    fetchPerms()
+    const interval = setInterval(fetchPerms, 5000)
+    return () => { active = false; clearInterval(interval) }
+  }, [isAdmin, session?.user])
 
   // Load order on mount
   useEffect(() => {
