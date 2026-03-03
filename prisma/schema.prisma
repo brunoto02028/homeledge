@@ -717,6 +717,7 @@ model User {
   emailSignatures   EmailSignature[]
   analyticsEvents   AnalyticsEvent[]
   insurancePolicies InsurancePolicy[]
+  insuranceClaims   InsuranceClaim[]
   correspondence    Correspondence[]
 
   @@index([email])
@@ -1987,16 +1988,45 @@ model InsurancePolicy {
   propertyAddress String?   @map("property_address")
   buildingsValue  Float?    @map("buildings_value")
   contentsValue   Float?    @map("contents_value")
+  // Document attachment
+  documentPath    String?   @map("document_path") // cloud storage path for policy PDF
 
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   entity          Entity?   @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  claims          InsuranceClaim[]
 
   @@index([userId])
   @@index([entityId])
   @@index([type])
   @@index([endDate])
   @@map("insurance_policies")
+}
+
+/// Insurance claims — track claim history per policy
+model InsuranceClaim {
+  id              String    @id @default(cuid())
+  policyId        String    @map("policy_id")
+  userId          String    @map("user_id")
+  claimDate       DateTime  @map("claim_date")
+  claimReference  String?   @map("claim_reference")
+  status          String    @default("submitted") // submitted, under_review, approved, rejected, paid, withdrawn
+  amount          Float?    // claimed amount
+  settledAmount   Float?    @map("settled_amount") // actual payout
+  description     String?
+  outcome         String?   // outcome notes
+  documentPath    String?   @map("document_path") // supporting documents
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  policy          InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@index([userId])
+  @@index([status])
+  @@map("insurance_claims")
 }

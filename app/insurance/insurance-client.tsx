@@ -75,7 +75,31 @@ interface InsurancePolicy {
   propertyAddress: string | null;
   buildingsValue: number | null;
   contentsValue: number | null;
+  documentPath: string | null;
+  claims?: InsuranceClaim[];
 }
+
+interface InsuranceClaim {
+  id: string;
+  policyId: string;
+  claimDate: string;
+  claimReference: string | null;
+  status: string;
+  amount: number | null;
+  settledAmount: number | null;
+  description: string | null;
+  outcome: string | null;
+  createdAt: string;
+}
+
+const CLAIM_STATUSES = [
+  { value: 'submitted', label: 'Submitted', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+  { value: 'under_review', label: 'Under Review', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+  { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+  { value: 'paid', label: 'Paid', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  { value: 'withdrawn', label: 'Withdrawn', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300' },
+];
 
 const emptyForm = {
   type: 'car', providerName: '', policyNumber: '', holderName: '', coverageAmount: '',
@@ -103,6 +127,13 @@ export function InsuranceClient() {
   const [emergencyPolicy, setEmergencyPolicy] = useState<InsurancePolicy | null>(null);
   const [comparePolicy, setComparePolicy] = useState<InsurancePolicy | null>(null);
   const [renewalTipsOpen, setRenewalTipsOpen] = useState(false);
+  const [uploadingDocFor, setUploadingDocFor] = useState<string | null>(null);
+  const [claimsPolicy, setClaimsPolicy] = useState<InsurancePolicy | null>(null);
+  const [claims, setClaims] = useState<InsuranceClaim[]>([]);
+  const [claimsLoading, setClaimsLoading] = useState(false);
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [claimForm, setClaimForm] = useState({ claimDate: '', claimReference: '', amount: '', description: '', status: 'submitted' });
+  const [savingClaim, setSavingClaim] = useState(false);
 
   const fetchPolicies = useCallback(async () => {
     try {
@@ -195,6 +226,119 @@ export function InsuranceClient() {
       contentsValue: p.contentsValue?.toString() || '',
     });
     setShowDialog(true);
+  };
+
+  // Document upload handler
+  const handleDocUpload = async (policyId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingDocFor(policyId);
+    try {
+      const cloudPath = `insurance/${policyId}/${file.name}`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', cloudPath);
+      const uploadRes = await fetch('/api/upload/local?path=' + encodeURIComponent(cloudPath), {
+        method: 'PUT',
+        body: file,
+      });
+      if (!uploadRes.ok) throw new Error('Upload failed');
+      await fetch(`/api/insurance/${policyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentPath: cloudPath }),
+      });
+      toast({ title: 'Document attached', description: file.name });
+      fetchPolicies();
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploadingDocFor(null);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveDoc = async (policyId: string) => {
+    try {
+      await fetch(`/api/insurance/${policyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentPath: null }),
+      });
+      toast({ title: 'Document removed' });
+      fetchPolicies();
+    } catch {
+      toast({ title: 'Failed to remove document', variant: 'destructive' });
+    }
+  };
+
+  const handleViewDoc = async (docPath: string) => {
+    try {
+      const res = await fetch('/api/upload/get-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cloudStoragePath: docPath, isPublic: false }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        window.open(data.url, '_blank');
+      }
+    } catch {
+      toast({ title: 'Failed to open document', variant: 'destructive' });
+    }
+  };
+
+  // Claims management
+  const openClaims = async (policy: InsurancePolicy) => {
+    setClaimsPolicy(policy);
+    setClaimsLoading(true);
+    setShowClaimForm(false);
+    try {
+      const res = await fetch(`/api/insurance/${policy.id}/claims`);
+      if (res.ok) setClaims(await res.json());
+    } catch {
+      toast({ title: 'Error loading claims', variant: 'destructive' });
+    } finally {
+      setClaimsLoading(false);
+    }
+  };
+
+  const handleSaveClaim = async () => {
+    if (!claimsPolicy || !claimForm.claimDate) return;
+    setSavingClaim(true);
+    try {
+      const res = await fetch(`/api/insurance/${claimsPolicy.id}/claims`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(claimForm),
+      });
+      if (res.ok) {
+        toast({ title: 'Claim recorded' });
+        setShowClaimForm(false);
+        setClaimForm({ claimDate: '', claimReference: '', amount: '', description: '', status: 'submitted' });
+        openClaims(claimsPolicy);
+      } else {
+        const err = await res.json();
+        toast({ title: err.error || 'Error', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error saving claim', variant: 'destructive' });
+    } finally {
+      setSavingClaim(false);
+    }
+  };
+
+  const handleDeleteClaim = async (claimId: string) => {
+    if (!claimsPolicy) return;
+    try {
+      const res = await fetch(`/api/insurance/${claimsPolicy.id}/claims/${claimId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Claim deleted' });
+        openClaims(claimsPolicy);
+      }
+    } catch {
+      toast({ title: 'Error deleting claim', variant: 'destructive' });
+    }
   };
 
   const formatCurrency = (amount: number) =>
@@ -488,6 +632,33 @@ export function InsuranceClient() {
                       onClick={() => setComparePolicy(policy)}
                     >
                       <Scale className="h-3 w-3" /> Compare
+                    </Button>
+                  </div>
+
+                  {/* Document & Claims Row */}
+                  <div className="flex gap-1.5">
+                    {/* Document upload/view */}
+                    {policy.documentPath ? (
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => handleViewDoc(policy.documentPath!)}>
+                          <FileText className="h-3 w-3" /> View Policy Doc
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemoveDoc(policy.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex-1">
+                        <div className={`flex items-center justify-center gap-1 h-7 rounded-md border border-dashed text-xs cursor-pointer hover:bg-muted/50 transition-colors ${uploadingDocFor === policy.id ? 'opacity-50' : ''}`}>
+                          {uploadingDocFor === policy.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3 text-muted-foreground" />}
+                          <span className="text-muted-foreground">Attach Policy PDF</span>
+                        </div>
+                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => handleDocUpload(policy.id, e)} disabled={!!uploadingDocFor} />
+                      </label>
+                    )}
+                    {/* Claims tracker */}
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => openClaims(policy)}>
+                      <AlertTriangle className="h-3 w-3" /> Claims
                     </Button>
                   </div>
 
@@ -914,6 +1085,125 @@ export function InsuranceClient() {
           </Dialog>
         );
       })()}
+
+      {/* ═══ CLAIMS TRACKER MODAL ═══ */}
+      {claimsPolicy && (
+        <Dialog open={!!claimsPolicy} onOpenChange={(open) => { if (!open) { setClaimsPolicy(null); setShowClaimForm(false); } }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Claims — {claimsPolicy.providerName} ({POLICY_TYPES.find(pt => pt.value === claimsPolicy.type)?.label})
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Add claim button */}
+              {!showClaimForm && (
+                <Button size="sm" onClick={() => setShowClaimForm(true)} className="gap-1.5">
+                  <Plus className="h-4 w-4" /> Record New Claim
+                </Button>
+              )}
+
+              {/* Claim form */}
+              {showClaimForm && (
+                <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                  <h4 className="font-semibold text-sm">New Claim</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Claim Date *</Label>
+                      <Input type="date" value={claimForm.claimDate} onChange={e => setClaimForm({ ...claimForm, claimDate: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Claim Reference</Label>
+                      <Input value={claimForm.claimReference} onChange={e => setClaimForm({ ...claimForm, claimReference: e.target.value })} placeholder="REF-123456" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Amount Claimed (£)</Label>
+                      <Input type="number" step="0.01" value={claimForm.amount} onChange={e => setClaimForm({ ...claimForm, amount: e.target.value })} placeholder="0.00" />
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <Select value={claimForm.status} onValueChange={v => setClaimForm({ ...claimForm, status: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CLAIM_STATUSES.map(s => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea value={claimForm.description} onChange={e => setClaimForm({ ...claimForm, description: e.target.value })} placeholder="Describe the incident..." rows={2} />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" size="sm" onClick={() => setShowClaimForm(false)}>Cancel</Button>
+                    <Button size="sm" onClick={handleSaveClaim} disabled={savingClaim}>
+                      {savingClaim && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                      Save Claim
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Claims list */}
+              {claimsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : claims.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle2 className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No claims recorded for this policy.</p>
+                  <p className="text-xs mt-1">Click &quot;Record New Claim&quot; to add one.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {claims.map(claim => {
+                    const statusConfig = CLAIM_STATUSES.find(s => s.value === claim.status) || CLAIM_STATUSES[0];
+                    return (
+                      <div key={claim.id} className="p-3 rounded-lg border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                            <span className="text-sm font-semibold">{new Date(claim.claimDate).toLocaleDateString('en-GB')}</span>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleDeleteClaim(claim.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {claim.claimReference && (
+                          <div className="text-xs text-muted-foreground">Ref: <span className="font-mono">{claim.claimReference}</span></div>
+                        )}
+                        {claim.description && (
+                          <div className="text-sm text-muted-foreground">{claim.description}</div>
+                        )}
+                        <div className="flex gap-4 text-xs">
+                          {claim.amount != null && (
+                            <span>Claimed: <strong>{formatCurrency(claim.amount)}</strong></span>
+                          )}
+                          {claim.settledAmount != null && (
+                            <span>Settled: <strong className="text-green-600">{formatCurrency(claim.settledAmount)}</strong></span>
+                          )}
+                        </div>
+                        {claim.outcome && (
+                          <div className="text-xs text-muted-foreground italic">Outcome: {claim.outcome}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setClaimsPolicy(null); setShowClaimForm(false); }}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ═══ RENEWAL TIPS MODAL ═══ */}
       <Dialog open={renewalTipsOpen} onOpenChange={setRenewalTipsOpen}>
