@@ -37,6 +37,7 @@ const navItems = [
   { href: "/tax-timeline", labelKey: "nav.taxTimeline", icon: CalendarClock, permission: 'tax_timeline' as PermissionKey },
   { href: "/transfers", labelKey: "nav.transfers", icon: ArrowLeftRight, permission: 'transfers' as PermissionKey },
   { href: "/vault", labelKey: "nav.vault", icon: KeyRound, permission: 'vault' as PermissionKey },
+  { href: "/insurance", labelKey: "nav.insurance", icon: Shield, permission: 'insurance' as PermissionKey },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, permission: 'settings' as PermissionKey },
 ]
 

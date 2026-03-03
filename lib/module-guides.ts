@@ -401,6 +401,20 @@ export const MODULE_GUIDES: Record<string, ModuleGuideData> = {
     whyImportant: 'Keeping credentials in unsecured places (sticky notes, text files) is a security risk. The Vault provides military-grade encryption for your most sensitive information.',
     whyImportantPt: 'Manter credenciais em locais inseguros (post-its, arquivos de texto) é um risco de segurança. O Cofre oferece criptografia de nível militar para suas informações mais sensíveis.',
   },
+  insurance: {
+    title: 'Insurance — Policy Management & Protection',
+    titlePt: 'Seguros — Gestão de Apólices e Proteção',
+    description: 'Manage all your insurance policies in one place — life, car, motorcycle, home, health, and travel. Track premiums, renewal dates, coverage amounts, and never miss a renewal.',
+    descriptionPt: 'Gerencie todas as suas apólices de seguro em um só lugar — vida, carro, moto, casa, saúde e viagem. Rastreie prêmios, datas de renovação, valores de cobertura e nunca perca uma renovação.',
+    steps: [
+      { label: 'Add your insurance policies with provider and coverage details', labelPt: 'Adicione suas apólices com detalhes do provedor e cobertura' },
+      { label: 'Set renewal dates to get timely reminders', labelPt: 'Defina datas de renovação para receber lembretes oportunos' },
+      { label: 'Track monthly and annual premium costs', labelPt: 'Rastreie custos de prêmios mensais e anuais' },
+      { label: 'Compare policies when renewals are due to find better deals', labelPt: 'Compare apólices quando as renovações vencerem para encontrar melhores ofertas' },
+    ],
+    whyImportant: 'Insurance is essential protection but also a significant expense. Tracking all policies prevents gaps in coverage, catches auto-renewals at inflated prices, and ensures you are adequately protected.',
+    whyImportantPt: 'Seguro é proteção essencial mas também uma despesa significativa. Rastrear todas as apólices previne lacunas na cobertura, detecta renovações automáticas com preços inflados e garante proteção adequada.',
+  },
   settings: {
     title: 'Settings — Personalise Your Experience',
     titlePt: 'Configurações — Personalize Sua Experiência',

@@ -177,6 +177,7 @@ model Entity {
   bills                 Bill[]
   scannedDocuments      ScannedDocument[]
   history               EntityHistory[]
+  insurancePolicies     InsurancePolicy[]
 
   @@index([userId])
   @@index([companyNumber])
@@ -713,6 +714,7 @@ model User {
   emailAccounts     EmailAccount[]
   emailSignatures   EmailSignature[]
   analyticsEvents   AnalyticsEvent[]
+  insurancePolicies InsurancePolicy[]
 
   @@index([email])
   @@index([status])
@@ -1894,4 +1896,50 @@ model AnalyticsEvent {
   @@index([page])
   @@index([createdAt])
   @@map("analytics_events")
+}
+
+/// Insurance policies — life, car, motorcycle, home, health, travel, pet
+model InsurancePolicy {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  entityId        String?   @map("entity_id")
+  type            String    // life, car, motorcycle, home, health, travel, pet, business, other
+  providerName    String    @map("provider_name")
+  policyNumber    String?   @map("policy_number")
+  holderName      String?   @map("holder_name")
+  coverageAmount  Float?    @map("coverage_amount") // total cover in GBP
+  premiumAmount   Float     @map("premium_amount")  // premium per period
+  premiumFrequency String   @default("monthly") @map("premium_frequency") // monthly, quarterly, yearly
+  excessAmount    Float?    @map("excess_amount")   // voluntary excess
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime? @map("end_date")        // renewal date
+  isActive        Boolean   @default(true) @map("is_active")
+  autoRenewal     Boolean   @default(true) @map("auto_renewal")
+  notes           String?
+  // Car/motorcycle specific
+  vehicleReg      String?   @map("vehicle_reg")
+  vehicleMake     String?   @map("vehicle_make")
+  vehicleModel    String?   @map("vehicle_model")
+  vehicleYear     Int?      @map("vehicle_year")
+  coverType       String?   @map("cover_type") // comprehensive, third_party, third_party_fire_theft
+  ncdYears        Int?      @map("ncd_years")  // no-claims discount years
+  // Life specific
+  beneficiary     String?
+  termYears       Int?      @map("term_years")
+  // Property specific
+  propertyAddress String?   @map("property_address")
+  buildingsValue  Float?    @map("buildings_value")
+  contentsValue   Float?    @map("contents_value")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity          Entity?   @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([type])
+  @@index([endDate])
+  @@map("insurance_policies")
 }

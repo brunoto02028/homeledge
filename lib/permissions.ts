@@ -32,6 +32,7 @@ export const ALL_PERMISSIONS = [
   'english_hub',
   'email',
   'intelligence',
+  'insurance',
   'settings',
 ] as const;
 
@@ -65,6 +66,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/english-hub': 'english_hub',
   '/email': 'email',
   '/intelligence': 'intelligence',
+  '/insurance': 'insurance',
   '/settings': 'settings',
 };
 
@@ -96,6 +98,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   english_hub: 'English Hub',
   email: 'Email',
   intelligence: 'Global Intelligence',
+  insurance: 'Insurance',
   settings: 'Settings',
 };
 
@@ -130,7 +133,7 @@ export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
     'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
     'entities', 'household', 'reports', 'projections', 'properties',
     'product_calculator', 'tax_timeline', 'email', 'transfers',
-    'providers', 'services',
+    'providers', 'services', 'insurance',
   ],
   business: [...CUSTOMER_MODULES] as PermissionKey[],
   managed: [...CUSTOMER_MODULES] as PermissionKey[],
