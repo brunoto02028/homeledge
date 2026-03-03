@@ -13,7 +13,7 @@ import { useTranslation } from '@/lib/i18n';
 import {
   User, Phone, Calendar, Briefcase, Building2, CheckCircle, ArrowRight,
   ArrowLeft, Loader2, PoundSterling, Sparkles, FileSpreadsheet, Receipt,
-  KeyRound, TrendingUp, BarChart3, Camera, Rocket,
+  KeyRound, TrendingUp, BarChart3, Camera, Rocket, Landmark,
 } from 'lucide-react';
 
 const EMPLOYMENT_OPTIONS = [
@@ -49,6 +49,7 @@ const FEATURE_OPTIONS = [
   { key: 'vault', label: 'Secure Vault', desc: 'Store passwords and credentials', icon: KeyRound },
   { key: 'projections', label: 'Projections', desc: 'Financial forecasting and goals', icon: TrendingUp },
   { key: 'reports', label: 'HMRC Reports', desc: 'Tax calculations and reports', icon: BarChart3 },
+  { key: 'entities', label: 'Companies House', desc: 'Company filings, CT600 and compliance', icon: Landmark },
 ];
 
 const STEPS = ['Welcome', 'Employment', 'Business', 'Features', 'Complete'];
@@ -78,7 +79,7 @@ export function OnboardingClient() {
       .then(r => r.json())
       .then(d => {
         if (d.onboardingCompleted) {
-          router.push('/');
+          router.push('/dashboard');
           return;
         }
         setForm(prev => ({
@@ -144,7 +145,7 @@ export function OnboardingClient() {
       toast({ title: 'Welcome to HomeLedger! 🎉', description: 'Your account is set up and ready to go.' });
 
       // Small delay for the toast to show
-      setTimeout(() => router.push('/'), 1000);
+      setTimeout(() => router.push('/dashboard'), 1000);
     } catch (err: any) {
       toast({ title: err.message || 'Failed to save', variant: 'destructive' });
     } finally {
