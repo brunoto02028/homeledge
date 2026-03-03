@@ -96,6 +96,7 @@ export const authOptions: NextAuthOptions = {
           name: user.fullName,
           role: user.role,
           permissions: (user as any).permissions || [],
+          hiddenModules: (user as any).hiddenModules || [],
           plan: (user as any).plan || 'free',
           onboardingCompleted: (user as any).onboardingCompleted ?? true,
           mustChangePassword: (user as any).mustChangePassword ?? false,
@@ -152,6 +153,7 @@ export const authOptions: NextAuthOptions = {
         user.id = dbUser.id;
         (user as any).role = dbUser.role;
         (user as any).permissions = (dbUser as any).permissions || [];
+        (user as any).hiddenModules = (dbUser as any).hiddenModules || [];
         (user as any).plan = (dbUser as any).plan || 'free';
         (user as any).onboardingCompleted = (dbUser as any).onboardingCompleted ?? true;
         (user as any).mustChangePassword = false;
@@ -172,11 +174,11 @@ export const authOptions: NextAuthOptions = {
         token.lastRefreshed = Date.now();
       }
 
-      // Refresh user data from DB every 10 seconds or on explicit session update
-      // This ensures admin permission/visibility changes propagate quickly without re-login
+      // Refresh user data from DB every 30 seconds or on explicit session update
+      // This ensures admin permission/visibility changes propagate without re-login
       const now = Date.now();
       const lastRefreshed = (token.lastRefreshed as number) || 0;
-      const shouldRefresh = trigger === 'update' || (now - lastRefreshed) > 10 * 1000;
+      const shouldRefresh = trigger === 'update' || (now - lastRefreshed) > 30 * 1000;
 
       if (shouldRefresh && token.id) {
         try {
