@@ -181,15 +181,17 @@ export default function StatementsClient() {
     }
   }, [selectedEntityId]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch('/api/categories');
+      const params = new URLSearchParams();
+      if (selectedEntityId) params.set('entityId', selectedEntityId);
+      const res = await fetch(`/api/categories?${params}`);
       const data = await res.json();
       setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, [selectedEntityId]);
 
   const fetchAccounts = async () => {
     try {
@@ -240,11 +242,14 @@ export default function StatementsClient() {
   }, [fetchStatements]);
 
   useEffect(() => {
-    fetchCategories();
     fetchAccounts();
     fetchEntities();
     autoSyncConnections();
   }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   useEffect(() => {
     fetchStatements();
@@ -1260,7 +1265,7 @@ export default function StatementsClient() {
               <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as 'all' | 'uncategorised')}>
                 <TabsList>
                   <TabsTrigger value="all">All Transactions ({totals.total})</TabsTrigger>
-                  <TabsTrigger value="uncategorized" className={totals.uncategorised > 0 ? 'text-yellow-600' : ''}>
+                  <TabsTrigger value="uncategorised" className={totals.uncategorised > 0 ? 'text-yellow-600' : ''}>
                     Uncategorised ({totals.uncategorised})
                   </TabsTrigger>
                 </TabsList>
@@ -1539,7 +1544,7 @@ export default function StatementsClient() {
                                     <SelectValue placeholder="Select category" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="uncategorized">No Category</SelectItem>
+                                    <SelectItem value="uncategorised">No Category</SelectItem>
                                     {categories
                                       .filter(c => c.type === (tx.type === 'credit' ? 'income' : 'expense'))
                                       .map((cat) => (
@@ -1588,7 +1593,7 @@ export default function StatementsClient() {
                                       <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="uncategorized">No Category</SelectItem>
+                                      <SelectItem value="uncategorised">No Category</SelectItem>
                                       {categories
                                         .filter(c => c.type === (tx.type === 'credit' ? 'income' : 'expense'))
                                         .map((cat) => (
