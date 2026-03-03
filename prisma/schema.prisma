@@ -1881,6 +1881,7 @@ model AnalyticsEvent {
   scrollDepth   Int?     @map("scroll_depth") // max scroll depth percentage (0-100)
   referrer      String?  // previous page
   userAgent     String?  @map("user_agent")
+  ipAddress     String?  @map("ip_address")
   metadata      Json?    // extra data
   createdAt     DateTime @default(now()) @map("created_at")
 
