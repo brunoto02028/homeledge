@@ -3,7 +3,7 @@ import EntitiesClient from './entities-client';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 export const metadata = {
-  title: 'Entities | HomeLedger',
+  title: 'Entities | Clarity & Co',
   description: 'Manage your companies and personal profiles',
 };
 

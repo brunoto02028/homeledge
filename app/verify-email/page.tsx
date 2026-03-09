@@ -11,6 +11,7 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get('email') || '';
+  const callbackUrl = searchParams.get('callbackUrl') || '';
 
   const [email] = useState(emailParam);
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -77,7 +78,7 @@ export default function VerifyEmailPage() {
 
       if (res.ok && data.success) {
         setSuccess(true);
-        setTimeout(() => router.replace('/login'), 3000);
+        setTimeout(() => router.replace(callbackUrl ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : '/login'), 3000);
       } else {
         setError(data.error || 'Verification failed');
         setOtpDigits(['', '', '', '', '', '']);
@@ -198,7 +199,7 @@ export default function VerifyEmailPage() {
           </div>
         </CardContent>
         <CardFooter className="justify-center">
-          <Link href="/register" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <Link href={callbackUrl ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}` : '/register'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Registration
           </Link>

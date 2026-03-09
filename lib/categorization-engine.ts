@@ -173,19 +173,40 @@ async function matchDeterministicRule(
   options: CategorizationOptions
 ): Promise<CategorizationResult> {
   try {
-    // Load active rules, ordered by priority desc
+    // Load active rules scoped by entity, user, and global
+    // Priority: entity-specific > user-global > system-global
     const where: any = {
       isActive: true,
-      OR: [{ userId: null }],
+      OR: [
+        { userId: null, entityId: null },   // system/global rules
+      ],
     };
     if (options.userId) {
-      where.OR.push({ userId: options.userId });
+      where.OR.push({ userId: options.userId, entityId: null }); // user rules (no entity = applies to all)
+    }
+    if (options.entityId) {
+      where.OR.push({ entityId: options.entityId }); // entity-specific rules (any user)
     }
 
     const rules = await (prisma as any).categorizationRule.findMany({
       where,
       orderBy: [{ priority: 'desc' }, { usageCount: 'desc' }],
       include: { category: { select: { id: true, name: true, type: true } } },
+    });
+
+    // Sort: entity-specific first, then user-global, then system
+    // Within each tier: exact > starts_with > contains > regex
+    const matchTypeOrder: Record<string, number> = { exact: 0, starts_with: 1, contains: 2, regex: 3 };
+    const entityId = options.entityId || null;
+    rules.sort((a: any, b: any) => {
+      // Tier: entity-specific (0) > user-global (1) > system (2)
+      const tierA = a.entityId === entityId && a.entityId ? 0 : a.userId ? 1 : 2;
+      const tierB = b.entityId === entityId && b.entityId ? 0 : b.userId ? 1 : 2;
+      if (tierA !== tierB) return tierA - tierB;
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      const aOrder = matchTypeOrder[a.matchType] ?? 9;
+      const bOrder = matchTypeOrder[b.matchType] ?? 9;
+      return aOrder - bOrder;
     });
 
     const descLower = tx.description.toLowerCase();
@@ -267,15 +288,30 @@ async function matchSmartPattern(
     const descWords = tx.description.toLowerCase().split(/\s+/).filter(w => w.length > 3);
     if (descWords.length === 0) return noMatch();
 
-    // Search for feedback entries with similar transaction text
-    const feedbackEntries = await (prisma as any).categorizationFeedback.findMany({
-      where: {
-        userId: options.userId,
-        source: 'user_correction',
-      },
+    // Search for feedback entries — entity-specific first, then user-global
+    const feedbackWhere: any = {
+      userId: options.userId,
+      source: 'user_correction',
+    };
+    // If entity is specified, prefer entity-scoped feedback
+    if (options.entityId) {
+      feedbackWhere.entityId = options.entityId;
+    }
+
+    let feedbackEntries = await (prisma as any).categorizationFeedback.findMany({
+      where: feedbackWhere,
       orderBy: { createdAt: 'desc' },
       take: 200,
     });
+
+    // Fallback: if no entity-specific feedback, try user-global (entityId=null)
+    if (feedbackEntries.length === 0 && options.entityId) {
+      feedbackEntries = await (prisma as any).categorizationFeedback.findMany({
+        where: { userId: options.userId, source: 'user_correction', entityId: null },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      });
+    }
 
     if (feedbackEntries.length === 0) return noMatch();
 
@@ -475,21 +511,30 @@ export async function recordFeedback(params: {
     const searchWord = params.merchantName?.toLowerCase() || words[0] || '';
 
     if (searchWord.length >= 3) {
+      // Count corrections scoped by entity — prevents cross-entity auto-learning
+      const correctionWhere: any = {
+        userId: params.userId,
+        finalCategoryId: params.finalCategoryId,
+        source: 'user_correction',
+        transactionText: { contains: searchWord, mode: 'insensitive' },
+      };
+      if (params.entityId) {
+        correctionWhere.entityId = params.entityId;
+      } else {
+        correctionWhere.entityId = null;
+      }
+
       const similarCorrections = await (prisma as any).categorizationFeedback.count({
-        where: {
-          userId: params.userId,
-          finalCategoryId: params.finalCategoryId,
-          source: 'user_correction',
-          transactionText: { contains: searchWord, mode: 'insensitive' },
-        },
+        where: correctionWhere,
       });
 
       if (similarCorrections >= 3) {
-        // Check if rule already exists
+        // Check if rule already exists for this entity scope
         const existingRule = await (prisma as any).categorizationRule.findFirst({
           where: {
             keyword: searchWord,
             userId: params.userId,
+            entityId: params.entityId || null,
             categoryId: params.finalCategoryId,
           },
         });
@@ -514,14 +559,20 @@ export async function recordFeedback(params: {
           });
           ruleCreated = true;
 
-          // Mark feedback as auto-rule-created
+          // Mark feedback as auto-rule-created (scoped by entity)
+          const fbUpdateWhere: any = {
+            userId: params.userId,
+            finalCategoryId: params.finalCategoryId,
+            transactionText: { contains: searchWord, mode: 'insensitive' },
+            autoRuleCreated: false,
+          };
+          if (params.entityId) {
+            fbUpdateWhere.entityId = params.entityId;
+          } else {
+            fbUpdateWhere.entityId = null;
+          }
           await (prisma as any).categorizationFeedback.updateMany({
-            where: {
-              userId: params.userId,
-              finalCategoryId: params.finalCategoryId,
-              transactionText: { contains: searchWord, mode: 'insensitive' },
-              autoRuleCreated: false,
-            },
+            where: fbUpdateWhere,
             data: { autoRuleCreated: true },
           });
 

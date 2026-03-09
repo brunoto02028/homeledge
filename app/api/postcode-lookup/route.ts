@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       const nomRes = await fetch(
         `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(postcodeFormatted)}&countrycodes=gb&format=json&addressdetails=1&limit=30`,
         {
-          headers: { 'User-Agent': 'HomeLedger/1.0 (https://homeledger.co.uk)' },
+          headers: { 'User-Agent': 'Clarity & Co/1.0 (https://Clarity & Co.co.uk)' },
           signal: AbortSignal.timeout(8000),
         }
       );

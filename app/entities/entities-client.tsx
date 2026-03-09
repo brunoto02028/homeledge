@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Building2, User, Plus, Pencil, Trash2, Search, Loader2, Star, MapPin, FileText, Calendar, Shield, Landmark, CheckCircle, LayoutGrid, List, Circle, AlertTriangle, Image, Wand2, X, RefreshCw, Users, Clock, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Building2, User, Plus, Pencil, Trash2, Search, Loader2, Star, MapPin, FileText, Calendar, Shield, Landmark, CheckCircle, LayoutGrid, List, Circle, AlertTriangle, Image, Wand2, X, RefreshCw, Users, Clock, ExternalLink, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { ModuleGuide } from '@/components/module-guide';
 
@@ -113,7 +114,8 @@ const emptyForm = {
 };
 
 export default function EntitiesClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const router = useRouter();
   const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,11 +157,11 @@ export default function EntitiesClient() {
         const data = await res.json();
         setChLiveData(prev => ({ ...prev, [entityId]: data }));
       } else {
-        toast({ title: 'CH Error', description: 'Could not fetch Companies House data', variant: 'destructive' });
+        toast({ title: isPt ? 'Erro CH' : 'CH Error', description: isPt ? 'Não foi possível buscar dados do Companies House' : 'Could not fetch Companies House data', variant: 'destructive' });
         setChExpanded(null);
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to reach Companies House', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao acessar Companies House' : 'Failed to reach Companies House', variant: 'destructive' });
       setChExpanded(null);
     } finally {
       setChLiveLoading(null);
@@ -173,7 +175,7 @@ export default function EntitiesClient() {
       if (res.ok) {
         const data = await res.json();
         setChLiveData(prev => ({ ...prev, [entityId]: data }));
-        toast({ title: 'Refreshed', description: 'Companies House data updated' });
+        toast({ title: isPt ? 'Atualizado' : 'Refreshed', description: isPt ? 'Dados do Companies House atualizados' : 'Companies House data updated' });
       }
     } catch {
       toast({ title: 'Error', variant: 'destructive' });
@@ -342,7 +344,7 @@ export default function EntitiesClient() {
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
-      toast({ title: 'Name required', variant: 'destructive' });
+      toast({ title: isPt ? 'Nome obrigatório' : 'Name required', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -355,7 +357,7 @@ export default function EntitiesClient() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        toast({ title: editEntity ? 'Entity Updated' : 'Entity Created' });
+        toast({ title: editEntity ? (isPt ? 'Entidade Atualizada' : 'Entity Updated') : (isPt ? 'Entidade Criada' : 'Entity Created') });
         setDialogOpen(false);
         fetchEntities();
       } else {
@@ -373,7 +375,7 @@ export default function EntitiesClient() {
     if (!deleteId) return;
     try {
       await fetch(`/api/entities/${deleteId}`, { method: 'DELETE' });
-      toast({ title: 'Entity Deleted' });
+      toast({ title: isPt ? 'Entidade Excluída' : 'Entity Deleted' });
       fetchEntities();
     } catch (error) {
       toast({ title: 'Error', variant: 'destructive' });
@@ -389,7 +391,7 @@ export default function EntitiesClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isDefault: true }),
       });
-      toast({ title: 'Default Entity Set' });
+      toast({ title: isPt ? 'Entidade Padrão Definida' : 'Default Entity Set' });
       fetchEntities();
     } catch (error) {
       toast({ title: 'Error', variant: 'destructive' });
@@ -423,6 +425,69 @@ export default function EntitiesClient() {
           </Button>
         </div>
       </div>
+
+      {/* Companies House Quick Search Bar */}
+      <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/40 flex-shrink-0">
+              <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={chSearch}
+                  onChange={(e) => handleChSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && chSearch.trim()) {
+                      router.push(`/entities/companies-house-search?q=${encodeURIComponent(chSearch)}`);
+                    }
+                  }}
+                  placeholder={t('chSearch.quickSearchPlaceholder')}
+                  className="pl-10 h-10 bg-white dark:bg-background"
+                />
+                {chSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-blue-500" />
+                )}
+              </div>
+              {/* Inline quick results */}
+              {chResults.length > 0 && chSearch.trim() && !dialogOpen && (
+                <div className="absolute z-50 mt-1 w-[calc(100%-5rem)] bg-popover rounded-lg border shadow-lg max-h-48 overflow-y-auto">
+                  {chResults.slice(0, 5).map((r, i) => (
+                    <button
+                      key={i}
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 border-b last:border-b-0 text-sm transition-colors"
+                      onClick={() => selectCompanyResult(r)}
+                    >
+                      <div className="font-medium">{r.name}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                        <span className="font-mono">{r.companyNumber}</span>
+                        <span>•</span>
+                        <Badge variant="outline" className={`text-[10px] py-0 h-4 ${r.status === 'active' ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
+                          {r.status}
+                        </Badge>
+                        {r.address && <><span>•</span><span className="truncate">{r.address}</span></>}
+                      </div>
+                    </button>
+                  ))}
+                  <Link
+                    href={`/entities/companies-house-search?q=${encodeURIComponent(chSearch)}`}
+                    className="block w-full text-center px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 border-t"
+                  >
+                    {t('chSearch.viewAll')} <ArrowRight className="inline h-3 w-3 ml-1" />
+                  </Link>
+                </div>
+              )}
+            </div>
+            <Link href="/entities/companies-house-search">
+              <Button variant="outline" size="sm" className="flex-shrink-0 h-10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                <Search className="h-4 w-4 mr-1.5" /> {t('chSearch.viewAll')}
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -989,12 +1054,12 @@ export default function EntitiesClient() {
                                 if (getUrlRes.ok) {
                                   const { url } = await getUrlRes.json();
                                   setForm(prev => ({ ...prev, logoUrl: url }));
-                                  toast({ title: 'Logo Uploaded' });
+                                  toast({ title: isPt ? 'Logo Enviado' : 'Logo Uploaded' });
                                 }
                               }
                             } catch (err) {
                               console.error('Logo upload error:', err);
-                              toast({ title: 'Upload Failed', variant: 'destructive' });
+                              toast({ title: isPt ? 'Falha no Envio' : 'Upload Failed', variant: 'destructive' });
                             } finally {
                               setUploadingLogo(false);
                             }
@@ -1034,7 +1099,7 @@ export default function EntitiesClient() {
                             const data = await res.json();
                             if (data.success && data.logoUrl) {
                               setForm(prev => ({ ...prev, logoUrl: data.logoUrl }));
-                              toast({ title: 'Logo Generated', description: 'AI-generated logo applied.' });
+                              toast({ title: isPt ? 'Logo Gerado' : 'Logo Generated', description: isPt ? 'Logo gerado por IA aplicado.' : 'AI-generated logo applied.' });
                             } else {
                               toast({ title: 'Generation Info', description: data.message || data.suggestion || 'Could not generate image. Try uploading instead.', variant: 'default' });
                             }

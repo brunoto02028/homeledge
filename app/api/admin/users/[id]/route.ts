@@ -47,6 +47,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (Array.isArray(body.hiddenModules)) {
       updateData.hiddenModules = body.hiddenModules;
     }
+    if (typeof body.isTestUser === 'boolean') {
+      updateData.isTestUser = body.isTestUser;
+    }
 
     const updated = await prisma.user.update({
       where: { id },

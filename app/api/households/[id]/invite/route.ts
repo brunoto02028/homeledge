@@ -10,15 +10,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   try {
     const userId = await requireUserId();
     const { id } = params;
-    const { email, role = 'viewer' } = await req.json();
+    const { email, role = 'viewer', permissions = [] } = await req.json();
 
     if (!email?.trim()) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Verify user is owner or editor
+    // Verify user is owner, admin, or editor
     const membership = await prisma.membership.findFirst({
-      where: { userId, householdId: id, role: { in: ['owner', 'editor'] } },
+      where: { userId, householdId: id, role: { in: ['owner', 'admin', 'editor'] as any } },
     });
 
     if (!membership) {
@@ -56,6 +56,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         email: email.trim().toLowerCase(),
         householdId: id,
         role: role as any,
+        permissions: permissions as any,
         invitedBy: userId,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
@@ -66,9 +67,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     try {
       const emailResult = await sendInvitationEmail(
         email.trim().toLowerCase(),
-        inviter?.fullName || 'A HomeLedger user',
+        inviter?.fullName || 'A Clarity & Co user',
         household?.name || 'a household',
         invitation.token,
+        role,
       );
       emailSent = emailResult?.success === true;
     } catch (emailErr) {

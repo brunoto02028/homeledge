@@ -1,4 +1,4 @@
-# HomeLedger — API Reference
+# Clarity & Co — API Reference
 
 All API routes require authentication unless marked as **Public**.  
 Authentication is via NextAuth.js session cookies.

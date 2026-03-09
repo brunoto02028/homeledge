@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import IntelligenceClient from './intelligence-client';
 
 export const metadata: Metadata = {
-  title: 'Global Intelligence Dashboard — HomeLedger',
+  title: 'Global Intelligence Dashboard — Clarity & Co',
   description: 'Real-time global news intelligence with sentiment analysis, UK market impact tracking, and interactive geospatial visualization. Monitor crisis events, opportunities, and financial signals worldwide.',
   openGraph: {
-    title: 'Global Intelligence Dashboard — HomeLedger',
+    title: 'Global Intelligence Dashboard — Clarity & Co',
     description: 'Real-time global news intelligence with sentiment analysis and UK market impact tracking.',
-    url: 'https://homeledger.co.uk/intelligence',
+    url: 'https://Clarity & Co.co.uk/intelligence',
     type: 'website',
   },
 };
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function IntelligencePage() {
   return (
     <>
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
       <IntelligenceClient />
     </>
   );

@@ -27,7 +27,7 @@ async function main() {
   const entries = [
     { title: 'Yoti Sandbox - SDK ID', category: 'other', username: encrypt('fbd0172b-caf5-4fe5-bab6-4ce60c6731b2'), passwordEnc: encrypt(''), websiteUrl: encrypt('https://hub.yoti.com'), notes: encrypt('Yoti Sandbox Client SDK ID. Env: YOTI_CLIENT_SDK_ID') },
     { title: 'Yoti Sandbox - PEM Key Path', category: 'other', username: encrypt('yoti-sandbox.pem'), passwordEnc: encrypt('/opt/homeledger/yoti-sandbox.pem'), websiteUrl: encrypt('https://hub.yoti.com'), notes: encrypt('Yoti RSA Private Key path on VPS. Env: YOTI_PEM_KEY_PATH') },
-    { title: 'Yoti Webhook Secret', category: 'other', username: encrypt('YOTI_WEBHOOK_SECRET'), passwordEnc: encrypt('homeledger-yoti-webhook-2026'), websiteUrl: encrypt('https://homeledger.co.uk/api/yoti/webhook'), notes: encrypt('Bearer token for Yoti webhook auth') },
+    { title: 'Yoti Webhook Secret', category: 'other', username: encrypt('YOTI_WEBHOOK_SECRET'), passwordEnc: encrypt('homeledger-yoti-webhook-2026'), websiteUrl: encrypt('https://clarityco.co.uk/api/yoti/webhook'), notes: encrypt('Bearer token for Yoti webhook auth') },
   ];
 
   for (const e of entries) {

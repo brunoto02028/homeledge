@@ -13,7 +13,7 @@ Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray
 Write-Host "`n[1/3] Syncing source files to VPS..." -ForegroundColor Yellow
 
 # Directories to sync (excluding .next, node_modules, .git)
-$syncDirs = @("app", "components", "lib", "prisma", "public", "e2e", "docs")
+$syncDirs = @("app", "components", "lib", "prisma", "public", "e2e", "docs", "scripts", "messages")
 foreach ($dir in $syncDirs) {
     $localPath = Join-Path $LOCAL_DIR $dir
     if (Test-Path $localPath) {

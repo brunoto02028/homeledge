@@ -55,7 +55,8 @@ const emptyForm = {
 };
 
 export function PropertiesClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ export function PropertiesClient() {
       const res = await fetch('/api/properties');
       if (res.ok) setProperties(await res.json());
     } catch {
-      toast({ title: 'Error', description: 'Failed to load properties', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao carregar imóveis' : 'Failed to load properties', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export function PropertiesClient() {
 
   const handleSave = async () => {
     if (!form.name) {
-      toast({ title: 'Name is required', variant: 'destructive' });
+      toast({ title: isPt ? 'Nome é obrigatório' : 'Name is required', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -93,7 +94,7 @@ export function PropertiesClient() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error((await res.json()).error);
-      toast({ title: editId ? 'Property updated' : 'Property added' });
+      toast({ title: editId ? (isPt ? 'Imóvel atualizado' : 'Property updated') : (isPt ? 'Imóvel adicionado' : 'Property added') });
       setShowDialog(false);
       setEditId(null);
       setForm(emptyForm);
@@ -109,7 +110,7 @@ export function PropertiesClient() {
     if (!deleteId) return;
     try {
       await fetch(`/api/properties/${deleteId}`, { method: 'DELETE' });
-      toast({ title: 'Property deleted' });
+      toast({ title: isPt ? 'Imóvel excluído' : 'Property deleted' });
       setDeleteId(null);
       fetchData();
     } catch {
@@ -157,7 +158,7 @@ export function PropertiesClient() {
           <p className="text-muted-foreground mt-1">{t('properties.subtitle')}</p>
         </div>
         <Button onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Add Property
+          <Plus className="h-4 w-4 mr-2" /> {isPt ? 'Adicionar Imóvel' : 'Add Property'}
         </Button>
       </div>
 
@@ -236,10 +237,10 @@ export function PropertiesClient() {
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">
             <Home className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No properties yet</h3>
-            <p className="text-muted-foreground mb-4">Track residential properties, buy-to-lets, and commercial units</p>
+            <h3 className="text-lg font-medium mb-2">{isPt ? 'Nenhum imóvel ainda' : 'No properties yet'}</h3>
+            <p className="text-muted-foreground mb-4">{isPt ? 'Acompanhe imóveis residenciais, buy-to-lets e comerciais' : 'Track residential properties, buy-to-lets, and commercial units'}</p>
             <Button onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Add First Property
+              <Plus className="h-4 w-4 mr-2" /> {isPt ? 'Adicionar Primeiro Imóvel' : 'Add First Property'}
             </Button>
           </CardContent>
         </Card>
@@ -279,15 +280,15 @@ export function PropertiesClient() {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                       <p className="text-sm font-bold">{p.currentValue ? fmt(p.currentValue) : '-'}</p>
-                      <p className="text-[10px] text-muted-foreground">Value</p>
+                      <p className="text-[10px] text-muted-foreground">{isPt ? 'Valor' : 'Value'}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                       <p className="text-sm font-bold">{p.mortgageBalance ? fmt(p.mortgageBalance) : '-'}</p>
-                      <p className="text-[10px] text-muted-foreground">Mortgage</p>
+                      <p className="text-[10px] text-muted-foreground">{isPt ? 'Hipoteca' : 'Mortgage'}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                       <p className={`text-sm font-bold ${equity >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{fmt(equity)}</p>
-                      <p className="text-[10px] text-muted-foreground">Equity</p>
+                      <p className="text-[10px] text-muted-foreground">{isPt ? 'Patrimônio' : 'Equity'}</p>
                     </div>
                   </div>
 
@@ -296,11 +297,11 @@ export function PropertiesClient() {
                       <span className="flex items-center gap-1"><Percent className="h-3 w-3" />{p.mortgageRate}% {p.mortgageType || ''}</span>
                     )}
                     {ltv !== null && <span>LTV: {ltv}%</span>}
-                    {p.monthlyPayment && <span>Payment: {fmt(p.monthlyPayment)}/mo</span>}
-                    {p.rentalIncome && <span className="text-emerald-600">Rental: {fmt(p.rentalIncome)}/mo</span>}
+                    {p.monthlyPayment && <span>{isPt ? 'Parcela' : 'Payment'}: {fmt(p.monthlyPayment)}/mo</span>}
+                    {p.rentalIncome && <span className="text-emerald-600">{isPt ? 'Aluguel' : 'Rental'}: {fmt(p.rentalIncome)}/mo</span>}
                     {gain !== null && (
                       <span className={gain >= 0 ? 'text-emerald-600' : 'text-red-600'}>
-                        {gain >= 0 ? '+' : ''}{fmt(gain)} since purchase
+                        {gain >= 0 ? '+' : ''}{fmt(gain)} {isPt ? 'desde a compra' : 'since purchase'}
                       </span>
                     )}
                   </div>
@@ -315,22 +316,22 @@ export function PropertiesClient() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editId ? 'Edit Property' : 'Add Property'}</DialogTitle>
+            <DialogTitle>{editId ? (isPt ? 'Editar Imóvel' : 'Edit Property') : (isPt ? 'Adicionar Imóvel' : 'Add Property')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Property Name</Label>
-                <Input placeholder="e.g. 42 Oak Avenue" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <Label>{isPt ? 'Nome do Imóvel' : 'Property Name'}</Label>
+                <Input placeholder={isPt ? 'ex: Rua das Flores 42' : 'e.g. 42 Oak Avenue'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Type</Label>
+                <Label>{isPt ? 'Tipo' : 'Type'}</Label>
                 <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="residential">Residential</SelectItem>
+                    <SelectItem value="residential">{isPt ? 'Residencial' : 'Residential'}</SelectItem>
                     <SelectItem value="buy_to_let">Buy to Let</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
+                    <SelectItem value="commercial">{isPt ? 'Comercial' : 'Commercial'}</SelectItem>
                     <SelectItem value="holiday_let">Holiday Let</SelectItem>
                   </SelectContent>
                 </Select>
@@ -338,8 +339,8 @@ export function PropertiesClient() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Address</Label>
-                <Input placeholder="Full address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                <Label>{isPt ? 'Endereço' : 'Address'}</Label>
+                <Input placeholder={isPt ? 'Endereço completo' : 'Full address'} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <Label>Postcode</Label>
@@ -348,21 +349,21 @@ export function PropertiesClient() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Purchase Price (£)</Label>
+                <Label>{isPt ? 'Preço de Compra (£)' : 'Purchase Price (£)'}</Label>
                 <Input type="number" step="1000" value={form.purchasePrice} onChange={e => setForm({ ...form, purchasePrice: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Current Value (£)</Label>
+                <Label>{isPt ? 'Valor Atual (£)' : 'Current Value (£)'}</Label>
                 <Input type="number" step="1000" value={form.currentValue} onChange={e => setForm({ ...form, currentValue: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label>Mortgage Balance (£)</Label>
+                <Label>{isPt ? 'Saldo da Hipoteca (£)' : 'Mortgage Balance (£)'}</Label>
                 <Input type="number" step="1000" value={form.mortgageBalance} onChange={e => setForm({ ...form, mortgageBalance: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Rate (%)</Label>
+                <Label>{isPt ? 'Taxa (%)' : 'Rate (%)'}</Label>
                 <Input type="number" step="0.01" value={form.mortgageRate} onChange={e => setForm({ ...form, mortgageRate: e.target.value })} />
               </div>
               <div className="space-y-1.5">
@@ -380,24 +381,24 @@ export function PropertiesClient() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Monthly Payment (£)</Label>
+                <Label>{isPt ? 'Parcela Mensal (£)' : 'Monthly Payment (£)'}</Label>
                 <Input type="number" step="1" value={form.monthlyPayment} onChange={e => setForm({ ...form, monthlyPayment: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Monthly Rental Income (£)</Label>
+                <Label>{isPt ? 'Renda Mensal de Aluguel (£)' : 'Monthly Rental Income (£)'}</Label>
                 <Input type="number" step="1" value={form.rentalIncome} onChange={e => setForm({ ...form, rentalIncome: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Notes</Label>
-              <Input placeholder="Optional notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+              <Label>{isPt ? 'Observações' : 'Notes'}</Label>
+              <Input placeholder={isPt ? 'Observações opcionais' : 'Optional notes'} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{isPt ? 'Cancelar' : 'Cancel'}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {editId ? 'Update' : 'Add Property'}
+              {editId ? (isPt ? 'Atualizar' : 'Update') : (isPt ? 'Adicionar Imóvel' : 'Add Property')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -407,12 +408,12 @@ export function PropertiesClient() {
       <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Property?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently remove this property from your portfolio.</AlertDialogDescription>
+            <AlertDialogTitle>{isPt ? 'Excluir Imóvel?' : 'Delete Property?'}</AlertDialogTitle>
+            <AlertDialogDescription>{isPt ? 'Isto removerá permanentemente este imóvel do seu portfólio.' : 'This will permanently remove this property from your portfolio.'}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 shadow-sm">Delete</AlertDialogAction>
+            <AlertDialogCancel>{isPt ? 'Cancelar' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 shadow-sm">{isPt ? 'Excluir' : 'Delete'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

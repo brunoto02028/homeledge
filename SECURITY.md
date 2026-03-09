@@ -14,7 +14,7 @@
 
 Instead, please report security issues via email:
 
-📧 **security@homeledger.co.uk**
+📧 **security@clarityco.co.uk**
 
 Include:
 - Description of the vulnerability

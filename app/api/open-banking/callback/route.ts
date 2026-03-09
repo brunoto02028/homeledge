@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://Clarity & Co.co.uk';
 
   if (error) {
     console.error('[OpenBanking Callback] Error:', error);

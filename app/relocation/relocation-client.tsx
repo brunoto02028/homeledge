@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { ModuleGuide } from '@/components/module-guide';
+import { useTranslation } from '@/lib/i18n';
 import {
   Globe, Send, Loader2, Bot, User, AlertTriangle, ExternalLink,
   ShieldAlert, ArrowRight, BookOpen, CreditCard, Building2,
@@ -44,6 +45,8 @@ For visa applications, immigration appeals, asylum claims, or any complex immigr
 • A qualified immigration solicitor — solicitors.lawsociety.org.uk`;
 
 export function RelocationClient() {
+  const { locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const router = useRouter();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -83,7 +86,7 @@ export function RelocationClient() {
       const aiMsg: ChatMessage = { role: 'assistant', content: data.answer || 'No response received.', timestamp: new Date() };
       setMessages(prev => [...prev, aiMsg]);
     } catch {
-      toast({ title: 'Failed to get response', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha ao obter resposta' : 'Failed to get response', variant: 'destructive' });
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not process your request. Please try again.', timestamp: new Date() }]);
     } finally {
       setLoading(false);

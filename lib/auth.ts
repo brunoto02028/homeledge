@@ -100,6 +100,7 @@ export const authOptions: NextAuthOptions = {
           plan: (user as any).plan || 'free',
           onboardingCompleted: (user as any).onboardingCompleted ?? true,
           mustChangePassword: (user as any).mustChangePassword ?? false,
+          isTestUser: (user as any).isTestUser ?? false,
         };
       },
     }),
@@ -122,31 +123,56 @@ export const authOptions: NextAuthOptions = {
         let dbUser = await prisma.user.findUnique({ where: { email } });
 
         if (!dbUser) {
-          // First-time Google sign-in: create user with free plan permissions
+          // First-time Google sign-in: create user + household in a transaction
           const freePermissions = getPermissionsForPlan('none');
-          dbUser = await prisma.user.create({
-            data: {
-              email,
-              fullName: user.name || email.split('@')[0],
-              passwordHash: '',
-              role: 'user',
-              status: 'active',
-              emailVerified: true,
-              onboardingCompleted: false,
-              plan: 'none',
-              permissions: freePermissions,
-            },
+          const fullName = user.name || email.split('@')[0];
+          dbUser = await prisma.$transaction(async (tx) => {
+            const newUser = await tx.user.create({
+              data: {
+                email,
+                fullName,
+                passwordHash: '',
+                role: 'user',
+                status: 'active',
+                emailVerified: true,
+                onboardingCompleted: false,
+                plan: 'none',
+                permissions: freePermissions,
+              },
+            });
+            // Create household (same as admin-created users)
+            const household = await tx.household.create({
+              data: { name: `${fullName}'s Household`, ownerId: newUser.id },
+            });
+            await tx.membership.create({
+              data: { userId: newUser.id, householdId: household.id, role: 'owner' },
+            });
+            await tx.event.create({
+              data: {
+                userId: newUser.id,
+                eventType: 'user.created_via_google',
+                entityType: 'User',
+                entityId: newUser.id,
+                payload: { email, method: 'google' },
+              },
+            });
+            return newUser;
           });
           console.log(`[Auth] New Google user created: ${email} with plan=none, permissions=${freePermissions.length}`);
         } else {
-          // Existing user signing in with Google
+          // Existing user signing in with Google (account linking or returning Google user)
           if (dbUser.status === 'suspended') return false;
           const updates: any = { lastLoginAt: new Date() };
           if (!dbUser.emailVerified) {
             updates.emailVerified = true;
             updates.status = 'active';
           }
+          // Clear mustChangePassword when linking Google (they verified identity via Google)
+          if ((dbUser as any).mustChangePassword) {
+            updates.mustChangePassword = false;
+          }
           await prisma.user.update({ where: { id: dbUser.id }, data: updates });
+          console.log(`[Auth] Existing user signed in via Google: ${email}`);
         }
 
         // Attach DB fields to user object for jwt callback
@@ -157,6 +183,7 @@ export const authOptions: NextAuthOptions = {
         (user as any).plan = (dbUser as any).plan || 'free';
         (user as any).onboardingCompleted = (dbUser as any).onboardingCompleted ?? true;
         (user as any).mustChangePassword = false;
+        (user as any).isTestUser = (dbUser as any).isTestUser ?? false;
         return true;
       }
       // Credentials: always allow (authorize already validated)
@@ -171,6 +198,7 @@ export const authOptions: NextAuthOptions = {
         token.plan = (user as any).plan || 'free';
         token.onboardingCompleted = (user as any).onboardingCompleted ?? true;
         token.mustChangePassword = (user as any).mustChangePassword ?? false;
+        token.isTestUser = (user as any).isTestUser ?? false;
         token.lastRefreshed = Date.now();
       }
 
@@ -184,7 +212,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser: any = await (prisma as any).user.findUnique({
             where: { id: token.id as string },
-            select: { onboardingCompleted: true, fullName: true, permissions: true, hiddenModules: true, plan: true, role: true, mustChangePassword: true, status: true },
+            select: { onboardingCompleted: true, fullName: true, permissions: true, hiddenModules: true, plan: true, role: true, mustChangePassword: true, isTestUser: true, status: true },
           });
           if (dbUser) {
             token.onboardingCompleted = dbUser.onboardingCompleted;
@@ -194,6 +222,7 @@ export const authOptions: NextAuthOptions = {
             token.plan = dbUser.plan || 'free';
             token.role = dbUser.role;
             token.mustChangePassword = dbUser.mustChangePassword ?? false;
+            token.isTestUser = dbUser.isTestUser ?? false;
             token.lastRefreshed = now;
           }
         } catch {}
@@ -208,6 +237,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).hiddenModules = token.hiddenModules || [];
         (session.user as any).plan = token.plan || 'free';
         (session.user as any).mustChangePassword = token.mustChangePassword ?? false;
+        (session.user as any).isTestUser = token.isTestUser ?? false;
       }
       return session;
     },

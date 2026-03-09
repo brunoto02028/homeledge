@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useId } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, ArrowLeftRight, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Sparkles, ClipboardList, Megaphone, FilePen, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { ROUTE_PERMISSION_MAP, hasPermission, ADMIN_ONLY_MODULES, type PermissionKey } from "@/lib/permissions"
+import { UpgradeModal } from "@/components/upgrade-modal"
 
 const navItems = [
   { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard, permission: 'dashboard' as PermissionKey },
@@ -16,11 +17,15 @@ const navItems = [
   { href: "/bills", labelKey: "nav.bills", icon: Receipt, permission: 'bills' as PermissionKey },
   { href: "/documents", labelKey: "nav.documents", icon: Camera, permission: 'documents' as PermissionKey },
   { href: "/categories", labelKey: "nav.categories", icon: Tag, permission: 'categories' as PermissionKey },
+  { href: "/citizenship", labelKey: "nav.citizenship", icon: ClipboardList, permission: 'academy' as PermissionKey },
+  { href: "/consulate", labelKey: "nav.consulate", icon: Building2, permission: 'academy' as PermissionKey },
+  { href: "/dbs", labelKey: "nav.dbs", icon: Shield, permission: 'academy' as PermissionKey },
   { href: "/english-hub", labelKey: "nav.englishHub", icon: Languages, permission: 'english_hub' as PermissionKey },
   { href: "/email", labelKey: "nav.email", icon: Mail, permission: 'email' as PermissionKey },
   { href: "/intelligence", labelKey: "nav.intelligence", icon: Radio, permission: 'intelligence' as PermissionKey },
   { href: "/entities", labelKey: "nav.entities", icon: Landmark, permission: 'entities' as PermissionKey },
   { href: "/files", labelKey: "nav.files", icon: FolderOpen, permission: 'files' as PermissionKey },
+  { href: "/smart-upload", labelKey: "nav.smartUpload", icon: Sparkles, permission: 'files' as PermissionKey },
   { href: "/household", labelKey: "nav.household", icon: Users, permission: 'household' as PermissionKey },
   { href: "/invoices", labelKey: "nav.invoices", icon: FileText, permission: 'invoices' as PermissionKey },
   { href: "/learn", labelKey: "nav.learn", icon: BookOpen, permission: 'learn' as PermissionKey },
@@ -35,14 +40,15 @@ const navItems = [
   { href: "/categorization-rules", labelKey: "nav.categorizationRules", icon: Brain, permission: 'categories' as PermissionKey },
   { href: "/statements", labelKey: "nav.statements", icon: FileSpreadsheet, permission: 'statements' as PermissionKey },
   { href: "/tax-timeline", labelKey: "nav.taxTimeline", icon: CalendarClock, permission: 'tax_timeline' as PermissionKey },
-  { href: "/transfers", labelKey: "nav.transfers", icon: ArrowLeftRight, permission: 'transfers' as PermissionKey },
   { href: "/vault", labelKey: "nav.vault", icon: KeyRound, permission: 'vault' as PermissionKey },
   { href: "/insurance", labelKey: "nav.insurance", icon: Shield, permission: 'insurance' as PermissionKey },
   { href: "/correspondence", labelKey: "nav.correspondence", icon: FileText, permission: 'correspondence' as PermissionKey },
+  { href: "/self-assessment-guide", labelKey: "nav.selfAssessmentGuide", icon: ClipboardList, permission: 'reports' as PermissionKey },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, permission: 'settings' as PermissionKey },
 ]
 
 const adminItems = [
+  { href: "/admin/marketing", labelKey: "nav.marketing", icon: Megaphone },
   { href: "/admin/cms", labelKey: "nav.cms", icon: Languages },
   { href: "/admin/users", labelKey: "nav.users", icon: Shield },
   { href: "/admin/plans", labelKey: "nav.plans", icon: CreditCard },
@@ -50,6 +56,8 @@ const adminItems = [
   { href: "/admin/integrations", labelKey: "nav.integrations", icon: Cable },
   { href: "/admin/credentials", labelKey: "nav.credentials", icon: KeyRound },
   { href: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { href: "/admin/automation", labelKey: "nav.automation", icon: Zap },
+  { href: "/pdf-editor", labelKey: "nav.pdfEditor", icon: FilePen },
 ]
 
 const NAV_ORDER_KEY = 'homeledger-nav-order'
@@ -75,6 +83,7 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
   const sessionHidden: string[] = (session?.user as any)?.hiddenModules || []
   const isAdmin = sessionRole === 'admin'
   const isAccountant = sessionRole === 'accountant'
+  const [lockedModule, setLockedModule] = useState<PermissionKey | null>(null)
 
   // Live permissions from DB (bypasses JWT cache for instant admin updates)
   const [livePermissions, setLivePermissions] = useState<string[] | null>(null)
@@ -220,14 +229,17 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
             className={cn(reorderMode && !isLocked && "cursor-grab active:cursor-grabbing")}
           >
             <Link
-              href={isLocked ? '/settings?upgrade=1' : item.href}
-              onClick={reorderMode ? (e) => e.preventDefault() : onItemClick}
-              title={collapsed ? (isLocked ? `${label} (Upgrade)` : label) : undefined}
+              href={isLocked ? '#' : item.href}
+              onClick={isLocked
+                ? (e) => { e.preventDefault(); setLockedModule(item.permission) }
+                : reorderMode ? (e) => e.preventDefault() : onItemClick
+              }
+              title={collapsed ? (isLocked ? `${label} (Upgrade required)` : label) : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                 collapsed && "justify-center px-2",
                 isLocked
-                  ? "text-slate-600 hover:bg-white/5 hover:text-slate-500 opacity-60"
+                  ? "text-slate-600 hover:bg-white/5 hover:text-slate-500 cursor-pointer"
                   : isActive
                     ? "bg-white/15 text-white shadow-sm"
                     : "text-slate-400 hover:bg-white/10 hover:text-slate-200",
@@ -318,6 +330,7 @@ export function Navigation({ collapsed = false, onItemClick }: { collapsed?: boo
         <Languages className="h-5 w-5 flex-shrink-0" />
         {!collapsed && <span>{locale === 'en' ? 'Português (BR)' : 'English'}</span>}
       </button>
+      <UpgradeModal permission={lockedModule} onClose={() => setLockedModule(null)} />
     </nav>
   )
 }

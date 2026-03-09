@@ -1,5 +1,5 @@
 /**
- * Performance Benchmark Script for HomeLedger.
+ * Performance Benchmark Script for Clarity & Co.
  *
  * Measures build time, bundle sizes, and page load metrics.
  * Run with: `npm run benchmark`
@@ -39,7 +39,7 @@ function getDirSize(dir) {
 }
 
 console.log('='.repeat(60));
-console.log('  HomeLedger Performance Benchmark');
+console.log('  Clarity & Co Performance Benchmark');
 console.log('='.repeat(60));
 console.log();
 

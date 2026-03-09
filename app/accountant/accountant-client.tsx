@@ -17,6 +17,7 @@ import {
   TrendingUp, TrendingDown, BarChart3, ArrowLeft, Briefcase,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from '@/lib/i18n';
 
 interface ClientRelationship {
   id: string;
@@ -60,6 +61,8 @@ interface ClientData {
 }
 
 export function AccountantDashboard() {
+  const { locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { data: session } = useSession();
   const [clients, setClients] = useState<ClientRelationship[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +131,7 @@ export function AccountantDashboard() {
 
   const viewClientData = async (client: ClientRelationship, section = 'overview') => {
     if (!client.clientId) {
-      toast.error('Client has not joined HomeLedger yet');
+      toast.error('Client has not joined Clarity & Co yet');
       return;
     }
     setSelectedClient(client);
@@ -440,7 +443,7 @@ export function AccountantDashboard() {
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
                 />
-                <p className="text-xs text-muted-foreground mt-1">If the client already has a HomeLedger account, access will be granted immediately.</p>
+                <p className="text-xs text-muted-foreground mt-1">If the client already has a Clarity & Co account, access will be granted immediately.</p>
               </div>
               <div>
                 <Label>Label (optional)</Label>

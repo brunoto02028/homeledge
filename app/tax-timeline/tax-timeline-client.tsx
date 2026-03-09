@@ -48,7 +48,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export function TaxTimelineClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [data, setData] = useState<TimelineData | null>(null);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());

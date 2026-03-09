@@ -96,7 +96,7 @@ export function PWAInstallPrompt() {
           <Download className="h-5 w-5 text-white dark:text-slate-900" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Install HomeLedger</p>
+          <p className="text-sm font-medium">Install Clarity & Co</p>
           <p className="text-xs text-muted-foreground">Quick access from your desktop</p>
         </div>
         <div className="flex items-center gap-1">
@@ -123,9 +123,9 @@ export function PWASidebarButton({ collapsed = false }: { collapsed?: boolean })
       const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
       const isEdge = /Edg/.test(navigator.userAgent);
       const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-      let msg = 'To install HomeLedger as a desktop app:\n\n';
-      if (isEdge) msg += '• Click the install icon in the address bar\n• Or: Menu (\u22EF) \u2192 Apps \u2192 Install HomeLedger';
-      else if (isChrome) msg += '• Click the install icon in the address bar\n• Or: Menu (\u22EE) \u2192 "Install HomeLedger"';
+      let msg = 'To install Clarity & Co as a desktop app:\n\n';
+      if (isEdge) msg += '• Click the install icon in the address bar\n• Or: Menu (\u22EF) \u2192 Apps \u2192 Install Clarity & Co';
+      else if (isChrome) msg += '• Click the install icon in the address bar\n• Or: Menu (\u22EE) \u2192 "Install Clarity & Co"';
       else if (isSafari) msg += '• File \u2192 Add to Dock (macOS Sonoma+)';
       else msg += '• Use Chrome or Edge for best install experience';
       alert(msg);

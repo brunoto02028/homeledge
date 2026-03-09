@@ -39,29 +39,47 @@ if [ $BUILD_EXIT -ne 0 ]; then
   exit 1
 fi
 
-log '4/5 Build successful. Cleaning rollback backup...'
-# Keep one rollback copy, remove older ones
+log '4/5 Build complete. Fixing prerender-manifest...'
+# Always fix manifest — prevents 502 when prerender errors occur during build
+node "$APP_DIR/fix-manifest.js" 2>&1 | tee -a "$LOG_FILE"
+# Keep only latest rollback, remove older ones
 find "$APP_DIR" -maxdepth 1 -name '.next-rollback-*' -not -name ".next-rollback-$TS" -exec rm -rf {} + 2>/dev/null || true
 
-# 5. Graceful reload — PM2 starts new process, waits for it to listen, then kills old
+# 5. Graceful reload — zero-downtime
+# pm2 reload: starts NEW process first, waits for it to listen, THEN kills old
+# If process was lost (crash), fall back to pm2 start
 log '5/5 PM2 graceful reload (zero-downtime)...'
-pm2 reload homeledger --update-env 2>&1 | tee -a "$LOG_FILE"
+if pm2 describe homeledger > /dev/null 2>&1; then
+  pm2 reload homeledger --update-env 2>&1 | tee -a "$LOG_FILE"
+else
+  log 'Process not in PM2 list — starting fresh...'
+  pm2 start "$APP_DIR/ecosystem.config.js" 2>&1 | tee -a "$LOG_FILE"
+fi
+pm2 save 2>&1 | tee -a "$LOG_FILE"
 
 # Wait and verify
-sleep 3
+sleep 6
 HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/ 2>/dev/null || echo '000')
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "302" ]; then
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
   log "DEPLOY SUCCESS — HTTP $HTTP_CODE — App is live!"
-  # Safe to remove rollback now
   rm -rf "$APP_DIR/.next-rollback-$TS"
 else
-  log "WARNING — HTTP $HTTP_CODE — Checking PM2 status..."
-  pm2 status homeledger 2>&1 | tee -a "$LOG_FILE"
-  log "Rollback available at .next-rollback-$TS"
-  log "To rollback: rm -rf .next && mv .next-rollback-$TS .next && pm2 reload homeledger"
+  log "WARNING — HTTP $HTTP_CODE — Auto-rolling back..."
+  ROLLBACK=$(ls -d "$APP_DIR"/.next-rollback-* 2>/dev/null | tail -1)
+  if [ -n "$ROLLBACK" ]; then
+    rm -rf "$APP_DIR/.next"
+    mv "$ROLLBACK" "$APP_DIR/.next"
+    node "$APP_DIR/fix-manifest.js"
+    pm2 reload homeledger 2>/dev/null || pm2 restart homeledger
+    sleep 4
+    HTTP2=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/ 2>/dev/null || echo '000')
+    log "Rollback complete — HTTP $HTTP2"
+  else
+    log 'No rollback available. Run: pm2 logs homeledger'
+  fi
 fi
 
-log '========== ZERO-DOWNTIME DEPLOY COMPLETE =========='
+log '========== DEPLOY COMPLETE =========='
 echo ''
-echo '✅ Deploy complete with zero downtime!'
+echo 'Deploy complete!'

@@ -1,6 +1,6 @@
-# Contributing to HomeLedger
+# Contributing to Clarity & Co
 
-Thank you for your interest in contributing to HomeLedger! This guide will help you get started.
+Thank you for your interest in contributing to Clarity & Co! This guide will help you get started.
 
 ## Code of Conduct
 

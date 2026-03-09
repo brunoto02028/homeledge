@@ -55,7 +55,8 @@ const emptyForm = {
 };
 
 export function VaultClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -73,7 +74,7 @@ export function VaultClient() {
       const res = await fetch('/api/vault');
       if (res.ok) setEntries(await res.json());
     } catch {
-      toast({ title: 'Error', description: 'Failed to load vault entries', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao carregar entradas do cofre' : 'Failed to load vault entries', variant: 'destructive' });
     }
     setLoading(false);
   }, [toast]);
@@ -100,17 +101,17 @@ export function VaultClient() {
       });
 
       if (res.ok) {
-        toast({ title: 'Success', description: `Entry ${editingId ? 'updated' : 'created'}` });
+        toast({ title: isPt ? 'Sucesso' : 'Success', description: editingId ? (isPt ? 'Entrada atualizada' : 'Entry updated') : (isPt ? 'Entrada criada' : 'Entry created') });
         setShowForm(false);
         setEditingId(null);
         setForm(emptyForm);
         fetchEntries();
       } else {
         const data = await res.json();
-        toast({ title: 'Error', description: data.error || 'Failed to save', variant: 'destructive' });
+        toast({ title: isPt ? 'Erro' : 'Error', description: data.error || (isPt ? 'Falha ao salvar' : 'Failed to save'), variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to save', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar' : 'Failed to save', variant: 'destructive' });
     }
     setSaving(false);
   };
@@ -140,11 +141,11 @@ export function VaultClient() {
     try {
       const res = await fetch(`/api/vault/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'Deleted', description: 'Entry removed from vault' });
+        toast({ title: isPt ? 'Excluído' : 'Deleted', description: isPt ? 'Entrada removida do cofre' : 'Entry removed from vault' });
         fetchEntries();
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir' : 'Failed to delete', variant: 'destructive' });
     }
   };
 

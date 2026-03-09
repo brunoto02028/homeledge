@@ -1,5 +1,5 @@
 /**
- * Unified AI Client for HomeLedger.
+ * Unified AI Client for Clarity & Co.
  * Supports Gemini 2.0 Flash (primary) and Abacus AI (fallback).
  * Provides automatic failover between providers.
  * @module ai-client

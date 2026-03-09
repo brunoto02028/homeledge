@@ -18,6 +18,7 @@ import {
   Pencil, Trash2, CalendarDays, History, AlertCircle, Info
 } from 'lucide-react';
 import { ModuleGuide } from '@/components/module-guide';
+import { useTranslation } from '@/lib/i18n';
 
 interface GovConnection {
   id: string;
@@ -43,6 +44,8 @@ interface Entity {
 }
 
 export default function ConnectionsClient() {
+  const { locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
   const { selectedEntity } = useEntityContext();
   const [connections, setConnections] = useState<GovConnection[]>([]);
@@ -80,12 +83,12 @@ export default function ConnectionsClient() {
     const success = params.get('success');
     const error = params.get('error');
     if (success) {
-      toast({ title: 'Connected!', description: `Successfully connected to ${success === 'companies_house' ? 'Companies House' : 'HMRC'}.` });
+      toast({ title: isPt ? 'Conectado!' : 'Connected!', description: isPt ? `Conectado com sucesso ao ${success === 'companies_house' ? 'Companies House' : 'HMRC'}.` : `Successfully connected to ${success === 'companies_house' ? 'Companies House' : 'HMRC'}.` });
       window.history.replaceState({}, '', '/connections');
       fetchData();
     }
     if (error) {
-      toast({ title: 'Connection Failed', description: decodeURIComponent(error), variant: 'destructive' });
+      toast({ title: isPt ? 'Falha na Conexão' : 'Connection Failed', description: decodeURIComponent(error), variant: 'destructive' });
       window.history.replaceState({}, '', '/connections');
     }
   }, []);
@@ -108,11 +111,11 @@ export default function ConnectionsClient() {
 
   const handleConnect = async () => {
     if (!connectEntityId) {
-      toast({ title: 'Select an entity', variant: 'destructive' });
+      toast({ title: isPt ? 'Selecione uma entidade' : 'Select an entity', variant: 'destructive' });
       return;
     }
     if (connectProvider === 'companies_house' && !connectCompanyNumber) {
-      toast({ title: 'Company number required', variant: 'destructive' });
+      toast({ title: isPt ? 'Número da empresa obrigatório' : 'Company number required', variant: 'destructive' });
       return;
     }
 
@@ -151,7 +154,7 @@ export default function ConnectionsClient() {
       window.location.href = data.authUrl;
     } catch (err: any) {
       console.error('[Connect] Error:', err);
-      toast({ title: 'Connection Error', description: err.message || 'Unknown error', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro de Conexão' : 'Connection Error', description: err.message || (isPt ? 'Erro desconhecido' : 'Unknown error'), variant: 'destructive' });
       setConnecting(false);
     }
   };
@@ -167,10 +170,10 @@ export default function ConnectionsClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      toast({ title: 'Sync Complete', description: 'Data updated from ' + (connection.provider === 'companies_house' ? 'Companies House' : 'HMRC') });
+      toast({ title: isPt ? 'Sincronização Concluída' : 'Sync Complete', description: (isPt ? 'Dados atualizados de ' : 'Data updated from ') + (connection.provider === 'companies_house' ? 'Companies House' : 'HMRC') });
       fetchData();
     } catch (err: any) {
-      toast({ title: 'Sync Failed', description: err.message, variant: 'destructive' });
+      toast({ title: isPt ? 'Falha na Sincronização' : 'Sync Failed', description: err.message, variant: 'destructive' });
     } finally {
       setSyncing(null);
     }
@@ -196,7 +199,7 @@ export default function ConnectionsClient() {
       });
       setShowFilingDialog(false);
     } catch (err: any) {
-      toast({ title: 'Filing Error', description: err.message, variant: 'destructive' });
+      toast({ title: isPt ? 'Erro no Envio' : 'Filing Error', description: err.message, variant: 'destructive' });
     } finally {
       setSubmittingFiling(false);
     }
@@ -516,7 +519,7 @@ export default function ConnectionsClient() {
                   <li>Click Connect below</li>
                   <li>You&apos;ll be redirected to the HMRC Government Gateway</li>
                   <li>Log in with your Government Gateway credentials</li>
-                  <li>Grant permission for HomeLedger to access your data</li>
+                  <li>Grant permission for Clarity & Co to access your data</li>
                   <li>You&apos;ll be redirected back here automatically</li>
                 </ol>
               </div>
@@ -782,7 +785,7 @@ export default function ConnectionsClient() {
 
             {/* Filing History from our system */}
             <TabsContent value="filing_history" className="space-y-3 mt-3">
-              <p className="text-sm font-medium">Filings submitted through HomeLedger</p>
+              <p className="text-sm font-medium">Filings submitted through Clarity & Co</p>
               {ourFilings.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">No filings submitted yet from this system.</p>
               ) : (

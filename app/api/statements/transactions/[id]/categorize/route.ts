@@ -16,10 +16,10 @@ export async function PATCH(
 
     const { prisma } = await import('@/lib/db');
 
-    // Verify transaction belongs to user's statement
+    // Verify transaction belongs to user's statement (include entityId for scoped learning)
     const existing = await prisma.bankTransaction.findFirst({
       where: { id: transactionId, statement: { userId: { in: userIds } } },
-      include: { category: { select: { name: true } } },
+      include: { category: { select: { name: true } }, statement: { select: { entityId: true } } },
     });
     if (!existing) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
@@ -53,6 +53,7 @@ export async function PATCH(
       try {
         const feedbackResult = await recordFeedback({
           userId,
+          entityId: existing.statement?.entityId || undefined,
           transactionId,
           transactionText: existing.description,
           merchantName: undefined,

@@ -15,12 +15,12 @@ function encrypt(text: string): string {
 }
 
 async function main() {
-  const admin = await prisma.user.findFirst({ where: { email: 'admin@homeledger.co.uk' } });
+  const admin = await prisma.user.findFirst({ where: { email: 'admin@Clarity & Co.co.uk' } });
   if (!admin) { console.log('Admin not found'); return; }
 
   const entries = [
     { name: 'NewsAPI', category: 'other', username: 'brunoto02028@gmail.com', password: '47c2301eb90340bc831bf882fd1ec248', url: 'https://newsapi.org', notes: 'API Key for Global Intelligence Dashboard. Free plan: 100 req/day.' },
-    { name: 'Mapbox', category: 'other', username: 'homeledge', password: 'MAPBOX_TOKEN_STORED_IN_VAULT', url: 'https://console.mapbox.com', notes: 'Public token for map rendering. Org: HomeLedger, Email: admin@homeledger.co.uk. Token stored in Secure Vault on VPS.' },
+    { name: 'Mapbox', category: 'other', username: 'homeledge', password: 'MAPBOX_TOKEN_STORED_IN_VAULT', url: 'https://console.mapbox.com', notes: 'Public token for map rendering. Org: Clarity & Co, Email: admin@Clarity & Co.co.uk. Token stored in Secure Vault on VPS.' },
   ];
 
   for (const e of entries) {

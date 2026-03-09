@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://Clarity & Co.co.uk';
     const verifyUrl = `${baseUrl}/verify/${token}`;
 
     return NextResponse.json({

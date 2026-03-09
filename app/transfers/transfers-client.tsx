@@ -79,7 +79,8 @@ function monthlyEquiv(amount: number, freq: string): number {
 }
 
 export function TransfersClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -104,7 +105,7 @@ export function TransfersClient() {
       if (cRes.ok) setCategories(await cRes.json());
       if (aRes.ok) setAccounts(await aRes.json());
     } catch {
-      toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao carregar dados' : 'Failed to load data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -121,7 +122,7 @@ export function TransfersClient() {
 
   const handleSave = async () => {
     if (!form.name || !form.amount || !form.frequency) {
-      toast({ title: 'Required', description: 'Name, amount, and frequency are required', variant: 'destructive' });
+      toast({ title: isPt ? 'Obrigatório' : 'Required', description: isPt ? 'Nome, valor e frequência são obrigatórios' : 'Name, amount, and frequency are required', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -134,7 +135,7 @@ export function TransfersClient() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error((await res.json()).error);
-      toast({ title: editId ? 'Updated' : 'Created' });
+      toast({ title: editId ? (isPt ? 'Atualizado' : 'Updated') : (isPt ? 'Criado' : 'Created') });
       setShowDialog(false);
       setEditId(null);
       setForm(emptyForm);
@@ -154,7 +155,7 @@ export function TransfersClient() {
         body: JSON.stringify({ isActive: !t.isActive }),
       });
       if (!res.ok) throw new Error();
-      toast({ title: t.isActive ? 'Paused' : 'Activated' });
+      toast({ title: t.isActive ? (isPt ? 'Pausado' : 'Paused') : (isPt ? 'Ativado' : 'Activated') });
       fetchData();
     } catch {
       toast({ title: 'Error', variant: 'destructive' });
@@ -165,7 +166,7 @@ export function TransfersClient() {
     if (!deleteId) return;
     try {
       await fetch(`/api/recurring-transfers/${deleteId}`, { method: 'DELETE' });
-      toast({ title: 'Deleted' });
+      toast({ title: isPt ? 'Excluído' : 'Deleted' });
       setDeleteId(null);
       fetchData();
     } catch {

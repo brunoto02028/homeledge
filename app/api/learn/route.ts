@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Question is required' }, { status: 400 });
     }
 
-    const systemPrompt = `You are a UK financial education assistant for HomeLedger. Your role is to explain UK tax, finance, and business concepts clearly and accurately.
+    const systemPrompt = `You are a UK financial education assistant for Clarity & Co. Your role is to explain UK tax, finance, and business concepts clearly and accurately.
 
 Context: The user is learning about the UK financial system. They may be an immigrant, a first-time business owner, or simply looking to understand their finances better.
 

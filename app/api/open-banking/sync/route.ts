@@ -56,14 +56,27 @@ export async function POST(request: NextRequest) {
             tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
             status: 'active',
             lastSyncError: null,
+            metadata: { ...(conn.metadata || {}), failedRefreshCount: 0 },
           },
         });
       } catch (err: any) {
-        await (prisma as any).bankConnection.update({
-          where: { id: conn.id },
-          data: { status: 'expired', lastSyncError: 'Token refresh failed — please reconnect your bank' },
-        });
-        return NextResponse.json({ error: 'Token expired. Please click "Reconnect Bank" to re-authorise.', code: 'TOKEN_EXPIRED' }, { status: 401 });
+        const errorMsg = err.message?.substring(0, 200) || 'Token refresh failed';
+        const isPermanent = errorMsg.includes('invalid_grant') || errorMsg.includes('consent') || errorMsg.includes('revoked');
+
+        if (isPermanent) {
+          await (prisma as any).bankConnection.update({
+            where: { id: conn.id },
+            data: { status: 'expired', lastSyncError: 'Bank consent expired — please reconnect your bank' },
+          });
+          return NextResponse.json({ error: 'Bank consent expired. Please click "Reconnect Bank" to re-authorise.', code: 'TOKEN_EXPIRED' }, { status: 401 });
+        } else {
+          // Temporary failure — don't mark as expired, just report error
+          await (prisma as any).bankConnection.update({
+            where: { id: conn.id },
+            data: { lastSyncError: 'Temporary refresh error — please try again in a few minutes' },
+          });
+          return NextResponse.json({ error: 'Temporary connection issue. Please try again in a few minutes.', code: 'TEMP_ERROR' }, { status: 503 });
+        }
       }
     }
 

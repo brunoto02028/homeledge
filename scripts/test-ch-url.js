@@ -11,7 +11,7 @@ function buildScopes(companyNumber) {
 }
 
 const clientId = process.env.CH_OAUTH_CLIENT_ID || 'NOT_SET';
-const redirectUri = (process.env.NEXTAUTH_URL || 'https://homeledger.co.uk') + '/api/government/callback/companies-house';
+const redirectUri = (process.env.NEXTAUTH_URL || 'https://clarityco.co.uk') + '/api/government/callback/companies-house';
 const scope = buildScopes('16548405');
 
 const params = new URLSearchParams({

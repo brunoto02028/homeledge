@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { VaultClient } from './vault-client';
 
 export const metadata: Metadata = {
-  title: 'Vault | HomeLedger',
+  title: 'Vault | Clarity & Co',
 };
 
 export default function VaultPage() {

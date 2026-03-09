@@ -1,7 +1,7 @@
 import ReportsClient from './reports-client';
 
 export const metadata = {
-  title: 'Reports - HomeLedger',
+  title: 'Reports - Clarity & Co',
   description: 'Export HMRC-ready financial reports',
 };
 

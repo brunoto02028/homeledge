@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 const sections = [
   {
     sectionKey: 'meta',
-    title: 'HomeLedger — Simplify Your UK Finances',
+    title: 'Clarity & Co — Simplify Your UK Finances',
     subtitle: 'Manage bank statements, invoices, HMRC tax reports, bills, and more.',
     content: { description: 'Free UK personal and business finance platform with AI-powered tools.', keywords: 'UK finance, HMRC, tax reports, invoices, bank statements, AI' },
     isPublished: true, sortOrder: 0
@@ -50,7 +50,7 @@ const sections = [
   {
     sectionKey: 'business',
     title: 'Run Your Business Finances with Confidence',
-    subtitle: 'Whether you are a sole trader, limited company, or CIC — HomeLedger handles invoices, tax reports, Companies House filings, and HMRC obligations.',
+    subtitle: 'Whether you are a sole trader, limited company, or CIC — Clarity & Co handles invoices, tax reports, Companies House filings, and HMRC obligations.',
     content: { bullets: [
       'Manage multiple entities — Ltd, CIC, sole trader, personal',
       'SA103 & CT600 reports with automatic box mapping',
@@ -97,13 +97,13 @@ const sections = [
     title: 'Frequently Asked Questions',
     subtitle: '',
     content: { items: [
-      { question: 'Is HomeLedger really free?', answer: 'Yes! Our Free plan includes full access to statements, invoices, bills, categories, and basic reports. Premium plans add advanced features like AI chat, financial projections, and priority support.' },
+      { question: 'Is Clarity & Co really free?', answer: 'Yes! Our Free plan includes full access to statements, invoices, bills, categories, and basic reports. Premium plans add advanced features like AI chat, financial projections, and priority support.' },
       { question: 'Is my financial data secure?', answer: 'Absolutely. All data is encrypted in transit (TLS 1.3) and at rest. Vault entries use AES-256-GCM encryption. We never share your data with third parties.' },
-      { question: 'Can I manage multiple businesses?', answer: 'Yes. HomeLedger supports unlimited entities — personal accounts, limited companies, CICs, sole-trader businesses — all from one login.' },
+      { question: 'Can I manage multiple businesses?', answer: 'Yes. Clarity & Co supports unlimited entities — personal accounts, limited companies, CICs, sole-trader businesses — all from one login.' },
       { question: 'Does it generate HMRC-ready reports?', answer: 'Yes. We generate SA103 (Self Assessment), CT600 (Corporation Tax), and detailed tax summaries with automatic box mapping. Export to PDF anytime.' },
       { question: 'Can my accountant access my data?', answer: 'Yes. Invite your accountant via email. They get a dedicated dashboard to view your data with read-only permissions — no credential sharing needed.' },
       { question: 'What file formats do you support?', answer: 'We accept CSV, PDF, Excel (.xlsx), and image files (JPG, PNG) for bank statements, invoices, and documents. Our AI processes them all.' },
-      { question: 'Can I install HomeLedger as a desktop app?', answer: 'Yes! HomeLedger is a Progressive Web App (PWA). Click Install in your browser to add it to your desktop or mobile home screen.' },
+      { question: 'Can I install Clarity & Co as a desktop app?', answer: 'Yes! Clarity & Co is a Progressive Web App (PWA). Click Install in your browser to add it to your desktop or mobile home screen.' },
       { question: 'How does the AI Assistant work?', answer: 'Our AI understands the context of the page you are on. Ask it about your statements, tax obligations, or spending patterns and it gives personalised answers.' }
     ] },
     isPublished: true, sortOrder: 8
@@ -112,14 +112,14 @@ const sections = [
     sectionKey: 'cta',
     title: 'Final CTA',
     subtitle: '',
-    content: { headline: 'Ready to Take Control of Your Finances?', subheadline: 'Join UK individuals, sole traders and businesses already using HomeLedger.' },
+    content: { headline: 'Ready to Take Control of Your Finances?', subheadline: 'Join UK individuals, sole traders and businesses already using Clarity & Co.' },
     isPublished: true, sortOrder: 9
   },
   {
     sectionKey: 'footer',
     title: 'Footer',
     subtitle: '',
-    content: { copyright: '2025 HomeLedger. All rights reserved.', columns: { product: ['Features', 'Pricing', 'FAQ'], solutions: ['For Business', 'For Accountants', 'Personal Finance'], legal: ['Privacy Policy', 'Terms of Service'], account: ['Sign In', 'Create Account'] } },
+    content: { copyright: '2025 Clarity & Co. All rights reserved.', columns: { product: ['Features', 'Pricing', 'FAQ'], solutions: ['For Business', 'For Accountants', 'Personal Finance'], legal: ['Privacy Policy', 'Terms of Service'], account: ['Sign In', 'Create Account'] } },
     isPublished: true, sortOrder: 10
   }
 ];

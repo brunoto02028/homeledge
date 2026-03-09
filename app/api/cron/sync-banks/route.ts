@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import { refreshAccessToken, isConfigured } from '@/lib/truelayer';
 import { syncConnectionTransactions } from '@/lib/open-banking-sync';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const REFRESH_BUFFER_MS = 10 * 60 * 1000; // Refresh 10 min before expiry
 const RETRY_DELAY_MS = 2000;
 const MAX_REFRESH_RETRIES = 2;
@@ -65,23 +68,58 @@ export async function GET() {
                 tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
                 status: 'active',
                 lastSyncError: null,
+                metadata: { ...(conn.metadata || {}), failedRefreshCount: 0 },
               },
             });
             console.log(`[CronSyncBanks] ${label}: Token refreshed OK → active, new expiry in ${refreshed.expires_in}s`);
           } catch (err: any) {
             const errorMsg = err.message?.substring(0, 200) || 'Token refresh failed';
             const isPermanent = errorMsg.includes('invalid_grant') || errorMsg.includes('consent') || errorMsg.includes('revoked');
-            console.error(`[CronSyncBanks] ${conn.bankName || conn.id}: Token refresh FAILED (${isPermanent ? 'PERMANENT' : 'temporary'}):`, errorMsg);
-            await (prisma as any).bankConnection.update({
-              where: { id: conn.id },
-              data: {
-                status: 'expired',
-                lastSyncError: isPermanent
-                  ? 'Bank consent expired (90-day limit) — please reconnect your bank'
-                  : 'Token refresh failed — will retry next sync cycle',
-              },
-            });
-            results.push({ connectionId: conn.id, bank: conn.bankName || '?', synced: 0, skipped: 0, error: isPermanent ? 'Consent expired — reconnect required' : 'Token refresh failed — will retry' });
+            const label = conn.bankName || conn.id;
+            console.error(`[CronSyncBanks] ${label}: Token refresh FAILED (${isPermanent ? 'PERMANENT' : 'temporary'}):`, errorMsg);
+
+            if (isPermanent) {
+              // Permanent failure: mark expired immediately
+              await (prisma as any).bankConnection.update({
+                where: { id: conn.id },
+                data: {
+                  status: 'expired',
+                  lastSyncError: 'Bank consent expired (90-day limit) — please reconnect your bank',
+                  metadata: { ...(conn.metadata || {}), failedRefreshCount: 0 },
+                },
+              });
+              results.push({ connectionId: conn.id, bank: label, synced: 0, skipped: 0, error: 'Consent expired — reconnect required' });
+            } else {
+              // Temporary failure: keep status unchanged, track consecutive failures
+              const prevFails = (conn.metadata as any)?.failedRefreshCount || 0;
+              const failCount = prevFails + 1;
+              const maxTempRetries = 5;
+
+              if (failCount >= maxTempRetries) {
+                // Too many consecutive temporary failures — escalate to expired
+                console.error(`[CronSyncBanks] ${label}: ${failCount} consecutive failures — marking expired`);
+                await (prisma as any).bankConnection.update({
+                  where: { id: conn.id },
+                  data: {
+                    status: 'expired',
+                    lastSyncError: `Token refresh failed ${failCount} times — please reconnect your bank`,
+                    metadata: { ...(conn.metadata || {}), failedRefreshCount: failCount },
+                  },
+                });
+                results.push({ connectionId: conn.id, bank: label, synced: 0, skipped: 0, error: `Failed ${failCount}x — marked expired` });
+              } else {
+                // Keep status active, just log the error — will retry next cycle
+                console.log(`[CronSyncBanks] ${label}: Temporary failure ${failCount}/${maxTempRetries} — keeping active`);
+                await (prisma as any).bankConnection.update({
+                  where: { id: conn.id },
+                  data: {
+                    lastSyncError: `Token refresh attempt ${failCount}/${maxTempRetries} failed — will retry`,
+                    metadata: { ...(conn.metadata || {}), failedRefreshCount: failCount },
+                  },
+                });
+                results.push({ connectionId: conn.id, bank: label, synced: 0, skipped: 0, error: `Temp failure ${failCount}/${maxTempRetries} — retrying` });
+              }
+            }
             continue;
           }
         }

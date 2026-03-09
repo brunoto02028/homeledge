@@ -218,7 +218,7 @@ export default function VerifyIdentityPage() {
               <p className="text-sm text-muted-foreground">
                 <Shield className="h-4 w-4 inline mr-1 text-blue-500" />
                 <strong>Privacy:</strong> Your identity verification is processed securely by Yoti, a UK-certified
-                identity service provider (DIATF certified). Your biometric data is not stored by HomeLedger —
+                identity service provider (DIATF certified). Your biometric data is not stored by Clarity & Co —
                 only the verification result (pass/fail) is retained.
               </p>
             </div>

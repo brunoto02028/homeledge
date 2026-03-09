@@ -3,7 +3,7 @@ import { CorrespondenceClient } from './correspondence-client';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 export const metadata = {
-  title: 'Correspondence | HomeLedger',
+  title: 'Correspondence | Clarity & Co',
   description: 'Track and archive official correspondence — HMRC, Companies House, councils, banks, and legal notices',
 };
 

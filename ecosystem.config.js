@@ -27,10 +27,12 @@ module.exports = {
     args: 'start -p 3100',
     cwd: '/opt/homeledger',
     // Zero-downtime reload settings
-    listen_timeout: 10000,  // Wait up to 10s for new process to be ready
+    listen_timeout: 15000,  // Wait up to 15s for new process to be ready
     kill_timeout: 5000,     // Give old process 5s to finish in-flight requests
-    max_restarts: 3,        // Max restart attempts before giving up
-    restart_delay: 1000,    // 1s delay between restart attempts
+    max_restarts: 10,       // Allow up to 10 restarts before giving up
+    min_uptime: 5000,       // Process must run 5s to count as successful start
+    restart_delay: 2000,    // 2s delay between restart attempts
+    exp_backoff_restart_delay: 100, // Exponential backoff on repeated crashes
     env: {
       NODE_ENV: 'production',
       ...envVars,

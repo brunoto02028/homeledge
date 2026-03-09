@@ -702,7 +702,7 @@ function CreditScoreTab() {
             <p className="text-xs text-muted-foreground">
               Experian offers a Partner API that allows authorised apps to display users' credit scores. 
               To enable this feature, you would need to apply as an Experian Partner at developer.experian.com. 
-              Once approved, HomeLedger could display your live Experian score directly here with your consent.
+              Once approved, Clarity & Co could display your live Experian score directly here with your consent.
             </p>
             <p className="text-xs text-muted-foreground">
               In the meantime, check your scores for free: <strong>Experian</strong> (experian.co.uk), <strong>Equifax</strong> via ClearScore (clearscore.com), <strong>TransUnion</strong> via Credit Karma (creditkarma.co.uk).

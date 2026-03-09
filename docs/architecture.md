@@ -1,4 +1,4 @@
-# HomeLedger — System Architecture
+# Clarity & Co — System Architecture
 
 ## High-Level Overview
 
@@ -212,10 +212,10 @@ Contexts:
 ```
 VPS (Ubuntu 22.04, 4GB RAM)
 ├── Nginx (reverse proxy)
-│   ├── homeledger.co.uk → localhost:3100
+│   ├── clarityco.co.uk → localhost:3100
 │   └── SSL via Let's Encrypt (auto-renew)
 ├── PM2
-│   ├── homeledger (Next.js, port 3100)
+│   ├── Clarity & Co (Next.js, port 3100)
 │   └── docling (Python/FastAPI, port 3200)
 ├── PostgreSQL 16 (localhost:5432)
 └── Cron

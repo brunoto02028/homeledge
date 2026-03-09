@@ -1,8 +1,8 @@
 # 🧠 Categorisation Intelligence — User Guide
 
-## How HomeLedger Automatically Categorises Your Transactions
+## How Clarity & Co Automatically Categorises Your Transactions
 
-Every time you upload a bank statement or sync your bank account, HomeLedger analyses each transaction and assigns it to the correct category — such as "Groceries", "Transport", "Client Payments", or "Office Costs". This happens through a **4-layer intelligent engine** that gets smarter the more you use it.
+Every time you upload a bank statement or sync your bank account, Clarity & Co analyses each transaction and assigns it to the correct category — such as "Groceries", "Transport", "Client Payments", or "Office Costs". This happens through a **4-layer intelligent engine** that gets smarter the more you use it.
 
 ---
 
@@ -20,7 +20,7 @@ Think of the categorisation engine as a team of 4 specialists, each with a diffe
 
 **What you see:** The transaction appears already categorised with a green tick.
 
-HomeLedger comes pre-loaded with **100+ rules** for common UK merchants and payments:
+Clarity & Co comes pre-loaded with **100+ rules** for common UK merchants and payments:
 
 | Pattern | Category | Type |
 |---------|----------|------|
@@ -223,5 +223,5 @@ The engine automatically adapts based on your entity type (sole trader, partners
 
 ---
 
-*This guide is part of HomeLedger — UK Household Finance Hub.*
+*This guide is part of Clarity & Co — UK Household Finance Hub.*
 *For technical details, see the source code in `lib/categorization-engine.ts`.*

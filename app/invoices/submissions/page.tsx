@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import SubmissionsClient from './submissions-client';
 
 export const metadata = {
-  title: 'Invoice Submissions | HomeLedger',
+  title: 'Invoice Submissions | Clarity & Co',
   description: 'Manage and track invoice submissions to clients',
 };
 

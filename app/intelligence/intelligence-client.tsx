@@ -18,6 +18,9 @@ interface NewsArticle {
   country: string; continent: string; coordinates: [number, number] | null;
   sentiment: 'negative' | 'positive' | 'neutral'; ukImpact: boolean;
   prophecyRelated: boolean; prophecyRef: string | null;
+  prophecyThemes?: string[]; prophecyScore?: number;
+  prophecyAnalysis?: string | null;
+  prophecyScriptures?: Array<{ book: string; ref: string; text: string }>;
 }
 interface NavalVessel {
   name: string; type: string; nation: string; fleet: string;
@@ -102,31 +105,78 @@ export default function IntelligenceClient() {
   const [selectedEarthquake, setSelectedEarthquake] = useState<any>(null);
   const [selectedAircraftDetail, setSelectedAircraftDetail] = useState<any>(null);
   const [selectedVessel, setSelectedVessel] = useState<NavalVessel | null>(null);
+
+  // ─── Clear all popups before opening a new one (only 1 visible at a time) ──
+  const clearPopups = useCallback(() => { setSelectedArticle(null); setSelectedEarthquake(null); setSelectedAircraftDetail(null); setSelectedVessel(null); }, []);
   const [aircraftCount, setAircraftCount] = useState(0);
   const [quakeCount, setQuakeCount] = useState(0);
   const [conflictCount, setConflictCount] = useState(0);
 
+  // ─── Persistent state helpers ────────────────────────────────────────
+  const LS_KEY = 'cc-intel-state';
+  const loadSaved = useCallback(() => {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+  }, []);
+  const saveSetting = useCallback((key: string, value: any) => {
+    try { const cur = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); cur[key] = value; localStorage.setItem(LS_KEY, JSON.stringify(cur)); } catch {}
+  }, []);
+
   // UI
   const [searchTerm, setSearchTerm] = useState('');
-  const [sentimentFilter, setSentimentFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [continentFilter, setContinentFilter] = useState('All Regions');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sentimentFilter, _setSentimentFilter] = useState('');
+  const [categoryFilter, _setCategoryFilter] = useState('');
+  const [continentFilter, _setContinentFilter] = useState('All Regions');
+  const [sidebarOpen, _setSidebarOpen] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapStyle, setMapStyle] = useState('voyager');
+  const [mapStyle, _setMapStyle] = useState('dark');
   const isLightMap = mapStyle === 'voyager' || mapStyle === 'topo';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [liveTime, setLiveTime] = useState('');
 
   // Layers
-  const [showAircraft, setShowAircraft] = useState(true);
-  const [showQuakes, setShowQuakes] = useState(true);
-  const [showNaval, setShowNaval] = useState(true);
-  const [showConflicts, setShowConflicts] = useState(true);
-  const [weatherLayer, setWeatherLayer] = useState('');
-  const [scanLineOn, setScanLineOn] = useState(true);
-  const [sfxOn, setSfxOn] = useState(false);
-  const [bottomTab, setBottomTab] = useState<BottomTab>('none');
+  const [showAircraft, _setShowAircraft] = useState(true);
+  const [showQuakes, _setShowQuakes] = useState(true);
+  const [showNaval, _setShowNaval] = useState(true);
+  const [showConflicts, _setShowConflicts] = useState(true);
+  const [weatherLayer, _setWeatherLayer] = useState('');
+  const [scanLineOn, _setScanLineOn] = useState(true);
+  const [sfxOn, _setSfxOn] = useState(false);
+  const [bottomTab, _setBottomTab] = useState<BottomTab>('none');
+
+  // ─── Auto-persist wrappers: every toggle change is saved to localStorage ──
+  const setShowAircraft = useCallback((v: boolean) => { _setShowAircraft(v); saveSetting('showAircraft', v); }, [saveSetting]);
+  const setShowQuakes = useCallback((v: boolean) => { _setShowQuakes(v); saveSetting('showQuakes', v); }, [saveSetting]);
+  const setShowNaval = useCallback((v: boolean) => { _setShowNaval(v); saveSetting('showNaval', v); }, [saveSetting]);
+  const setShowConflicts = useCallback((v: boolean) => { _setShowConflicts(v); saveSetting('showConflicts', v); }, [saveSetting]);
+  const setMapStyle = useCallback((v: string) => { _setMapStyle(v); saveSetting('mapStyle', v); }, [saveSetting]);
+  const setSidebarOpen = useCallback((v: boolean) => { _setSidebarOpen(v); saveSetting('sidebarOpen', v); }, [saveSetting]);
+  const setWeatherLayer = useCallback((v: string) => { _setWeatherLayer(v); saveSetting('weatherLayer', v); }, [saveSetting]);
+  const setScanLineOn = useCallback((v: boolean) => { _setScanLineOn(v); saveSetting('scanLineOn', v); }, [saveSetting]);
+  const setSfxOn = useCallback((v: boolean) => { _setSfxOn(v); saveSetting('sfxOn', v); }, [saveSetting]);
+  const setBottomTab = useCallback((v: BottomTab) => { _setBottomTab(v); saveSetting('bottomTab', v); }, [saveSetting]);
+  const setSentimentFilter = useCallback((v: string) => { _setSentimentFilter(v); saveSetting('sentimentFilter', v); }, [saveSetting]);
+  const setCategoryFilter = useCallback((v: string) => { _setCategoryFilter(v); saveSetting('categoryFilter', v); }, [saveSetting]);
+  const setContinentFilter = useCallback((v: string) => { _setContinentFilter(v); saveSetting('continentFilter', v); }, [saveSetting]);
+
+  // ─── Restore persisted state on mount ──────────────────────────────
+  const [stateRestored, setStateRestored] = useState(false);
+  useEffect(() => {
+    const s = loadSaved();
+    if (s.showAircraft !== undefined) _setShowAircraft(s.showAircraft);
+    if (s.showQuakes !== undefined) _setShowQuakes(s.showQuakes);
+    if (s.showNaval !== undefined) _setShowNaval(s.showNaval);
+    if (s.showConflicts !== undefined) _setShowConflicts(s.showConflicts);
+    if (s.mapStyle) _setMapStyle(s.mapStyle);
+    if (s.sidebarOpen !== undefined) _setSidebarOpen(s.sidebarOpen);
+    if (s.weatherLayer !== undefined) _setWeatherLayer(s.weatherLayer);
+    if (s.scanLineOn !== undefined) _setScanLineOn(s.scanLineOn);
+    if (s.sfxOn !== undefined) _setSfxOn(s.sfxOn);
+    if (s.bottomTab) _setBottomTab(s.bottomTab);
+    if (s.sentimentFilter) _setSentimentFilter(s.sentimentFilter);
+    if (s.categoryFilter) _setCategoryFilter(s.categoryFilter);
+    if (s.continentFilter) _setContinentFilter(s.continentFilter);
+    setStateRestored(true);
+  }, [loadSaved]);
 
   // ─── Live clock ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -149,7 +199,8 @@ export default function IntelligenceClient() {
     if (sentimentFilter === 'negative' || sentimentFilter === 'positive') r = r.filter(a => a.sentiment === sentimentFilter);
     else if (sentimentFilter === 'uk') r = r.filter(a => a.ukImpact);
     else if (sentimentFilter === 'prophecy') r = r.filter(a => a.prophecyRelated);
-    if (categoryFilter) r = r.filter(a => a.category === categoryFilter);
+    if (categoryFilter === 'prophecy') r = r.filter(a => a.prophecyRelated);
+    else if (categoryFilter) r = r.filter(a => a.category === categoryFilter);
     if (continentFilter !== 'All Regions') r = r.filter(a => a.continent === continentFilter);
     return r;
   }, [articles, searchTerm, sentimentFilter, categoryFilter, continentFilter]);
@@ -215,7 +266,7 @@ export default function IntelligenceClient() {
           center: [25, 10], zoom: 3, minZoom: 2, maxZoom: 18,
           zoomControl: false, worldCopyJump: true, attributionControl: false,
         });
-        const style = MAP_STYLES.find(s => s.id === 'voyager')!;
+        const style = MAP_STYLES.find(s => s.id === 'dark')!;
         const tile = L.tileLayer(style.url, { maxZoom: 19, subdomains: style.sub }).addTo(map);
         tileLayerRef.current = tile;
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -233,12 +284,18 @@ export default function IntelligenceClient() {
         setMapDebug(`Map ERROR: ${err.message}`);
       }
     };
-    // Leaflet CSS is loaded via page.tsx <link> tag; only need JS
+    // Load Leaflet CSS + JS from self-hosted files (avoids CSP/CDN issues)
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = '/lib/leaflet/leaflet.css';
+      document.head.appendChild(css);
+    }
     if (!(window as any).L) {
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.src = '/lib/leaflet/leaflet.js';
       script.onload = () => setTimeout(initMap, 100);
-      script.onerror = () => setMapDebug('FAILED to load Leaflet JS from CDN');
+      script.onerror = () => setMapDebug('FAILED to load Leaflet JS');
       document.head.appendChild(script);
     } else { initMap(); }
     return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
@@ -246,14 +303,21 @@ export default function IntelligenceClient() {
 
   // ─── Change map style ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!mapRef.current || !tileLayerRef.current) return;
-    const L = (window as any).L; if (!L) return;
+    if (!mapRef.current) { console.log('[MapStyle] No map ref yet'); return; }
+    const L = (window as any).L; if (!L) { console.log('[MapStyle] No Leaflet'); return; }
     const style = MAP_STYLES.find(s => s.id === mapStyle) || MAP_STYLES[0];
-    mapRef.current.removeLayer(tileLayerRef.current);
+    console.log(`[MapStyle] Switching to ${style.id} (${style.label})`);
+    // Remove ALL existing tile layers to ensure clean swap
+    mapRef.current.eachLayer((layer: any) => {
+      if (layer._url && layer._url.includes('{z}') && !layer._url.includes('openweathermap')) {
+        mapRef.current.removeLayer(layer);
+      }
+    });
     const opts: any = { maxZoom: 19 };
     if (style.sub) opts.subdomains = style.sub;
     tileLayerRef.current = L.tileLayer(style.url, opts).addTo(mapRef.current);
-  }, [mapStyle]);
+    console.log(`[MapStyle] Applied ${style.id}: ${style.url.substring(0, 60)}`);
+  }, [mapStyle, mapLoaded]);
 
   // ─── Weather overlay ──────────────────────────────────────────────────
   useEffect(() => {
@@ -304,12 +368,12 @@ export default function IntelligenceClient() {
         ${article.prophecyRef ? `<div style="margin-top:6px;padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:4px;font-size:9px;color:#fbbf24;">📖 ${article.prophecyRef.slice(0, 70)}</div>` : ''}
       </div>`, { direction: 'top', offset: [0, -10], opacity: 1, className: 'cc-tooltip' });
       marker.on('click', () => {
-        setSelectedArticle(article); playBlip(article.sentiment === 'negative' ? 440 : 880);
+        clearPopups(); setSelectedArticle(article); playBlip(article.sentiment === 'negative' ? 440 : 880);
         mapRef.current.flyTo([article.coordinates![1], article.coordinates![0]], 5, { duration: 1.2 });
       });
       markersRef.current.push(marker);
     });
-  }, [filtered, mapLoaded, playBlip]);
+  }, [filtered, mapLoaded, playBlip, clearPopups]);
 
   // ─── Aircraft layer — live movement with trails ─────────────────────
   useEffect(() => {
@@ -395,7 +459,7 @@ export default function IntelligenceClient() {
               <span style="color:#555;">POSITION</span><span style="color:#888;">${ac.lat?.toFixed(3)}°, ${ac.lng?.toFixed(3)}°</span>
             </div>
           </div>`, { direction: 'top', offset: [0, -10], opacity: 1, className: 'cc-tooltip' });
-          marker.on('click', () => { setSelectedAircraftDetail(ac); mapRef.current?.flyTo([ac.lat, ac.lng], 7, { duration: 1 }); });
+          marker.on('click', () => { clearPopups(); setSelectedAircraftDetail(ac); mapRef.current?.flyTo([ac.lat, ac.lng], 7, { duration: 1 }); });
           aircraftMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Aircraft]', err); }
@@ -424,7 +488,7 @@ export default function IntelligenceClient() {
       clearInterval(fetchInterval);
       if (interpTimer) clearInterval(interpTimer);
     };
-  }, [showAircraft, mapLoaded]);
+  }, [showAircraft, mapLoaded, clearPopups]);
 
   // ─── Earthquake layer ─────────────────────────────────────────────────
   useEffect(() => {
@@ -457,7 +521,7 @@ export default function IntelligenceClient() {
             <div style="color:#888;font-size:9px;">${eq.depth?.toFixed(1)}km deep · ${new Date(eq.time).toLocaleString()}</div>
             ${eq.tsunami ? '<div style="color:#06b6d4;font-size:9px;margin-top:3px;font-weight:700;">🌊 TSUNAMI WARNING</div>' : ''}
           </div>`, { direction: 'top', offset: [0, -sz / 2], opacity: 1, className: 'cc-tooltip' });
-          marker.on('click', () => { setSelectedEarthquake(eq); mapRef.current?.flyTo([eq.lat, eq.lng], 6, { duration: 1 }); });
+          marker.on('click', () => { clearPopups(); setSelectedEarthquake(eq); mapRef.current?.flyTo([eq.lat, eq.lng], 6, { duration: 1 }); });
           quakeMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Quakes]', err); }
@@ -465,7 +529,7 @@ export default function IntelligenceClient() {
     fetchQuakes();
     const i = setInterval(fetchQuakes, 300000);
     return () => clearInterval(i);
-  }, [showQuakes, mapLoaded]);
+  }, [showQuakes, mapLoaded, clearPopups]);
 
   // ─── Conflict layer — identified by name, description, source ────────
   useEffect(() => {
@@ -572,7 +636,7 @@ export default function IntelligenceClient() {
             </div>
             <div style="margin-top:6px;font-size:8px;color:#555;">Click for full intel panel →</div>
           </div>`, { direction: 'top', offset: [0, -(sz + 8) / 2], opacity: 1, className: 'cc-tooltip' });
-          marker.on('click', () => { setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); });
+          marker.on('click', () => { clearPopups(); setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); });
           navalMarkersRef.current.push(marker);
         });
       } catch (err) { console.error('[Naval]', err); }
@@ -580,19 +644,36 @@ export default function IntelligenceClient() {
     fetchNaval();
     const i = setInterval(fetchNaval, 300000);
     return () => clearInterval(i);
-  }, [showNaval, mapLoaded]);
+  }, [showNaval, mapLoaded, clearPopups]);
 
   const timeAgo = (d: string) => { const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`; };
 
-  const crossRefGroups = useMemo(() => {
-    const kws = ['war', 'ukraine', 'russia', 'gaza', 'israel', 'iran', 'china', 'taiwan', 'nato', 'nuclear', 'oil', 'sanctions', 'earthquake', 'famine', 'inflation', 'recession'];
-    const groups: { keyword: string; articles: NewsArticle[]; prophecyRef?: string }[] = [];
-    kws.forEach(kw => {
-      const matched = articles.filter(a => `${a.title} ${a.description}`.toLowerCase().includes(kw));
-      if (matched.length >= 2) groups.push({ keyword: kw, articles: matched.slice(0, 10), prophecyRef: matched.find(a => a.prophecyRef)?.prophecyRef || undefined });
+  // ─── Prophecy Intelligence: group articles by prophecy theme ────────────
+  const prophecyGroups = useMemo(() => {
+    const themeMap = new Map<string, { theme: string; articles: NewsArticle[]; topScore: number; topScripture: { book: string; ref: string; text: string } | null; analysis: string | null }>();
+    articles.filter(a => a.prophecyRelated && a.prophecyThemes?.length).forEach(a => {
+      (a.prophecyThemes || []).forEach(themeId => {
+        if (!themeMap.has(themeId)) {
+          const scripture = a.prophecyScriptures?.[0] || null;
+          themeMap.set(themeId, { theme: themeId, articles: [], topScore: 0, topScripture: scripture, analysis: a.prophecyAnalysis || null });
+        }
+        const group = themeMap.get(themeId)!;
+        if (!group.articles.find(x => x.id === a.id)) group.articles.push(a);
+        if ((a.prophecyScore || 0) > group.topScore) {
+          group.topScore = a.prophecyScore || 0;
+          if (a.prophecyScriptures?.[0]) group.topScripture = a.prophecyScriptures[0];
+          if (a.prophecyAnalysis) group.analysis = a.prophecyAnalysis;
+        }
+      });
     });
-    return groups.sort((a, b) => b.articles.length - a.articles.length).slice(0, 12);
+    return Array.from(themeMap.values())
+      .sort((a, b) => b.articles.length - a.articles.length || b.topScore - a.topScore)
+      .slice(0, 15);
   }, [articles]);
+
+  const prophecyArticles = useMemo(() =>
+    articles.filter(a => a.prophecyRelated).sort((a, b) => (b.prophecyScore || 0) - (a.prophecyScore || 0)),
+  [articles]);
 
   // ─── ACCESS GATE ─────────────────────────────────────────────────────
   if (!accessChecked) {
@@ -621,7 +702,14 @@ export default function IntelligenceClient() {
   // ─── RENDER ───────────────────────────────────────────────────────────
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#050510]">
-      <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+      <div ref={mapContainerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
+
+      {/* Map debug overlay — visible until map loads */}
+      {!mapLoaded && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20 bg-black/80 border border-cyan-500/30 rounded-lg px-4 py-2 font-mono text-xs text-cyan-400">
+          {mapDebug}
+        </div>
+      )}
 
       {/* ═══ HUD CORNER BRACKETS ═══ */}
       <div className="absolute inset-0 z-[2] pointer-events-none">
@@ -844,7 +932,7 @@ export default function IntelligenceClient() {
           {([
             { id: 'calendar' as BottomTab, icon: Calendar, label: 'Economic Calendar', mLabel: 'Econ', c: '#22c55e' },
             { id: 'naval' as BottomTab, icon: Anchor, label: 'Naval Ops', mLabel: 'Naval', c: '#3b82f6' },
-            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Cross-Ref', mLabel: 'Intel', c: '#f59e0b' },
+            { id: 'cross-ref' as BottomTab, icon: BookOpen, label: 'Prophecy Intel', mLabel: 'Prophecy', c: '#f59e0b' },
             { id: 'stats' as BottomTab, icon: BarChart3, label: 'World Data', mLabel: 'Data', c: '#a855f7' },
           ] as const).map(tab => (
             <button key={tab.id} onClick={() => setBottomTab(bottomTab === tab.id ? 'none' : tab.id)}
@@ -911,7 +999,7 @@ export default function IntelligenceClient() {
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                       {navalVessels.filter(v => v.type !== 'patrol_zone').slice(0, 18).map((v, i) => (
-                        <button key={i} onClick={() => { setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); }}
+                        <button key={i} onClick={() => { clearPopups(); setSelectedVessel(v); mapRef.current?.flyTo([v.lat, v.lng], 6, { duration: 1 }); }}
                           className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/5 hover:border-white/10 transition text-left font-mono bg-white/[0.02]">
                           <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: v.color, boxShadow: `0 0 8px ${v.color}40` }} />
                           <div className="flex-1 min-w-0">
@@ -924,31 +1012,44 @@ export default function IntelligenceClient() {
                   </div>
                 )}
 
-                {/* CROSS-REF */}
+                {/* PROPHECY INTEL */}
                 {bottomTab === 'cross-ref' && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen className="w-4 h-4 text-amber-400" />
-                      <span className="text-sm font-mono text-white tracking-wider font-bold">INTEL CROSS-REFERENCE</span>
-                      <span className="text-[10px] font-mono text-zinc-600">{crossRefGroups.length} TOPICS</span>
+                      <span className="text-sm font-mono text-white tracking-wider font-bold">PROPHECY INTELLIGENCE</span>
+                      <span className="text-[10px] font-mono text-amber-500/60 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
+                        {prophecyArticles.length} MATCHES · {prophecyGroups.length} THEMES
+                      </span>
                     </div>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {crossRefGroups.map((g, i) => (
-                        <div key={i} className="rounded-lg bg-white/[0.02] border border-white/5 p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-mono font-bold text-amber-400 uppercase">{g.keyword}</span>
-                            <span className="text-[8px] font-mono text-zinc-600 bg-white/5 px-1.5 py-0.5 rounded">{g.articles.length} sources</span>
+                    {prophecyGroups.length === 0 ? (
+                      <div className="text-center py-8 text-zinc-600 font-mono text-xs">Analysing prophecy cross-references...</div>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {prophecyGroups.map((g, i) => (
+                          <div key={i} className="rounded-lg bg-white/[0.02] border border-amber-500/10 p-3 hover:border-amber-500/25 transition-all">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">{g.theme.replace(/_/g, ' ')}</span>
+                              <span className="text-[8px] font-mono text-zinc-600 bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10">{g.articles.length} articles</span>
+                              {g.topScore >= 70 && <span className="text-[7px] font-mono text-red-400 bg-red-500/10 px-1 py-0.5 rounded border border-red-500/15">HIGH</span>}
+                            </div>
+                            {g.topScripture && (
+                              <div className="text-[9px] font-mono text-amber-300/40 bg-amber-500/5 border border-amber-500/8 rounded px-2 py-1.5 mb-2 leading-relaxed">
+                                <span className="text-amber-400/70 font-bold">📖 {g.topScripture.book} {g.topScripture.ref}</span>
+                                <span className="text-amber-300/30 ml-1">— &ldquo;{g.topScripture.text.slice(0, 100)}{g.topScripture.text.length > 100 ? '...' : ''}&rdquo;</span>
+                              </div>
+                            )}
+                            <div className="space-y-1">{g.articles.slice(0, 3).map((a, j) => (
+                              <button key={j} onClick={() => { clearPopups(); setSelectedArticle(a); if (a.coordinates) mapRef.current?.flyTo([a.coordinates[1], a.coordinates[0]], 5, { duration: 1 }); }}
+                                className="block w-full text-left text-[10px] font-mono text-zinc-500 hover:text-amber-300 transition truncate">
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${a.sentiment === 'negative' ? 'bg-red-400' : a.sentiment === 'positive' ? 'bg-green-400' : 'bg-amber-400'}`} />
+                                {a.title?.slice(0, 75)}
+                              </button>
+                            ))}</div>
                           </div>
-                          {g.prophecyRef && <div className="text-[9px] font-mono text-amber-300/50 bg-amber-500/5 border border-amber-500/10 rounded px-2 py-1 mb-2">📖 {g.prophecyRef}</div>}
-                          <div className="space-y-1">{g.articles.slice(0, 3).map((a, j) => (
-                            <a key={j} href={a.url} target="_blank" rel="noopener noreferrer" className="block text-[10px] font-mono text-zinc-500 hover:text-white transition truncate">
-                              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${a.sentiment === 'negative' ? 'bg-red-400' : a.sentiment === 'positive' ? 'bg-green-400' : 'bg-cyan-400'}`} />
-                              {a.title?.slice(0, 80)}
-                            </a>
-                          ))}</div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1034,7 +1135,7 @@ export default function IntelligenceClient() {
                 {filtered.slice(0, 50).map(article => {
                   const sc = SC[article.sentiment] || SC.neutral;
                   return (
-                    <button key={article.id} onClick={() => { setSelectedArticle(article); if (article.coordinates && mapRef.current) mapRef.current.flyTo([article.coordinates[1], article.coordinates[0]], 5, { duration: 1 }); }}
+                    <button key={article.id} onClick={() => { clearPopups(); setSelectedArticle(article); if (article.coordinates && mapRef.current) mapRef.current.flyTo([article.coordinates[1], article.coordinates[0]], 5, { duration: 1 }); }}
                       className="w-full text-left px-3 py-2.5 rounded-lg border border-white/[0.03] hover:border-white/10 transition-all group bg-white/[0.01] hover:bg-white/[0.03]">
                       <div className="flex items-start gap-2.5">
                         <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: sc.fill, boxShadow: `0 0 6px ${sc.glow}` }} />
@@ -1077,7 +1178,26 @@ export default function IntelligenceClient() {
                 <span className="text-[9px] font-mono px-2 py-0.5 rounded border" style={{ color: SC[selectedArticle.sentiment]?.fill, background: `${SC[selectedArticle.sentiment]?.fill}10`, borderColor: `${SC[selectedArticle.sentiment]?.fill}25` }}>{SC[selectedArticle.sentiment]?.label}</span>
                 <span className="text-[9px] font-mono text-zinc-600">{selectedArticle.source} · {selectedArticle.country?.toUpperCase()} · {timeAgo(selectedArticle.publishedAt)}</span>
               </div>
-              {selectedArticle.prophecyRef && <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10"><div className="text-[9px] text-amber-400 font-mono font-bold">📖 PROPHECY</div><div className="text-[10px] text-amber-300/60 font-mono">{selectedArticle.prophecyRef}</div></div>}
+              {selectedArticle.prophecyRelated && (
+                <div className="mb-3 rounded-lg bg-amber-500/5 border border-amber-500/15 overflow-hidden">
+                  <div className="px-3 py-2 bg-amber-500/8 border-b border-amber-500/10 flex items-center gap-2">
+                    <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[10px] text-amber-400 font-mono font-bold">PROPHECY CROSS-REFERENCE</span>
+                    {selectedArticle.prophecyScore && <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border" style={{ color: selectedArticle.prophecyScore >= 70 ? '#ef4444' : '#f59e0b', background: selectedArticle.prophecyScore >= 70 ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)', borderColor: selectedArticle.prophecyScore >= 70 ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)' }}>{selectedArticle.prophecyScore}% MATCH</span>}
+                  </div>
+                  <div className="px-3 py-2 space-y-1.5">
+                    {(selectedArticle.prophecyScriptures || []).slice(0, 3).map((s, si) => (
+                      <div key={si} className="text-[9px] font-mono leading-relaxed">
+                        <span className="text-amber-400/80 font-bold">{s.book} {s.ref}</span>
+                        <span className="text-amber-300/35 ml-1">&mdash; &ldquo;{s.text.slice(0, 120)}{s.text.length > 120 ? '...' : ''}&rdquo;</span>
+                      </div>
+                    ))}
+                    {selectedArticle.prophecyAnalysis && (
+                      <div className="mt-2 pt-2 border-t border-amber-500/8 text-[9px] font-mono text-zinc-500 leading-relaxed">{selectedArticle.prophecyAnalysis.split('\n')[0].slice(0, 200)}</div>
+                    )}
+                  </div>
+                </div>
+              )}
               {selectedArticle.ukImpact && <div className="mb-3 px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10"><span className="text-[9px] text-cyan-400 font-mono font-bold">🇬🇧 UK MARKET IMPACT</span></div>}
               <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-mono hover:bg-cyan-500/15 transition border border-cyan-500/15 w-fit">READ FULL <ExternalLink className="w-3 h-3" /></a>
             </div>

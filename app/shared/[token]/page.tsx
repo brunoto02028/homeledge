@@ -78,10 +78,10 @@ export default function SharedPortalPage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-10 w-10 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
-              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+              <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">HomeLedger</h1>
+              <h1 className="text-xl font-bold">Clarity & Co</h1>
               <p className="text-sm text-slate-400">Shared Financial Portal</p>
             </div>
           </div>
@@ -283,8 +283,8 @@ export default function SharedPortalPage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground pt-6 border-t">
-          <p>This is a read-only view shared via HomeLedger. Data is live and reflects the owner&apos;s current records.</p>
-          <p className="mt-1">Powered by <strong>HomeLedger</strong> &mdash; homeledger.co.uk</p>
+          <p>This is a read-only view shared via Clarity & Co. Data is live and reflects the owner&apos;s current records.</p>
+          <p className="mt-1">Powered by <strong>Clarity & Co</strong> &mdash; clarityco.co.uk</p>
         </div>
       </div>
     </div>

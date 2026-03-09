@@ -1,15 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { ModuleGuide } from '@/components/module-guide';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   ShoppingBag, Loader2, Star, Clock, CheckCircle2, Package,
   CreditCard, ArrowRight, FileText, AlertCircle, ExternalLink,
-  PoundSterling, Truck, XCircle, RotateCcw,
+  PoundSterling, Truck, XCircle, RotateCcw, Plus, Pencil, Trash2,
+  Eye, Settings2,
 } from 'lucide-react';
 
 interface ServicePackage {
@@ -28,7 +34,18 @@ interface ServicePackage {
   iconEmoji: string | null;
   isFeatured: boolean;
   sortOrder: number;
+  isActive: boolean;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
 }
+
+const emptyForm = {
+  title: '', slug: '', description: '', shortDescription: '',
+  priceGbp: '', originalPriceGbp: '', currency: 'GBP',
+  deliverables: '', requirements: '',
+  estimatedDays: '', category: 'relocation',
+  iconEmoji: '📦', isFeatured: false, sortOrder: '0', isActive: true,
+};
 
 interface Purchase {
   id: string;
@@ -65,6 +82,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function ServicesClient() {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === 'admin';
+
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,14 +93,21 @@ export function ServicesClient() {
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Admin state
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [previewPkg, setPreviewPkg] = useState<ServicePackage | null>(null);
+
+  useEffect(() => { fetchData(); }, [isAdmin]);
 
   const fetchData = async () => {
     try {
       const [pkgRes, purRes] = await Promise.all([
-        fetch('/api/services'),
+        fetch(isAdmin ? '/api/admin/services' : '/api/services'),
         fetch('/api/services/purchases'),
       ]);
       if (pkgRes.ok) {
@@ -95,6 +122,91 @@ export function ServicesClient() {
       toast({ title: 'Failed to load services', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openCreate = () => {
+    setEditId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (pkg: ServicePackage) => {
+    setEditId(pkg.id);
+    setForm({
+      title: pkg.title,
+      slug: pkg.slug,
+      description: pkg.description,
+      shortDescription: pkg.shortDescription || '',
+      priceGbp: pkg.priceGbp.toString(),
+      originalPriceGbp: pkg.originalPriceGbp?.toString() || '',
+      currency: pkg.currency,
+      deliverables: pkg.deliverables.join('\n'),
+      requirements: pkg.requirements.join('\n'),
+      estimatedDays: pkg.estimatedDays?.toString() || '',
+      category: pkg.category || 'relocation',
+      iconEmoji: pkg.iconEmoji || '📦',
+      isFeatured: pkg.isFeatured,
+      sortOrder: pkg.sortOrder.toString(),
+      isActive: pkg.isActive,
+    });
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.title || !form.priceGbp) {
+      toast({ title: 'Title and price are required', variant: 'destructive' });
+      return;
+    }
+    if (!form.slug) form.slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        deliverables: form.deliverables.split('\n').map(s => s.trim()).filter(Boolean),
+        requirements: form.requirements.split('\n').map(s => s.trim()).filter(Boolean),
+      };
+      const url = editId ? `/api/admin/services/${editId}` : '/api/admin/services';
+      const method = editId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast({
+        title: editId ? 'Service updated' : 'Service created',
+        description: data.stripeSync ? '✓ Synced to Stripe' : 'Stripe not configured',
+      });
+      setShowForm(false);
+      setEditId(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ title: e.message || 'Failed', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (idToDelete?: string) => {
+    const targetId = idToDelete || deleteId;
+    if (!targetId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/services/${targetId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast({
+        title: 'Service deleted',
+        description: data.stripeSync ? '✓ Deleted from Stripe' : '',
+      });
+      setPackages(prev => prev.filter(p => p.id !== targetId));
+      setDeleteId(null);
+    } catch (e: any) {
+      toast({ title: e.message || 'Failed', variant: 'destructive' });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -144,15 +256,23 @@ export function ServicesClient() {
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <ModuleGuide moduleKey="services" />
+
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <ShoppingBag className="h-8 w-8 text-purple-500" />
-          Services
-        </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          Professional support for your UK journey — relocation, tax, company formation
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <ShoppingBag className="h-8 w-8 text-purple-500" />
+            Services
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Professional support for your UK journey — relocation, tax, company formation
+          </p>
+        </div>
+        {isAdmin && (
+          <Button onClick={openCreate} className="flex-shrink-0 gap-2">
+            <Plus className="h-4 w-4" /> New Service
+          </Button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -211,9 +331,30 @@ export function ServicesClient() {
               return (
                 <Card
                   key={pkg.id}
-                  className={`transition-all hover:shadow-lg ${pkg.isFeatured ? 'ring-2 ring-purple-500/30' : ''} ${isExpanded ? 'md:col-span-2' : ''}`}
+                  className={`transition-all hover:shadow-lg ${pkg.isFeatured ? 'ring-2 ring-purple-500/30' : ''} ${isExpanded ? 'md:col-span-2' : ''} ${isAdmin && !pkg.isActive ? 'opacity-60 border-dashed' : ''}`}
                 >
                   <CardContent className="p-6 space-y-4">
+                    {/* Admin badges */}
+                    {isAdmin && (
+                      <div className="flex items-center justify-between -mb-2">
+                        <div className="flex gap-1.5">
+                          {!pkg.isActive && <Badge variant="outline" className="text-[10px] border-red-400 text-red-400">Inactive</Badge>}
+                          {pkg.stripeProductId && <Badge variant="outline" className="text-[10px] border-emerald-400 text-emerald-500 gap-1"><CreditCard className="h-2.5 w-2.5" />Stripe</Badge>}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setPreviewPkg(pkg)} title="Preview as user">
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(pkg)} title="Edit">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" onClick={() => setDeleteId(pkg.id)} title="Delete">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -396,10 +537,230 @@ export function ServicesClient() {
         <CardContent className="p-4 flex items-center gap-3">
           <CreditCard className="h-5 w-5 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            Secure payments powered by Stripe (coming soon). Currently, purchases are tracked manually — our team will contact you to arrange payment.
+            Secure payments powered by Stripe. Purchases redirect to Stripe checkout for payment.
           </p>
         </CardContent>
       </Card>
+
+      {/* ── ADMIN: Create/Edit Dialog ── */}
+      {isAdmin && (
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Settings2 className="h-5 w-5" />
+                {editId ? 'Edit Service' : 'New Service'}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Title *</Label>
+                  <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="NIN Registration Support" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Slug</Label>
+                  <Input value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} placeholder="auto-generated if empty" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Price (£) *</Label>
+                  <Input type="number" value={form.priceGbp} onChange={e => setForm(p => ({ ...p, priceGbp: e.target.value }))} placeholder="149" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Original Price (£)</Label>
+                  <Input type="number" value={form.originalPriceGbp} onChange={e => setForm(p => ({ ...p, originalPriceGbp: e.target.value }))} placeholder="299" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Est. Days</Label>
+                  <Input type="number" value={form.estimatedDays} onChange={e => setForm(p => ({ ...p, estimatedDays: e.target.value }))} placeholder="14" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Category</Label>
+                  <select
+                    value={form.category}
+                    onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="relocation">Relocation</option>
+                    <option value="company_formation">Company Formation</option>
+                    <option value="tax">Tax Services</option>
+                    <option value="visa">Visa Support</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Icon Emoji</Label>
+                  <Input value={form.iconEmoji} onChange={e => setForm(p => ({ ...p, iconEmoji: e.target.value }))} placeholder="📦" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Sort Order</Label>
+                  <Input type="number" value={form.sortOrder} onChange={e => setForm(p => ({ ...p, sortOrder: e.target.value }))} placeholder="0" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Short Description</Label>
+                <Input value={form.shortDescription} onChange={e => setForm(p => ({ ...p, shortDescription: e.target.value }))} placeholder="One-line summary for the card" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Full Description</Label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  rows={4}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                  placeholder="Detailed description shown when user clicks Details..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Deliverables (one per line)</Label>
+                  <textarea
+                    value={form.deliverables}
+                    onChange={e => setForm(p => ({ ...p, deliverables: e.target.value }))}
+                    rows={4}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                    placeholder="NIN Application submitted&#10;Confirmation letter&#10;Follow-up support"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Requirements (one per line)</Label>
+                  <textarea
+                    value={form.requirements}
+                    onChange={e => setForm(p => ({ ...p, requirements: e.target.value }))}
+                    rows={4}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                    placeholder="Valid passport&#10;Proof of address"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.isFeatured} onChange={e => setForm(p => ({ ...p, isFeatured: e.target.checked }))} className="rounded" />
+                  <span className="text-sm">Featured (shows purple ring)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.isActive} onChange={e => setForm(p => ({ ...p, isActive: e.target.checked }))} className="rounded" />
+                  <span className="text-sm">Active (visible to users)</span>
+                </label>
+              </div>
+
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
+                <CreditCard className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>Saving will automatically create/update this service as a Stripe Product + Price. Price changes create a new Stripe Price (old one archived).</span>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {editId ? 'Save Changes' : 'Create Service'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── ADMIN: Delete Confirm ── */}
+      {isAdmin && (
+        <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this service?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The service will be permanently deleted from the database and removed from Stripe. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDelete(deleteId!)}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {/* ── ADMIN: Preview Modal ── */}
+      {isAdmin && previewPkg && (
+        <Dialog open={!!previewPkg} onOpenChange={open => !open && setPreviewPkg(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" /> Preview — as seen by user
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Stripe info */}
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs space-y-1">
+                <p className="font-semibold text-muted-foreground uppercase tracking-wide text-[10px]">Stripe info</p>
+                <p>Product ID: <span className="font-mono">{previewPkg.stripeProductId || '— not synced yet'}</span></p>
+                <p>Price ID: <span className="font-mono">{previewPkg.stripePriceId || '— not synced yet'}</span></p>
+                {previewPkg.stripeProductId && (
+                  <a
+                    href={`https://dashboard.stripe.com/products/${previewPkg.stripeProductId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-500 hover:underline mt-1"
+                  >
+                    <ExternalLink className="h-3 w-3" /> Open in Stripe Dashboard
+                  </a>
+                )}
+              </div>
+
+              {/* Card preview */}
+              <div className={`rounded-xl border p-5 space-y-3 ${previewPkg.isFeatured ? 'ring-2 ring-purple-500/30' : ''}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{previewPkg.iconEmoji || '📦'}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold">{previewPkg.title}</h3>
+                        {previewPkg.isFeatured && <Badge className="bg-purple-500/20 text-purple-600 text-[10px]"><Star className="h-3 w-3 mr-0.5" /> Featured</Badge>}
+                      </div>
+                      {previewPkg.category && <Badge variant="outline" className="text-[10px] mt-1">{CATEGORY_LABELS[previewPkg.category] || previewPkg.category}</Badge>}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {previewPkg.originalPriceGbp && previewPkg.originalPriceGbp > previewPkg.priceGbp && (
+                      <p className="text-xs line-through text-muted-foreground">£{previewPkg.originalPriceGbp}</p>
+                    )}
+                    <p className="text-2xl font-bold">£{previewPkg.priceGbp}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">{previewPkg.shortDescription || previewPkg.description.substring(0, 120) + '...'}</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  {previewPkg.estimatedDays && <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> ~{previewPkg.estimatedDays} days</span>}
+                  <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> {previewPkg.deliverables.length} deliverables</span>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1 h-9 rounded-md bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
+                    <CreditCard className="h-4 w-4 mr-1" /> Get Started — £{previewPkg.priceGbp}
+                  </div>
+                  <div className="h-9 px-4 rounded-md border flex items-center text-sm">Details</div>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">Clicking "Get Started" redirects to Stripe checkout with the Price ID above.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

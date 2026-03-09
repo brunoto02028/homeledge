@@ -14,7 +14,7 @@ interface NotificationParams {
 export async function sendNotificationEmail(params: NotificationParams): Promise<boolean> {
   try {
     const appUrl = process.env.NEXTAUTH_URL || '';
-    const appName = 'HomeLedger';
+    const appName = 'Clarity & Co';
     const senderEmail = appUrl ? `noreply@${new URL(appUrl).hostname}` : 'noreply@mail.abacusai.app';
 
     const response = await fetch('https://apps.abacus.ai/api/sendNotificationEmail', {
@@ -54,7 +54,7 @@ export function generateWelcomeEmailHtml(fullName: string, accountType: string):
   return `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
       <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to HomeLedger! 🎉</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Clarity & Co! 🎉</h1>
         <p style="color: #bfdbfe; margin: 10px 0 0 0;">Your finances, simplified</p>
       </div>
       
@@ -63,7 +63,7 @@ export function generateWelcomeEmailHtml(fullName: string, accountType: string):
         
         <p style="color: #475569; line-height: 1.6;">
           Thank you for creating your ${accountType === 'business' ? 'Business' : 'Household'} account. 
-          You're all set to start managing your finances with HomeLedger.
+          You're all set to start managing your finances with Clarity & Co.
         </p>
         
         <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin: 25px 0;">
@@ -82,12 +82,12 @@ export function generateWelcomeEmailHtml(fullName: string, accountType: string):
         
         <p style="color: #1e293b; margin-top: 30px;">
           Best regards,<br/>
-          <strong>The HomeLedger Team</strong>
+          <strong>The Clarity & Co Team</strong>
         </p>
       </div>
       
       <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-        <p style="margin: 0;">© ${new Date().getFullYear()} HomeLedger</p>
+        <p style="margin: 0;">© ${new Date().getFullYear()} Clarity & Co</p>
         <p style="margin: 5px 0 0 0;">Your finances, simplified.</p>
       </div>
     </div>
@@ -116,14 +116,14 @@ export function generateLoginAlertHtml(
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
       <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px 20px; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">🔐 New Login Detected</h1>
-        <p style="color: #bfdbfe; margin: 10px 0 0 0;">HomeLedger Security</p>
+        <p style="color: #bfdbfe; margin: 10px 0 0 0;">Clarity & Co Security</p>
       </div>
       
       <div style="padding: 30px 20px; background: white;">
         <h2 style="color: #1e293b; margin: 0 0 20px 0;">Hello ${fullName},</h2>
         
         <p style="color: #475569; line-height: 1.6;">
-          A new sign-in was detected on your HomeLedger account.
+          A new sign-in was detected on your Clarity & Co account.
         </p>
         
         <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin: 25px 0;">
@@ -161,13 +161,13 @@ export function generateLoginAlertHtml(
         
         <p style="color: #1e293b; margin-top: 30px;">
           Stay secure,<br/>
-          <strong>The HomeLedger Security Team</strong>
+          <strong>The Clarity & Co Security Team</strong>
         </p>
       </div>
       
       <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-        <p style="margin: 0;">This is an automated security notification from HomeLedger.</p>
-        <p style="margin: 5px 0 0 0;">© ${new Date().getFullYear()} HomeLedger</p>
+        <p style="margin: 0;">This is an automated security notification from Clarity & Co.</p>
+        <p style="margin: 5px 0 0 0;">© ${new Date().getFullYear()} Clarity & Co</p>
       </div>
     </div>
   `;

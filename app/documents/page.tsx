@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { DocumentsClient } from './documents-client';
 
 export const metadata: Metadata = {
-  title: 'Capture & Classify | HomeLedger',
+  title: 'Capture & Classify | Clarity & Co',
   description: 'Scan, upload and auto-classify your letters, bills, receipts and documents',
 };
 

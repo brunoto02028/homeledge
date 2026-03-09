@@ -6,7 +6,8 @@ import {
   Mail, Plus, RefreshCw, Send, Star, Trash2, Archive, Inbox, FileEdit,
   ChevronRight, Paperclip, Search, X, MoreVertical, Reply, Forward,
   AlertCircle, Check, Clock, Eye, EyeOff, Settings, Pen, ArrowLeft,
-  FolderOpen, StarOff, MailOpen, Loader2,
+  FolderOpen, StarOff, MailOpen, Loader2, Sparkles, ListTodo, Languages,
+  Brain, FileText,
 } from 'lucide-react';
 import { ModuleGuide } from '@/components/module-guide';
 
@@ -48,7 +49,8 @@ const PROVIDER_PRESETS = [
 ];
 
 export function EmailClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [accounts, setAccounts] = useState<EmailAccount[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
@@ -88,6 +90,28 @@ export function EmailClient() {
   const [sigName, setSigName] = useState('');
   const [sigBody, setSigBody] = useState('');
   const [editingSigId, setEditingSigId] = useState<string | null>(null);
+
+  // AI Analyst state
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiReplySuggestions, setAiReplySuggestions] = useState<any>(null);
+  const [aiReplyLoading, setAiReplyLoading] = useState(false);
+  const [aiBatchAnalyzing, setAiBatchAnalyzing] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [showTaskCreate, setShowTaskCreate] = useState(false);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskCreating, setTaskCreating] = useState(false);
+
+  // AI Batch Analyze with period
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
+  const [batchPeriod, setBatchPeriod] = useState('last_week');
+  const [batchDateFrom, setBatchDateFrom] = useState('');
+  const [batchDateTo, setBatchDateTo] = useState('');
+  const [batchReanalyze, setBatchReanalyze] = useState(false);
+  const [batchResults, setBatchResults] = useState<any>(null);
+  const [showBatchResults, setShowBatchResults] = useState(false);
 
   // ── Fetch accounts ──────────────────────────────────────────────────
   const fetchAccounts = useCallback(async () => {
@@ -266,6 +290,102 @@ export function EmailClient() {
     await fetchSignatures();
   };
 
+  // ── AI Analyst Functions ──────────────────────────────────────────────
+  const aiAnalyzeMessage = async (msgId: string) => {
+    setAiAnalyzing(true); setAiAnalysis(null); setShowAiPanel(true);
+    try {
+      const res = await fetch('/api/email/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: msgId, action: 'analyze' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAiAnalysis(data.analysis);
+        // If AI suggests a task, pre-fill the task form
+        if (data.analysis.actionRequired && data.analysis.suggestedTaskTitle) {
+          setTaskTitle(data.analysis.suggestedTaskTitle);
+          setTaskDescription(data.analysis.suggestedTaskDescription || '');
+          setTaskDueDate(data.analysis.suggestedTaskDueDate || '');
+        }
+      }
+    } catch { } finally { setAiAnalyzing(false); }
+  };
+
+  const aiSuggestReply = async (msgId: string, lang?: string) => {
+    setAiReplyLoading(true); setAiReplySuggestions(null);
+    try {
+      const res = await fetch('/api/email/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: msgId, action: 'suggest_reply', language: lang || 'auto' }),
+      });
+      const data = await res.json();
+      if (data.success) setAiReplySuggestions(data.suggestions);
+    } catch { } finally { setAiReplyLoading(false); }
+  };
+
+  const aiBatchAnalyze = async () => {
+    if (!activeAccountId) return;
+    setAiBatchAnalyzing(true);
+    setShowBatchDialog(false);
+    try {
+      const payload: any = {
+        accountId: activeAccountId,
+        action: 'batch_analyze',
+        period: batchPeriod,
+        reanalyze: batchReanalyze,
+      };
+      if (batchPeriod === 'custom') {
+        if (batchDateFrom) payload.dateFrom = batchDateFrom;
+        if (batchDateTo) payload.dateTo = batchDateTo;
+      }
+      const res = await fetch('/api/email/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBatchResults(data);
+        setShowBatchResults(true);
+        await fetchMessages();
+      }
+    } catch { } finally { setAiBatchAnalyzing(false); }
+  };
+
+  const aiCreateTask = async () => {
+    if (!taskTitle || !selectedMsg) return;
+    setTaskCreating(true);
+    try {
+      const res = await fetch('/api/email/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_task',
+          messageId: selectedMsg.id,
+          title: taskTitle,
+          description: taskDescription,
+          dueDate: taskDueDate || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowTaskCreate(false);
+        setTaskTitle(''); setTaskDescription(''); setTaskDueDate('');
+      }
+    } catch { } finally { setTaskCreating(false); }
+  };
+
+  const useAiReply = (reply: any) => {
+    setComposeSubject(reply.subject || `Re: ${selectedMsg?.subject || ''}`);
+    setComposeBody(reply.body);
+    setComposeTo(selectedMsg?.fromAddress || '');
+    setReplyTo(selectedMsg);
+    setShowCompose(true);
+    setAiReplySuggestions(null);
+  };
+
   // ── Effects ─────────────────────────────────────────────────────────
   useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
@@ -304,6 +424,9 @@ export function EmailClient() {
           <p className="text-sm text-slate-400 mt-1">{t('email.subtitle') || 'Manage all your email accounts in one place'}</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowBatchDialog(true)} disabled={aiBatchAnalyzing || !activeAccountId} className="px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-sm text-violet-300 hover:bg-violet-500/20 flex items-center gap-2 disabled:opacity-50" title="AI analyze emails by period">
+            {aiBatchAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />} AI Analyze
+          </button>
           <button onClick={() => { fetchSignatures(); setShowSignatures(true); }} className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-300 hover:bg-white/10 flex items-center gap-2">
             <Pen className="h-4 w-4" /> {t('email.signatures') || 'Signatures'}
           </button>
@@ -484,6 +607,16 @@ export function EmailClient() {
                   <button onClick={() => toggleStar(selectedMsg.id, selectedMsg.isStarred)} className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-amber-400">
                     {selectedMsg.isStarred ? <Star className="h-4 w-4 text-amber-400 fill-amber-400" /> : <Star className="h-4 w-4" />}
                   </button>
+                  <div className="w-px h-5 bg-white/10 mx-1" />
+                  <button onClick={() => aiAnalyzeMessage(selectedMsg.id)} disabled={aiAnalyzing} className="p-1.5 rounded-lg hover:bg-violet-400/10 text-slate-400 hover:text-violet-400 disabled:opacity-50" title="AI Analyze">
+                    {aiAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => aiSuggestReply(selectedMsg.id)} disabled={aiReplyLoading} className="p-1.5 rounded-lg hover:bg-emerald-400/10 text-slate-400 hover:text-emerald-400 disabled:opacity-50" title="AI Reply">
+                    {aiReplyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => { setShowTaskCreate(true); if (!taskTitle && selectedMsg.subject) setTaskTitle(`Follow up: ${selectedMsg.subject}`); }} className="p-1.5 rounded-lg hover:bg-amber-400/10 text-slate-400 hover:text-amber-400" title="Create Task">
+                    <ListTodo className="h-4 w-4" />
+                  </button>
                 </div>
 
                 {/* Message header */}
@@ -527,6 +660,71 @@ export function EmailClient() {
                             <Paperclip className="h-3 w-3 text-slate-500" />
                             <span>{att.filename}</span>
                             <span className="text-slate-500">({(att.size / 1024).toFixed(0)}KB)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Analysis Panel */}
+                  {showAiPanel && aiAnalysis && (
+                    <div className="mt-6 border-t border-white/5 pt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold text-violet-400 flex items-center gap-1"><Brain className="h-3 w-3" /> AI Analysis</p>
+                        <button onClick={() => { setShowAiPanel(false); setAiAnalysis(null); }} className="text-slate-500 hover:text-white"><X className="h-3 w-3" /></button>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="p-2.5 rounded-lg bg-violet-400/10 border border-violet-400/20">
+                          <p className="text-violet-300"><strong>Summary:</strong> {aiAnalysis.summary}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300">Category: {aiAnalysis.category}</span>
+                          <span className={`px-2 py-0.5 rounded ${aiAnalysis.urgency === 'high' ? 'bg-red-400/20 text-red-300' : aiAnalysis.urgency === 'medium' ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-700 text-slate-300'}`}>Urgency: {aiAnalysis.urgency}</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300">Sentiment: {aiAnalysis.sentiment}</span>
+                          {aiAnalysis.language && <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300">Lang: {aiAnalysis.language}</span>}
+                        </div>
+                        {aiAnalysis.actionRequired && (
+                          <div className="p-2.5 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-300">
+                            <strong>Action Required:</strong> {aiAnalysis.suggestedTaskTitle}
+                            <button onClick={() => setShowTaskCreate(true)} className="ml-2 underline text-amber-400">Create Task</button>
+                          </div>
+                        )}
+                        {aiAnalysis.financialAmounts?.length > 0 && (
+                          <div className="p-2.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-300">
+                            <strong>Financial:</strong> {aiAnalysis.financialAmounts.map((f: any) => `${f.currency || '£'}${f.amount} — ${f.description}`).join(', ')}
+                          </div>
+                        )}
+                        {aiAnalysis.attachmentAnalysis?.length > 0 && (
+                          <div className="p-2.5 rounded-lg bg-blue-400/10 border border-blue-400/20">
+                            <p className="text-blue-300 font-semibold mb-1">Attachment Analysis:</p>
+                            {aiAnalysis.attachmentAnalysis.map((a: any, i: number) => (
+                              <p key={i} className="text-blue-200">{a.filename}: <span className="text-slate-400">{a.type}</span> {a.entityHint && <span className="text-amber-300">→ {a.entityHint}</span>} {a.shouldArchive && <span className="text-emerald-400">[archive]</span>}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Reply Suggestions */}
+                  {aiReplySuggestions && aiReplySuggestions.replies?.length > 0 && (
+                    <div className="mt-6 border-t border-white/5 pt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold text-emerald-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> AI Reply Suggestions</p>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => aiSuggestReply(selectedMsg.id, 'en')} className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 hover:text-white">EN</button>
+                          <button onClick={() => aiSuggestReply(selectedMsg.id, 'pt')} className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 hover:text-white">PT</button>
+                          <button onClick={() => setAiReplySuggestions(null)} className="text-slate-500 hover:text-white"><X className="h-3 w-3" /></button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {aiReplySuggestions.replies.map((reply: any, i: number) => (
+                          <div key={i} className="p-3 rounded-lg bg-emerald-400/5 border border-emerald-400/20 hover:bg-emerald-400/10 cursor-pointer transition-colors" onClick={() => useAiReply(reply)}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] uppercase font-semibold text-emerald-400">{reply.tone}</span>
+                              <span className="text-[10px] text-slate-500">Click to use</span>
+                            </div>
+                            <p className="text-xs text-slate-300 whitespace-pre-wrap line-clamp-4">{reply.body}</p>
                           </div>
                         ))}
                       </div>
@@ -673,6 +871,194 @@ export function EmailClient() {
         </div>
       )}
 
+      {/* ── AI Batch Analyze Period Dialog ─────────────────────────────── */}
+      {showBatchDialog && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Brain className="h-4 w-4 text-violet-400" /> AI Email Analysis</h3>
+              <button onClick={() => setShowBatchDialog(false)} className="text-slate-400 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-xs text-slate-400">Select a period to analyze. AI will categorize email content and attachments, identify entities, and flag actions required.</p>
+
+              {/* Period selector */}
+              <div className="space-y-2">
+                <label className="text-xs text-slate-400 font-medium">Period</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'last_day', label: 'Last 24h' },
+                    { key: 'last_week', label: 'Last Week' },
+                    { key: 'last_month', label: 'Last Month' },
+                    { key: 'custom', label: 'Custom Range' },
+                  ].map(p => (
+                    <button key={p.key} onClick={() => setBatchPeriod(p.key)}
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${batchPeriod === p.key ? 'border-violet-400/50 bg-violet-400/10 text-violet-300' : 'border-white/10 text-slate-400 hover:bg-white/5'}`}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom date range */}
+              {batchPeriod === 'custom' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-slate-500 uppercase">From</label>
+                    <input type="date" value={batchDateFrom} onChange={e => setBatchDateFrom(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:border-violet-400/30 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 uppercase">To</label>
+                    <input type="date" value={batchDateTo} onChange={e => setBatchDateTo(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:border-violet-400/30 focus:outline-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* Re-analyze toggle */}
+              <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                <input type="checkbox" checked={batchReanalyze} onChange={e => setBatchReanalyze(e.target.checked)} className="rounded border-white/20 bg-white/5 text-violet-500 focus:ring-violet-400/30" />
+                Re-analyze previously categorized emails
+              </label>
+
+              <button onClick={aiBatchAnalyze} disabled={aiBatchAnalyzing} className="w-full px-4 py-2.5 rounded-lg bg-violet-500 text-white font-semibold text-sm hover:bg-violet-400 disabled:opacity-50 flex items-center justify-center gap-2">
+                {aiBatchAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                {aiBatchAnalyzing ? 'Analyzing...' : 'Start AI Analysis'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AI Batch Results Panel ───────────────────────────────────────── */}
+      {showBatchResults && batchResults && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <div>
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Brain className="h-4 w-4 text-violet-400" /> AI Analysis Results</h3>
+                <p className="text-[10px] text-slate-500 mt-0.5">{batchResults.analyzed} of {batchResults.total} emails analyzed — Period: {batchResults.period?.replace('_', ' ')}</p>
+              </div>
+              <button onClick={() => setShowBatchResults(false)} className="text-slate-400 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1 space-y-4">
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {Object.entries(batchResults.categories || {}).sort(([, a]: any, [, b]: any) => b - a).map(([cat, count]: any) => (
+                  <div key={cat} className={`p-2.5 rounded-lg border text-center ${cat === 'action_required' ? 'border-red-400/30 bg-red-400/5' : cat === 'billing' ? 'border-emerald-400/30 bg-emerald-400/5' : 'border-white/10 bg-white/5'}`}>
+                    <p className={`text-lg font-bold ${cat === 'action_required' ? 'text-red-400' : cat === 'billing' ? 'text-emerald-400' : 'text-white'}`}>{count}</p>
+                    <p className="text-[10px] text-slate-400 capitalize">{cat.replace(/_/g, ' ')}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Attachment types summary */}
+              {Object.keys(batchResults.attachmentTypes || {}).length > 0 && (
+                <div className="p-3 rounded-lg bg-blue-400/5 border border-blue-400/20">
+                  <p className="text-xs font-semibold text-blue-300 mb-2 flex items-center gap-1"><Paperclip className="h-3 w-3" /> Attachments Categorized</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(batchResults.attachmentTypes).map(([type, count]: any) => (
+                      <span key={type} className="text-[10px] px-2 py-0.5 rounded bg-blue-400/10 text-blue-300 capitalize">{type.replace(/_/g, ' ')}: {count}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Grouped results by category */}
+              {Object.entries(batchResults.grouped || {}).sort(([a], [b]) => {
+                if (a === 'action_required') return -1;
+                if (b === 'action_required') return 1;
+                if (a === 'billing') return -1;
+                if (b === 'billing') return 1;
+                return 0;
+              }).map(([cat, emails]: any) => (
+                <div key={cat} className="space-y-1">
+                  <p className={`text-xs font-semibold capitalize flex items-center gap-1 ${cat === 'action_required' ? 'text-red-400' : cat === 'billing' ? 'text-emerald-400' : cat === 'government' ? 'text-amber-400' : 'text-slate-300'}`}>
+                    {cat.replace(/_/g, ' ')} ({emails.length})
+                  </p>
+                  {emails.map((email: any, i: number) => (
+                    <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-white truncate">{email.subject || '(no subject)'}</p>
+                            {email.urgency === 'high' && <span className="text-[9px] px-1.5 rounded bg-red-400/20 text-red-300 flex-shrink-0">urgent</span>}
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5">{email.from} · {new Date(email.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                          <p className="text-[11px] text-slate-400 mt-1">{email.summary}</p>
+                          {email.entityHint && <span className="text-[10px] text-amber-400 mt-1 inline-block">→ {email.entityHint}</span>}
+                          {email.financialAmount && <span className="text-[10px] text-emerald-400 ml-2">£{email.financialAmount.amount}</span>}
+                        </div>
+                        {email.actionRequired && email.suggestedTask && (
+                          <button onClick={() => { setTaskTitle(email.suggestedTask); setTaskDescription(email.summary || ''); setShowBatchResults(false); setShowTaskCreate(true); }} className="text-[10px] px-2 py-1 rounded bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 flex-shrink-0 whitespace-nowrap">
+                            + Task
+                          </button>
+                        )}
+                      </div>
+                      {/* Attachment categorization */}
+                      {email.attachments?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {email.attachments.map((att: any, ai: number) => (
+                            <span key={ai} className="text-[9px] px-2 py-0.5 rounded bg-blue-400/10 border border-blue-400/20 text-blue-300 flex items-center gap-1">
+                              <Paperclip className="h-2.5 w-2.5" />
+                              {att.filename}
+                              <span className="text-slate-500">({att.type})</span>
+                              {att.entityHint && <span className="text-amber-300">→ {att.entityHint}</span>}
+                              {att.shouldArchive && <span className="text-emerald-400">✓ archive</span>}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              {batchResults.analyzed === 0 && (
+                <div className="text-center py-8 text-slate-500">
+                  <Brain className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No emails found for this period to analyze.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-white/5 flex justify-end">
+              <button onClick={() => setShowBatchResults(false)} className="px-4 py-2 rounded-lg bg-white/5 text-sm text-slate-300 hover:bg-white/10">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Task Creation Dialog ──────────────────────────────────────── */}
+      {showTaskCreate && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2"><ListTodo className="h-4 w-4 text-amber-400" /> Create Task from Email</h3>
+              <button onClick={() => setShowTaskCreate(false)} className="text-slate-400 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="text-xs text-slate-400">Title</label>
+                <input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="Task title" className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-slate-600 focus:border-amber-400/30 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Description</label>
+                <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Optional description..." className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-slate-600 focus:border-amber-400/30 focus:outline-none resize-none" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Due Date</label>
+                <input type="date" value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:border-amber-400/30 focus:outline-none" />
+              </div>
+              <button onClick={aiCreateTask} disabled={taskCreating || !taskTitle} className="w-full px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-semibold text-sm hover:bg-amber-400 disabled:opacity-50 flex items-center justify-center gap-2">
+                {taskCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ListTodo className="h-4 w-4" />}
+                Create Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Signatures Dialog ──────────────────────────────────────────── */}
       {showSignatures && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -716,10 +1102,10 @@ export function EmailClient() {
                           onClick={() => {
                             const name = sigName || 'Your Name';
                             const templates: Record<string, string> = {
-                              professional: `<div style="font-family:'Segoe UI',Arial,sans-serif;border-top:3px solid #f59e0b;padding-top:12px;margin-top:16px"><p style="margin:0;font-size:15px;font-weight:700;color:#f59e0b">${name}</p><p style="margin:2px 0 8px;font-size:12px;color:#94a3b8">Finance Manager | HomeLedger</p><p style="margin:0;font-size:11px;color:#64748b">📞 +44 7000 000000 · 📧 ${name.toLowerCase().replace(/\s/g,'.')}@homeledger.co.uk</p><p style="margin:4px 0 0;font-size:11px;color:#64748b">🌐 homeledger.co.uk</p></div>`,
-                              minimal: `<div style="font-family:'Segoe UI',Arial,sans-serif;margin-top:16px"><p style="margin:0;font-size:13px;font-weight:600;color:#e2e8f0">${name}</p><p style="margin:2px 0;font-size:11px;color:#94a3b8">HomeLedger · homeledger.co.uk</p></div>`,
-                              corporate: `<div style="font-family:'Segoe UI',Arial,sans-serif;border-left:4px solid #3b82f6;padding-left:12px;margin-top:16px"><p style="margin:0;font-size:14px;font-weight:700;color:#e2e8f0">${name}</p><p style="margin:2px 0;font-size:12px;color:#60a5fa">Finance Manager</p><p style="margin:0;font-size:11px;color:#94a3b8">HomeLedger UK Ltd</p><p style="margin:4px 0 0;font-size:11px;color:#64748b">+44 7000 000000 | homeledger.co.uk</p></div>`,
-                              elegant: `<div style="font-family:Georgia,serif;margin-top:16px;text-align:center;border-top:1px solid #a855f7;padding-top:12px"><p style="margin:0;font-size:15px;font-weight:700;color:#a855f7;letter-spacing:1px">${name}</p><p style="margin:4px 0;font-size:11px;color:#94a3b8;font-style:italic">Finance Manager — HomeLedger</p><p style="margin:0;font-size:11px;color:#64748b">homeledger.co.uk · +44 7000 000000</p></div>`,
+                              professional: `<div style="font-family:'Segoe UI',Arial,sans-serif;border-top:3px solid #f59e0b;padding-top:12px;margin-top:16px"><p style="margin:0;font-size:15px;font-weight:700;color:#f59e0b">${name}</p><p style="margin:2px 0 8px;font-size:12px;color:#94a3b8">Finance Manager | Clarity & Co</p><p style="margin:0;font-size:11px;color:#64748b">📞 +44 7000 000000 · 📧 ${name.toLowerCase().replace(/\s/g,'.')}@Clarity & Co.co.uk</p><p style="margin:4px 0 0;font-size:11px;color:#64748b">🌐 Clarity & Co.co.uk</p></div>`,
+                              minimal: `<div style="font-family:'Segoe UI',Arial,sans-serif;margin-top:16px"><p style="margin:0;font-size:13px;font-weight:600;color:#e2e8f0">${name}</p><p style="margin:2px 0;font-size:11px;color:#94a3b8">Clarity & Co · Clarity & Co.co.uk</p></div>`,
+                              corporate: `<div style="font-family:'Segoe UI',Arial,sans-serif;border-left:4px solid #3b82f6;padding-left:12px;margin-top:16px"><p style="margin:0;font-size:14px;font-weight:700;color:#e2e8f0">${name}</p><p style="margin:2px 0;font-size:12px;color:#60a5fa">Finance Manager</p><p style="margin:0;font-size:11px;color:#94a3b8">Clarity & Co UK Ltd</p><p style="margin:4px 0 0;font-size:11px;color:#64748b">+44 7000 000000 | Clarity & Co.co.uk</p></div>`,
+                              elegant: `<div style="font-family:Georgia,serif;margin-top:16px;text-align:center;border-top:1px solid #a855f7;padding-top:12px"><p style="margin:0;font-size:15px;font-weight:700;color:#a855f7;letter-spacing:1px">${name}</p><p style="margin:4px 0;font-size:11px;color:#94a3b8;font-style:italic">Finance Manager — Clarity & Co</p><p style="margin:0;font-size:11px;color:#64748b">Clarity & Co.co.uk · +44 7000 000000</p></div>`,
                             };
                             setSigBody(templates[tmpl.key] || '');
                           }}

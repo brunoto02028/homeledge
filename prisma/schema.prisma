@@ -287,6 +287,7 @@ enum UserStatus {
 
 enum MembershipRole {
   owner
+  admin
   editor
   viewer
   accountant
@@ -709,6 +710,7 @@ model User {
   categorizationRules CategorizationRule[] @relation("UserCategorizationRules")
   categorizationFeedback CategorizationFeedback[] @relation("UserCategorizationFeedback")
   categorizationMode String @default("smart") @map("categorization_mode") // "conservative" | "smart" | "autonomous"
+  isTestUser        Boolean @default(false) @map("is_test_user") // Enables full session recording, heatmap, screenshot detection
   notificationPreferences Json? @map("notification_preferences") // { loginAlerts, deadlineReminders, budgetAlerts }
   mustChangePassword Boolean @default(false) @map("must_change_password")
   submissionProfiles SubmissionProfile[]
@@ -716,9 +718,21 @@ model User {
   emailAccounts     EmailAccount[]
   emailSignatures   EmailSignature[]
   analyticsEvents   AnalyticsEvent[]
+  userSessions      UserSession[]
+  screenshotAlerts  ScreenshotAlert[]
   insurancePolicies InsurancePolicy[]
   insuranceClaims   InsuranceClaim[]
   correspondence    Correspondence[]
+  insuranceQuotes   InsuranceQuote[]
+  aiMemories        AiMemory[]
+  aiConversations   AiConversation[]
+  aiChatFeedback    AiChatFeedback[]
+  onboardingProfile OnboardingProfile?
+  citizenshipAttempts CitizenshipAttempt[]
+  dbsApplications    DbsApplication[]
+  blogPosts          BlogPost[]
+  automationRules    AutomationRule[]
+  automationLogs     AutomationLog[]
 
   @@index([email])
   @@index([status])
@@ -822,6 +836,7 @@ model Invitation {
   householdId String?          @map("household_id")
   businessId  String?          @map("business_id")
   role        MembershipRole   @default(viewer)
+  permissions String[]         @default([])
   status      InvitationStatus @default(pending)
   invitedBy   String           @map("invited_by")
   token       String           @unique @default(cuid())
@@ -1997,6 +2012,7 @@ model InsurancePolicy {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   entity          Entity?   @relation(fields: [entityId], references: [id], onDelete: SetNull)
   claims          InsuranceClaim[]
+  quotes          InsuranceQuote[]
 
   @@index([userId])
   @@index([entityId])
@@ -2029,4 +2045,574 @@ model InsuranceClaim {
   @@index([userId])
   @@index([status])
   @@map("insurance_claims")
+}
+
+/// Insurance quotes — track and compare quotes from different providers
+model InsuranceQuote {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  policyId        String?   @map("policy_id") // link to existing policy (for renewal comparison)
+  type            String    // car, motorcycle, home, life, health, travel, pet, business, other
+  providerName    String    @map("provider_name")
+  premiumAmount   Float     @map("premium_amount")
+  premiumFrequency String   @default("monthly") @map("premium_frequency")
+  coverageAmount  Float?    @map("coverage_amount")
+  excessAmount    Float?    @map("excess_amount")
+  coverType       String?   @map("cover_type") // comprehensive, third_party, etc.
+  features        String?   @db.Text // JSON string of included features
+  quoteReference  String?   @map("quote_reference")
+  quoteDate       DateTime  @default(now()) @map("quote_date")
+  expiryDate      DateTime? @map("expiry_date") // when the quote expires
+  source          String    @default("manual") // manual, comparethemarket, gocompare, etc.
+  isChosen        Boolean   @default(false) @map("is_chosen") // user chose this quote
+  notes           String?
+  // AI analysis
+  aiScore         Int?      @map("ai_score") // 1-100 value-for-money score
+  aiAnalysis      String?   @map("ai_analysis") @db.Text // AI recommendation text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  policy          InsurancePolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([policyId])
+  @@map("insurance_quotes")
+}
+
+/// AI persistent memory — stores learned preferences, facts, and patterns per user
+model AiMemory {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  section     String    @default("general") // which module this memory relates to
+  type        String    @default("preference") // preference, fact, instruction, pattern
+  content     String    @db.Text // the actual memory content
+  importance  Int       @default(5) // 1-10, higher = more important, affects retrieval priority
+  source      String    @default("auto") // auto (AI-extracted) or manual (user-stated)
+  isActive    Boolean   @default(true) @map("is_active")
+  usageCount  Int       @default(0) @map("usage_count") // how many times this memory was used
+  lastUsedAt  DateTime? @map("last_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([section])
+  @@index([type])
+  @@index([isActive])
+  @@map("ai_memories")
+}
+
+/// AI conversation history — persists chat sessions for cross-session context
+model AiConversation {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  section     String    @default("general")
+  title       String?   // auto-generated summary of conversation
+  messages    Json      @default("[]") // array of { role, content, timestamp }
+  tokenCount  Int       @default(0) @map("token_count")
+  isActive    Boolean   @default(true) @map("is_active") // false = archived
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback    AiChatFeedback[]
+
+  @@index([userId])
+  @@index([section])
+  @@index([isActive])
+  @@map("ai_conversations")
+}
+
+/// AI chat feedback — thumbs up/down per message for response quality learning
+model AiChatFeedback {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  conversationId  String?   @map("conversation_id")
+  section         String    @default("general")
+  userMessage     String    @map("user_message") @db.Text
+  aiResponse      String    @map("ai_response") @db.Text
+  rating          Int       // 1 = thumbs down, 2 = thumbs up
+  feedbackNote    String?   @map("feedback_note") // optional text feedback
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation    AiConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([section])
+  @@index([rating])
+  @@map("ai_chat_feedback")
+}
+
+// ==================== USER SESSION RECORDING & MONITORING ====================
+
+model UserSession {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  sessionToken    String    @unique @map("session_token")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  duration        Int?      // total seconds
+  // Device info
+  userAgent       String?   @map("user_agent")
+  viewport        String?   // "1920x1080"
+  device          String?   // desktop, mobile, tablet
+  browser         String?
+  os              String?
+  ip              String?
+  // Session data
+  pagesVisited    Int       @default(0) @map("pages_visited")
+  clickCount      Int       @default(0) @map("click_count")
+  scrollEvents    Int       @default(0) @map("scroll_events")
+  // rrweb recording (compressed JSON chunks)
+  recordingData   Json?     @map("recording_data") // rrweb events array
+  recordingSize   Int       @default(0) @map("recording_size") // bytes
+  hasRecording    Boolean   @default(false) @map("has_recording")
+  // Status
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startedAt])
+  @@index([isActive])
+  @@map("user_sessions")
+}
+
+model ScreenshotAlert {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  sessionId       String?   @map("session_id")
+  alertType       String    @map("alert_type") // screenshot, screen_recording, devtools, print
+  method          String?   // keyboard_shortcut, context_menu, api_call, visibility_change
+  page            String    // which page the user was on
+  keyCombo        String?   @map("key_combo") // e.g. "PrintScreen", "Ctrl+Shift+S"
+  viewport        String?
+  userAgent       String?   @map("user_agent")
+  ip              String?
+  metadata        Json?     // extra context
+  createdAt       DateTime  @default(now()) @map("created_at")
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([alertType])
+  @@index([createdAt])
+  @@map("screenshot_alerts")
+}
+
+/// Onboarding wizard profile — stores user's setup choices for personalised experience
+model OnboardingProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  entityType        String   @map("entity_type")       // "sole_trader" | "limited_company" | "cic_charity" | "individual"
+  businessName      String?  @map("business_name")
+  selectedFeatures  String[] @map("selected_features") // ["receipts","statements","reports","tax","budget","banking","compliance","team"]
+  experienceLevel   String   @default("beginner") @map("experience_level") // "beginner" | "intermediate" | "advanced"
+  completedAt       DateTime @default(now()) @map("completed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_profiles")
+}
+
+/// Life in the UK citizenship test attempts — tracks quiz scores and progress
+model CitizenshipAttempt {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  mode        String   // "mock" | "theme"
+  themeId     String?  @map("theme_id") // null for mock tests, themeId for study mode
+  score       Int
+  total       Int
+  percentage  Int
+  passed      Boolean
+  answers     Json     // Array of { questionId, userAnswer, correct }
+  duration    Int?     // seconds taken
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("citizenship_attempts")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DBS CHECK APPLICATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model DbsApplication {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+
+  // Application type
+  checkType       String   @map("check_type") // basic, standard, enhanced, enhanced_barred
+  workforce       String?  // child, adult, other (for enhanced checks)
+
+  // Applicant personal details
+  title           String?
+  firstName       String   @map("first_name")
+  middleNames     String?  @map("middle_names")
+  lastName        String   @map("last_name")
+  previousNames   Json?    @map("previous_names") // Array of { name, usedFrom, usedTo }
+  dateOfBirth     DateTime @map("date_of_birth")
+  placeOfBirth    String?  @map("place_of_birth")
+  gender          String?
+  nationality     String?
+  countryOfBirth  String?  @map("country_of_birth")
+  email           String
+  phone           String?
+  niNumber        String?  @map("ni_number") // National Insurance number
+
+  // Current address
+  addressLine1    String   @map("address_line_1")
+  addressLine2    String?  @map("address_line_2")
+  city            String
+  county          String?
+  postcode        String
+  country         String   @default("United Kingdom")
+  addressFrom     DateTime? @map("address_from") // When they moved to this address
+
+  // Previous addresses (5 years history required)
+  previousAddresses Json?  @map("previous_addresses") // Array of { line1, line2, city, county, postcode, country, from, to }
+
+  // Employment / role details
+  organisationName String? @map("organisation_name")
+  roleTitle        String? @map("role_title")
+  roleStartDate    DateTime? @map("role_start_date")
+
+  // Status tracking
+  status          String   @default("draft") // draft, submitted, processing, awaiting_id, completed, rejected, cancelled
+  certificateNumber String? @map("certificate_number")
+  issueDate       DateTime? @map("issue_date")
+  expiryDate      DateTime? @map("expiry_date") // For update service subscription
+
+  // Provider integration
+  providerRef     String?  @map("provider_ref") // uCheck reference ID
+  providerStatus  String?  @map("provider_status") // Status from provider API
+  providerData    Json?    @map("provider_data") // Raw response from provider
+
+  // Pricing
+  cost            Float?   // Cost charged to us
+  chargedAmount   Float?   @map("charged_amount") // Amount charged to user (with markup)
+  paid            Boolean  @default(false)
+
+  // Timestamps
+  submittedAt     DateTime? @map("submitted_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Notes
+  notes           String?
+  adminNotes      String?  @map("admin_notes")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("dbs_applications")
+}
+
+// ─── MARKETING HUB ───────────────────────────────────────────────────────────
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  name        String
+  namePt      String?    @map("name_pt")
+  slug        String     @unique
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  posts       BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  namePt    String?        @map("name_pt")
+  slug      String         @unique
+  posts     BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id               String        @id @default(cuid())
+  titleEn          String        @map("title_en")
+  titlePt          String?       @map("title_pt")
+  slug             String        @unique
+  excerptEn        String?       @map("excerpt_en")
+  excerptPt        String?       @map("excerpt_pt")
+  contentEn        String        @map("content_en") @db.Text
+  contentPt        String?       @map("content_pt") @db.Text
+  coverImage       String?       @map("cover_image")
+  metaTitleEn      String?       @map("meta_title_en")
+  metaTitlePt      String?       @map("meta_title_pt")
+  metaDescEn       String?       @map("meta_desc_en")
+  metaDescPt       String?       @map("meta_desc_pt")
+  keywords         String[]      @default([])
+  status           String        @default("draft") // draft, published, scheduled
+  publishedAt      DateTime?     @map("published_at")
+  scheduledAt      DateTime?     @map("scheduled_at")
+  readingMins      Int           @default(5) @map("reading_mins")
+  viewCount        Int           @default(0) @map("view_count")
+  categoryId       String?       @map("category_id")
+  authorId         String        @map("author_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  category         BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author           User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags             BlogPostTag[]
+  creatives        MarketingCreative[]
+  socialPosts      SocialPost[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@map("blog_posts")
+}
+
+model BlogPostTag {
+  postId  String   @map("post_id")
+  tagId   String   @map("tag_id")
+  post    BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag     BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("blog_post_tags")
+}
+
+model Lead {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  fullName      String?      @map("full_name")
+  phone         String?
+  businessType  String?      @map("business_type")
+  source        String?      // blog, popup, footer, landing_page, referral
+  sourceSlug    String?      @map("source_slug") // which page/popup
+  score         Int          @default(0)
+  tag           String       @default("cold") // hot, warm, cold
+  subscribed    Boolean      @default(true)
+  unsubToken    String       @unique @default(cuid()) @map("unsub_token")
+  convertedAt   DateTime?    @map("converted_at") // when became a paid user
+  userId        String?      @map("user_id") // linked if they register
+  notes         String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  actions       LeadAction[]
+
+  @@index([email])
+  @@index([tag])
+  @@index([score])
+  @@map("leads")
+}
+
+model LeadAction {
+  id         String   @id @default(cuid())
+  leadId     String   @map("lead_id")
+  action     String   // page_view, download, form_submit, email_open, email_click, login
+  points     Int      @default(0)
+  meta       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_actions")
+}
+
+model EmailTemplate {
+  id          String          @id @default(cuid())
+  name        String
+  subject     String
+  subjectPt   String?         @map("subject_pt")
+  bodyHtml    String          @map("body_html") @db.Text
+  bodyHtmlPt  String?         @map("body_html_pt") @db.Text
+  type        String          @default("custom") // welcome, trial, nurture, custom, campaign
+  isActive    Boolean         @default(true) @map("is_active")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  campaigns   EmailCampaign[]
+
+  @@map("email_templates")
+}
+
+model EmailCampaign {
+  id              String        @id @default(cuid())
+  name            String
+  subject         String
+  templateId      String?       @map("template_id")
+  bodyHtml        String?       @map("body_html") @db.Text
+  segment         String        @default("all") // all, hot, warm, cold, paid, trial
+  status          String        @default("draft") // draft, scheduled, sending, sent, failed
+  scheduledAt     DateTime?     @map("scheduled_at")
+  sentAt          DateTime?     @map("sent_at")
+  totalSent       Int           @default(0) @map("total_sent")
+  totalOpened     Int           @default(0) @map("total_opened")
+  totalClicked    Int           @default(0) @map("total_clicked")
+  createdBy       String        @map("created_by")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  template        EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("email_campaigns")
+}
+
+model MarketingResource {
+  id            String   @id @default(cuid())
+  title         String
+  titlePt       String?  @map("title_pt")
+  description   String?
+  descriptionPt String?  @map("description_pt")
+  type          String   // ebook, checklist, calculator, template, guide
+  slug          String   @unique
+  fileUrl       String?  @map("file_url")
+  coverImage    String?  @map("cover_image")
+  downloadCount Int      @default(0) @map("download_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  requiresEmail Boolean  @default(true) @map("requires_email")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("marketing_resources")
+}
+
+model PopupConfig {
+  id              String   @id @default(cuid())
+  name            String
+  type            String   // exit_intent, scroll, time
+  triggerValue    Int      @default(30) @map("trigger_value") // seconds or scroll %
+  titleEn         String   @map("title_en")
+  titlePt         String?  @map("title_pt")
+  bodyEn          String   @map("body_en")
+  bodyPt          String?  @map("body_pt")
+  ctaEn           String   @map("cta_en")
+  ctaPt           String?  @map("cta_pt")
+  resourceId      String?  @map("resource_id")
+  isActive        Boolean  @default(false) @map("is_active")
+  showOnPaths     String[] @default([]) @map("show_on_paths") // empty = all pages
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("popup_configs")
+}
+
+model MarketingCreative {
+  id           String    @id @default(cuid())
+  title        String
+  type         String    // feed_1x1, story_9x16, carousel, banner
+  imageUrl     String?   @map("image_url")
+  captionEn    String?   @map("caption_en") @db.Text
+  captionPt    String?   @map("caption_pt") @db.Text
+  hashtags     String[]  @default([])
+  prompt       String?   @db.Text // DALL-E prompt used
+  blogPostId   String?   @map("blog_post_id")
+  status       String    @default("draft") // draft, ready, published
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  blogPost     BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: SetNull)
+  socialPosts  SocialPost[]
+
+  @@map("marketing_creatives")
+}
+
+model SocialAccount {
+  id              String       @id @default(cuid())
+  platform        String       // instagram, facebook
+  accountId       String       @map("account_id") // Instagram Business Account ID
+  accountName     String       @map("account_name")
+  pageId          String?      @map("page_id") // Facebook Page ID
+  accessToken     String       @map("access_token") @db.Text
+  tokenExpiresAt  DateTime?    @map("token_expires_at")
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  posts           SocialPost[]
+
+  @@map("social_accounts")
+}
+
+model SocialPost {
+  id              String             @id @default(cuid())
+  socialAccountId String             @map("social_account_id")
+  creativeId      String?            @map("creative_id")
+  blogPostId      String?            @map("blog_post_id")
+  platform        String             // instagram, facebook
+  postType        String             @map("post_type") // feed, story, carousel, reel
+  caption         String?            @db.Text
+  hashtags        String[]           @default([])
+  mediaUrls       String[]           @default([]) @map("media_urls")
+  externalId      String?            @map("external_id") // Meta post ID after publishing
+  status          String             @default("draft") // draft, scheduled, published, failed
+  scheduledAt     DateTime?          @map("scheduled_at")
+  publishedAt     DateTime?          @map("published_at")
+  errorMessage    String?            @map("error_message")
+  reach           Int?
+  impressions     Int?
+  engagement      Int?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  socialAccount   SocialAccount      @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  creative        MarketingCreative? @relation(fields: [creativeId], references: [id], onDelete: SetNull)
+  blogPost        BlogPost?          @relation(fields: [blogPostId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([socialAccountId])
+  @@map("social_posts")
+}
+
+// ─── Automation Hub ──────────────────────────────────────────────────────────
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  trigger     String   // bill_due, invoice_overdue, budget_exceeded, statement_imported, schedule_daily, schedule_weekly, schedule_monthly
+  triggerConfig Json?  @map("trigger_config") // e.g. { days: 3 } for bill_due 3 days before
+  action      String   // send_email, create_action, flag_transaction, webhook, send_reminder
+  actionConfig Json?   @map("action_config") // e.g. { to: "...", subject: "...", body: "..." }
+  isActive    Boolean  @default(true) @map("is_active")
+  lastRunAt   DateTime? @map("last_run_at")
+  nextRunAt   DateTime? @map("next_run_at")
+  runCount    Int      @default(0) @map("run_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs        AutomationLog[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([trigger])
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id         String   @id @default(cuid())
+  ruleId     String   @map("rule_id")
+  userId     String   @map("user_id")
+  status     String   // success, failed, skipped
+  message    String?
+  detail     Json?
+  runAt      DateTime @default(now()) @map("run_at")
+  rule       AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([userId])
+  @@index([runAt])
+  @@map("automation_logs")
 }

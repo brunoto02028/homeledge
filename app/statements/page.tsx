@@ -1,7 +1,7 @@
 import StatementsClient from './statements-client';
 
 export const metadata = {
-  title: 'Bank Statements | HomeLedger',
+  title: 'Bank Statements | Clarity & Co',
   description: 'Manage and categorize your bank statement transactions for HMRC reporting',
 };
 

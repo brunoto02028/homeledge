@@ -20,8 +20,8 @@ async function main() {
       .withPrimaryColour('#1e40af')
       .withLocale('en')
       .withPresetIssuingCountry('GBR')
-      .withSuccessUrl('https://homeledger.co.uk/verify-identity?status=success')
-      .withErrorUrl('https://homeledger.co.uk/verify-identity?status=error')
+      .withSuccessUrl('https://clarityco.co.uk/verify-identity?status=success')
+      .withErrorUrl('https://clarityco.co.uk/verify-identity?status=error')
       .build();
 
     const sessionSpec = new SessionSpecificationBuilder()

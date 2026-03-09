@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendDeadlineReminderEmail, sendBudgetAlertEmail, getNotificationPrefs } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Cron secret to prevent unauthorized access
 const CRON_SECRET = process.env.CRON_SECRET || 'homeledger-cron-2024';
 

@@ -3,7 +3,7 @@ import { InsuranceClient } from './insurance-client';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 export const metadata = {
-  title: 'Insurance | HomeLedger',
+  title: 'Insurance | Clarity & Co',
   description: 'Manage your insurance policies — life, car, motorcycle, home, health, and travel',
 };
 

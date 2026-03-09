@@ -94,7 +94,7 @@ export default function PublicVerifyPage() {
             <Shield className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-bold">Identity Verification</h1>
-          <p className="text-sm text-muted-foreground mt-1">Powered by HomeLedger &amp; Yoti</p>
+          <p className="text-sm text-muted-foreground mt-1">Powered by Clarity & Co &amp; Yoti</p>
         </div>
 
         {/* Loading */}
@@ -239,7 +239,7 @@ export default function PublicVerifyPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          &copy; {new Date().getFullYear()} HomeLedger &middot; Powered by Yoti
+          &copy; {new Date().getFullYear()} Clarity & Co &middot; Powered by Yoti
         </p>
       </div>
     </div>

@@ -14,6 +14,15 @@ export async function GET() {
     const entities = await prisma.entity.findMany({
       where: { userId: { in: userIds } },
       include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            dateOfBirth: true,
+          },
+        },
         _count: {
           select: {
             bankStatements: true,

@@ -11,12 +11,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const { id } = params;
     const { memberId, role } = await req.json();
 
-    // Only owner can change roles
-    const household = await prisma.household.findFirst({
-      where: { id, ownerId: userId },
-    });
+    // Owner or admin can change roles
+    const household = await prisma.household.findUnique({ where: { id } });
+    const isOwner = household?.ownerId === userId;
+    const isAdmin = !isOwner && !!(await prisma.membership.findFirst({
+      where: { userId, householdId: id, role: { in: ['admin'] as any } },
+    }));
 
-    if (!household) {
+    if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
@@ -52,12 +54,14 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const { id } = params;
     const { memberId } = await req.json();
 
-    // Owner can remove anyone, members can remove themselves
-    const household = await prisma.household.findFirst({
-      where: { id, ownerId: userId },
-    });
+    // Owner/admin can remove anyone, members can remove themselves
+    const household = await prisma.household.findUnique({ where: { id } });
+    const isOwnerDel = household?.ownerId === userId;
+    const isAdminDel = !isOwnerDel && !!(await prisma.membership.findFirst({
+      where: { userId, householdId: id, role: { in: ['admin'] as any } },
+    }));
 
-    if (!household && memberId !== userId) {
+    if (!isOwnerDel && !isAdminDel && memberId !== userId) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 

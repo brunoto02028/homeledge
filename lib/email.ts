@@ -12,8 +12,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const FROM = process.env.SMTP_FROM || 'HomeLedger <noreply@homeledger.co.uk>';
-const BASE_URL = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+const FROM = process.env.SMTP_FROM || 'Clarity & Co <no-reply@clarityco.co.uk>';
+const BASE_URL = process.env.NEXTAUTH_URL || 'https://clarityco.co.uk';
 
 function baseTemplate(content: string, preheader: string = '') {
   return `
@@ -22,7 +22,7 @@ function baseTemplate(content: string, preheader: string = '') {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HomeLedger</title>
+  <title>Clarity &amp; Co</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>` : ''}
@@ -36,10 +36,10 @@ function baseTemplate(content: string, preheader: string = '') {
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="vertical-align:middle;">
-                    <img src="${BASE_URL}/site-logo.png" alt="HomeLedger" width="36" height="36" style="display:block;border-radius:8px;width:36px;height:36px;" />
+                    <img src="${BASE_URL}/site-logo.png" alt="Clarity &amp; Co" width="36" height="36" style="display:block;border-radius:8px;width:36px;height:36px;" />
                   </td>
                   <td style="padding-left:12px;">
-                    <span style="color:#ffffff;font-size:20px;font-weight:bold;">HomeLedger</span>
+                    <span style="color:#ffffff;font-size:20px;font-weight:bold;">Clarity &amp; Co</span>
                   </td>
                 </tr>
               </table>
@@ -55,7 +55,7 @@ function baseTemplate(content: string, preheader: string = '') {
           <tr>
             <td style="padding:24px 32px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
               <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
-                HomeLedger — Your finances, simplified<br>
+                Clarity &amp; Co — Your finances, simplified<br>
                 <a href="${BASE_URL}" style="color:#64748b;text-decoration:none;">${BASE_URL.replace('https://', '')}</a>
               </p>
             </td>
@@ -83,9 +83,9 @@ function buttonHtml(text: string, url: string, color: string = '#1e293b') {
 
 export async function sendWelcomeEmail(email: string, name: string) {
   const html = baseTemplate(`
-    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to HomeLedger, ${name}! 🎉</h1>
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to Clarity & Co, ${name}! 🎉</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      Your account has been created successfully. HomeLedger helps you manage your finances,
+      Your account has been created successfully. Clarity & Co helps you manage your finances,
       track expenses, generate HMRC reports, and much more.
     </p>
     <p style="margin:0 0 8px;font-size:15px;color:#475569;line-height:1.6;">Here's what you can do:</p>
@@ -100,9 +100,9 @@ export async function sendWelcomeEmail(email: string, name: string) {
     <p style="margin:0;font-size:13px;color:#94a3b8;">
       If you didn't create this account, you can safely ignore this email.
     </p>
-  `, `Welcome to HomeLedger, ${name}!`);
+  `, `Welcome to Clarity & Co, ${name}!`);
 
-  return sendEmail(email, `Welcome to HomeLedger, ${name}! 🎉`, html);
+  return sendEmail(email, `Welcome to Clarity & Co, ${name}! 🎉`, html);
 }
 
 export async function sendVerificationCodeEmail(email: string, name: string, code: string) {
@@ -122,27 +122,44 @@ export async function sendVerificationCodeEmail(email: string, name: string, cod
     <p style="margin:0;font-size:13px;color:#94a3b8;">
       If you didn't request this code, someone may be trying to access your account. You can safely ignore this email.
     </p>
-  `, `Your HomeLedger login code: ${code}`);
+  `, `Your Clarity & Co login code: ${code}`);
 
-  return sendEmail(email, `Your HomeLedger Login Code: ${code}`, html);
+  return sendEmail(email, `Your Clarity & Co Login Code: ${code}`, html);
 }
 
-export async function sendInvitationEmail(email: string, inviterName: string, householdName: string, token: string) {
+export async function sendInvitationEmail(email: string, inviterName: string, householdName: string, token: string, role?: string) {
   const acceptUrl = `${BASE_URL}/invite/${token}`;
+  const roleLabels: Record<string, string> = {
+    admin: 'Admin (Full Access)',
+    editor: 'Editor',
+    viewer: 'Viewer',
+    accountant: 'Accountant',
+  };
+  const roleLabel = roleLabels[role || 'viewer'] || role || 'Viewer';
+  const roleHtml = role ? `
+    <div style="margin:0 0 16px;padding:12px 16px;background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+      <p style="margin:0;font-size:13px;color:#64748b;">Your role:</p>
+      <p style="margin:4px 0 0;font-size:15px;font-weight:600;color:#1e293b;">${roleLabel}</p>
+    </div>
+  ` : '';
   const html = baseTemplate(`
     <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">You've Been Invited!</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      <strong>${inviterName}</strong> has invited you to join <strong>${householdName}</strong> on HomeLedger.
+      <strong>${inviterName}</strong> has invited you to join <strong>${householdName}</strong> on Clarity & Co.
     </p>
+    ${roleHtml}
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      HomeLedger is a finance management platform that helps families and teams
+      Clarity & Co is a finance management platform that helps families and teams
       track expenses, manage bills, and stay on top of their finances together.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;">
+      No subscription needed — simply create your account (or log in) and accept the invitation to get started.
     </p>
     ${buttonHtml('Accept Invitation', acceptUrl, '#f59e0b')}
     <p style="margin:0;font-size:13px;color:#94a3b8;">
       This invitation expires in 7 days. If you don't recognise this invitation, you can safely ignore it.
     </p>
-  `, `${inviterName} invited you to ${householdName} on HomeLedger`);
+  `, `${inviterName} invited you to ${householdName} on Clarity & Co`);
 
   return sendEmail(email, `${inviterName} invited you to ${householdName}`, html);
 }
@@ -151,31 +168,31 @@ export async function sendOnboardingReminderEmail(email: string, name: string, p
   const html = baseTemplate(`
     <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Complete Your Setup, ${name}</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      You're <strong>${percentComplete}%</strong> through setting up your HomeLedger account.
+      You're <strong>${percentComplete}%</strong> through setting up your Clarity & Co account.
       Finish the setup to unlock all features.
     </p>
     <div style="background-color:#f1f5f9;border-radius:8px;height:8px;margin:16px 0;">
       <div style="background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:8px;height:8px;width:${percentComplete}%;"></div>
     </div>
     ${buttonHtml('Continue Setup', `${BASE_URL}/onboarding`)}
-  `, `You're ${percentComplete}% done setting up HomeLedger`);
+  `, `You're ${percentComplete}% done setting up Clarity & Co`);
 
-  return sendEmail(email, `Complete your HomeLedger setup (${percentComplete}% done)`, html);
+  return sendEmail(email, `Complete your Clarity & Co setup (${percentComplete}% done)`, html);
 }
 
 export async function sendPasswordChangedEmail(email: string, name: string) {
   const html = baseTemplate(`
     <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Password Changed</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      Hi ${name}, your HomeLedger password was successfully changed.
+      Hi ${name}, your Clarity & Co password was successfully changed.
     </p>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
       If you didn't make this change, please reset your password immediately or contact support.
     </p>
     ${buttonHtml('Reset Password', `${BASE_URL}/forgot-password`, '#dc2626')}
-  `, 'Your HomeLedger password was changed');
+  `, 'Your Clarity & Co password was changed');
 
-  return sendEmail(email, 'Your HomeLedger password was changed', html);
+  return sendEmail(email, 'Your Clarity & Co password was changed', html);
 }
 
 export async function sendDeadlineReminderEmail(
@@ -210,7 +227,7 @@ export async function sendDeadlineReminderEmail(
     ${unsubscribeFooter()}
   `, `${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need your attention`);
 
-  return sendEmail(email, `HomeLedger: ${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need attention`, html);
+  return sendEmail(email, `Clarity & Co: ${deadlines.length} deadline${deadlines.length > 1 ? 's' : ''} need attention`, html);
 }
 
 export async function sendBudgetAlertEmail(
@@ -245,7 +262,7 @@ export async function sendBudgetAlertEmail(
     ${unsubscribeFooter()}
   `, `${alerts.length} budget alert${alerts.length > 1 ? 's' : ''}`);
 
-  return sendEmail(email, `HomeLedger: Budget Alert — ${alerts.length} budget${alerts.length > 1 ? 's' : ''} at limit`, html);
+  return sendEmail(email, `Clarity & Co: Budget Alert — ${alerts.length} budget${alerts.length > 1 ? 's' : ''} at limit`, html);
 }
 
 export async function sendSignupVerificationEmail(email: string, name: string, code: string) {
@@ -265,9 +282,9 @@ export async function sendSignupVerificationEmail(email: string, name: string, c
     <p style="margin:0;font-size:13px;color:#94a3b8;">
       If you didn't create this account, you can safely ignore this email.
     </p>
-  `, `Your HomeLedger verification code: ${code}`);
+  `, `Your Clarity & Co verification code: ${code}`);
 
-  return sendEmail(email, `Your HomeLedger verification code: ${code}`, html);
+  return sendEmail(email, `Your Clarity & Co verification code: ${code}`, html);
 }
 
 export async function sendPasswordResetEmail(email: string, name: string, code: string) {
@@ -287,9 +304,9 @@ export async function sendPasswordResetEmail(email: string, name: string, code: 
     <p style="margin:0;font-size:13px;color:#94a3b8;">
       If you didn't request this, please ignore this email. Your password will remain unchanged.
     </p>
-  `, `Your HomeLedger password reset code: ${code}`);
+  `, `Your Clarity & Co password reset code: ${code}`);
 
-  return sendEmail(email, `Your HomeLedger password reset code: ${code}`, html);
+  return sendEmail(email, `Your Clarity & Co password reset code: ${code}`, html);
 }
 
 export async function sendLoginAlertEmail(
@@ -308,7 +325,7 @@ export async function sendLoginAlertEmail(
   const html = baseTemplate(`
     <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">New Login Detected</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      Hi ${name}, a new sign-in was detected on your HomeLedger account.
+      Hi ${name}, a new sign-in was detected on your Clarity & Co account.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
       <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Email</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${email}</td></tr>
@@ -321,9 +338,9 @@ export async function sendLoginAlertEmail(
       <strong>Wasn't you?</strong> Change your password immediately and contact support.
     </p>
     ${unsubscribeFooter()}
-  `, 'New login detected on your HomeLedger account');
+  `, 'New login detected on your Clarity & Co account');
 
-  return sendEmail(email, 'New login detected on your HomeLedger account', html);
+  return sendEmail(email, 'New login detected on your Clarity & Co account', html);
 }
 
 export async function sendAdminCreatedAccountEmail(email: string, name: string, role: string, tempPassword?: string) {
@@ -332,9 +349,9 @@ export async function sendAdminCreatedAccountEmail(email: string, name: string, 
     : '';
 
   const html = baseTemplate(`
-    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to HomeLedger!</h1>
+    <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;">Welcome to Clarity & Co!</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
-      Hi ${name}, an administrator has created a HomeLedger account for you.
+      Hi ${name}, an administrator has created a Clarity & Co account for you.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background-color:#f8fafc;border-radius:8px;">
       <tr><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Email</td><td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${email}</td></tr>
@@ -344,10 +361,10 @@ export async function sendAdminCreatedAccountEmail(email: string, name: string, 
     <p style="margin:16px 0;padding:12px 16px;background-color:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">
       <strong>Important:</strong> You will be asked to change your password on first login. Do not share your credentials with anyone.
     </p>
-    ${buttonHtml('Sign In to HomeLedger', `${BASE_URL}/login`)}
-  `, `Your HomeLedger account has been created`);
+    ${buttonHtml('Sign In to Clarity & Co', `${BASE_URL}/login`)}
+  `, `Your Clarity & Co account has been created`);
 
-  return sendEmail(email, `Welcome to HomeLedger, ${name}!`, html);
+  return sendEmail(email, `Welcome to Clarity & Co, ${name}!`, html);
 }
 
 function parseUserAgent(userAgent: string): { browser: string; device: string } {
@@ -396,7 +413,7 @@ export async function sendVerificationLinksEmail(
     </p>
   `);
 
-  return sendEmail(email, `Your HomeLedger Verification Links (${links.length})`, html);
+  return sendEmail(email, `Your Clarity & Co Verification Links (${links.length})`, html);
 }
 
 // ─── Government Filing Emails ────────────────────────────────────────────
@@ -501,7 +518,7 @@ async function sendViaSMTP(to: string, subject: string, html: string) {
   return { success: true, messageId: info.messageId };
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string) {
   const useResend = !!process.env.RESEND_API_KEY;
   const useSMTP = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
 

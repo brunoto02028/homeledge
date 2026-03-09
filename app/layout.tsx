@@ -6,6 +6,8 @@ import { AppShell } from "@/components/header"
 import { CookieBanner } from "@/components/cookie-banner"
 import { SiteTracker } from "@/components/site-tracker"
 import { AnalyticsTracker } from "@/components/analytics-tracker"
+import UserTracker from "@/components/user-tracker"
+import InvisibleWatermark from "@/components/invisible-watermark"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
 
@@ -20,16 +22,19 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://homeledger.co.uk"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://clarityco.co.uk"),
   title: {
-    default: "HomeLedger — Simplify Your UK Finances",
-    template: "%s — HomeLedger",
+    default: "Clarity & Co — Simplify Your UK Finances",
+    template: "%s — Clarity & Co",
   },
   description: "Manage bank statements, invoices, HMRC tax reports, bills, and more. Free UK personal and business finance platform with AI-powered tools.",
-  keywords: ["UK finance", "personal finance", "HMRC tax", "self assessment", "invoice management", "bank statements", "bill tracker", "financial projections", "HomeLedger"],
-  authors: [{ name: "HomeLedger" }],
+  keywords: ["UK finance", "personal finance", "HMRC tax", "self assessment", "invoice management", "bank statements", "bill tracker", "financial projections", "Clarity & Co"],
+  authors: [{ name: "Clarity & Co" }],
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     shortcut: "/icon-192.png",
     apple: "/apple-touch-icon.png",
   },
@@ -37,21 +42,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_GB",
-    url: "https://homeledger.co.uk",
-    siteName: "HomeLedger",
-    title: "HomeLedger — Simplify Your UK Finances",
+    url: "https://clarityco.co.uk",
+    siteName: "Clarity & Co",
+    title: "Clarity & Co — Simplify Your UK Finances",
     description: "The all-in-one UK finance platform for individuals and small businesses. Bank statements, invoices, tax reports, secure vault, and AI tools.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "HomeLedger" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Clarity & Co" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HomeLedger — Simplify Your UK Finances",
+    title: "Clarity & Co — Simplify Your UK Finances",
     description: "The all-in-one UK finance platform for individuals and small businesses.",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "HomeLedger",
+    title: "Clarity & Co",
   },
 }
 
@@ -71,8 +76,8 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "HomeLedger",
-              "url": "https://homeledger.co.uk",
+              "name": "Clarity & Co",
+              "url": "https://clarityco.co.uk",
               "applicationCategory": "FinanceApplication",
               "operatingSystem": "Web",
               "description": "All-in-one UK finance platform for individuals and small businesses. AI-powered bank statement processing, HMRC tax reports, invoice management, secure vault, identity verification, and real-time global intelligence.",
@@ -85,10 +90,10 @@ export default function RootLayout({
               },
               "provider": {
                 "@type": "Organization",
-                "name": "HomeLedger",
-                "url": "https://homeledger.co.uk",
-                "logo": "https://homeledger.co.uk/icon-512.png",
-                "contactPoint": { "@type": "ContactPoint", "email": "admin@homeledger.co.uk", "contactType": "customer service" }
+                "name": "Clarity & Co",
+                "url": "https://clarityco.co.uk",
+                "logo": "https://clarityco.co.uk/icon-512.png",
+                "contactPoint": { "@type": "ContactPoint", "email": "admin@clarityco.co.uk", "contactType": "customer service" }
               },
               "featureList": ["Bank Statement Processing", "HMRC Tax Reports", "Invoice Management", "AI Categorisation", "Secure Vault", "Identity Verification", "Open Banking", "Global Intelligence Dashboard"]
             })
@@ -96,13 +101,20 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+          Skip to main content
+        </a>
         <Providers>
           <AppShell>
-            {children}
+            <main id="main-content" role="main" tabIndex={-1}>
+              {children}
+            </main>
           </AppShell>
           <CookieBanner />
           <SiteTracker />
           <AnalyticsTracker />
+          <UserTracker />
+          <InvisibleWatermark />
         </Providers>
       </body>
     </html>

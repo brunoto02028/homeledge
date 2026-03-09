@@ -1,10 +1,10 @@
 ---
-description: Zero-downtime deploy HomeLedger to VPS
+description: Zero-downtime deploy Clarity & Co to VPS
 ---
 
 # Zero-Downtime Deploy to VPS
 
-Deploy all local changes to the production VPS (homeledger.co.uk) with zero downtime.
+Deploy all local changes to the production VPS (clarityco.co.uk) with zero downtime.
 
 ## Steps
 
@@ -31,7 +31,14 @@ scp "<local-file>" root@5.182.18.148:/opt/homeledger/<filename>
 ```
 ssh root@5.182.18.148 "bash /opt/homeledger/deploy.sh"
 ```
-This will: install deps → prisma generate + db push → build (while old app serves traffic) → pm2 reload (graceful, no downtime)
+This will:
+- install deps → prisma generate + db push
+- build while OLD process keeps serving ALL traffic (no downtime during build)
+- fix prerender-manifest automatically (prevents 502 on prerender errors)
+- pm2 reload graceful: starts NEW process first → waits for it to listen → kills old
+- if process was lost (crash), starts fresh automatically
+- if HTTP check fails after reload → auto-rollback to previous .next
+- pm2 save to persist across reboots
 
 // turbo
 6. Verify the site is live:

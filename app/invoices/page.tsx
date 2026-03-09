@@ -3,7 +3,7 @@ import InvoicesClient from './invoices-client';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 export const metadata = {
-  title: 'Invoices | HomeLedger',
+  title: 'Invoices | Clarity & Co',
   description: 'Upload and manage your household invoices',
 };
 

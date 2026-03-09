@@ -13,7 +13,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[HomeLedger Error]', error);
+    console.error('[Clarity & Co Error]', error);
   }, [error]);
 
   return (

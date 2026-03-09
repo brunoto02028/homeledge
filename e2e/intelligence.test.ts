@@ -1,14 +1,14 @@
 /**
- * HomeLedger E2E Tests - Intelligence Dashboard
+ * Clarity & Co E2E Tests - Intelligence Dashboard
  * Tests: Page load, APIs, Map, Layers, Filters, Bottom Tabs, Naval, Economic Calendar
  * 
  * Run: npx tsx e2e/intelligence.test.ts
- * Requires: PUPPETEER_BASE_URL env var (defaults to https://homeledger.co.uk)
+ * Requires: PUPPETEER_BASE_URL env var (defaults to https://Clarity & Co.co.uk)
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
 
-const BASE_URL = process.env.PUPPETEER_BASE_URL || 'https://homeledger.co.uk';
+const BASE_URL = process.env.PUPPETEER_BASE_URL || 'https://Clarity & Co.co.uk';
 const TIMEOUT = 20000;
 
 let browser: Browser;
@@ -422,7 +422,7 @@ async function testLandingPageIntelligenceSection() {
 // ─── Main Runner ────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🌐 HomeLedger Intelligence E2E Tests');
+  console.log('\n🌐 Clarity & Co Intelligence E2E Tests');
   console.log(`📡 Target: ${BASE_URL}`);
   console.log('─'.repeat(60));
 

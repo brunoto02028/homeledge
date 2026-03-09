@@ -1,4 +1,4 @@
-# HomeLedger — Suggested Improvements
+# Clarity & Co — Suggested Improvements
 
 These are suggestions based on our current architecture (Entities, Statements, Life Events, Reports, etc.) for your review. Prioritise as you see fit.
 

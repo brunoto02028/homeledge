@@ -12,6 +12,7 @@ import {
   Loader2, Award, BarChart3, Sparkles, ArrowRight, FileText,
 } from 'lucide-react';
 import { ModuleGuide } from '@/components/module-guide';
+import { useTranslation } from '@/lib/i18n';
 
 interface BestAttempt {
   id: string;
@@ -56,6 +57,8 @@ interface CourseLevel {
 }
 
 export function AcademyClient() {
+  const { locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const router = useRouter();
   const { toast } = useToast();
   const [courses, setCourses] = useState<CourseLevel[]>([]);
@@ -74,7 +77,7 @@ export function AcademyClient() {
       const data = await res.json();
       setCourses(data.courses || []);
     } catch {
-      toast({ title: 'Failed to load courses', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha ao carregar cursos' : 'Failed to load courses', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

@@ -3,7 +3,7 @@ import CategoriesClient from './categories-client';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 export const metadata = {
-  title: 'Categories | HomeLedger',
+  title: 'Categories | Clarity & Co',
   description: 'Manage expense categories',
 };
 

@@ -92,7 +92,7 @@ const SYSTEM_CREDENTIALS = [
     keyName: 'RESEND_API_KEY',
     envVar: 'RESEND_API_KEY',
     category: 'api_key',
-    notes: 'Email delivery API. Domain: homeledger.co.uk. 3,000 emails/month free tier.',
+    notes: 'Email delivery API. Domain: Clarity & Co.co.uk. 3,000 emails/month free tier.',
     sortOrder: 40,
   },
   {

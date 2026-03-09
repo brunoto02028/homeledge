@@ -1,5 +1,5 @@
 /**
- * Permission system for HomeLedger
+ * Permission system for Clarity & Co
  * Each sidebar item has a permission key. Admin controls which permissions each user has.
  * Admin users always have ALL permissions. Empty permissions array = all permissions (owner/admin default).
  */
@@ -21,7 +21,6 @@ export const ALL_PERMISSIONS = [
   'files',
   'vault',
   'projections',
-  'transfers',
   'properties',
   'product_calculator',
   'tax_timeline',
@@ -54,9 +53,9 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/categories': 'categories',
   '/reports': 'reports',
   '/files': 'files',
+  '/smart-upload': 'files',
   '/vault': 'vault',
   '/projections': 'projections',
-  '/transfers': 'transfers',
   '/properties': 'properties',
   '/product-calculator': 'product_calculator',
   '/tax-timeline': 'tax_timeline',
@@ -69,6 +68,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   '/intelligence': 'intelligence',
   '/insurance': 'insurance',
   '/correspondence': 'correspondence',
+  '/self-assessment-guide': 'reports',
   '/settings': 'settings',
 };
 
@@ -89,7 +89,6 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   files: 'Files',
   vault: 'Secure Vault',
   projections: 'Projections',
-  transfers: 'Transfers',
   properties: 'Properties',
   product_calculator: 'Product Calculator',
   tax_timeline: 'Tax Timeline',
@@ -126,6 +125,7 @@ export const CUSTOMER_MODULES = ALL_PERMISSIONS.filter(
  */
 export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
   none: ['dashboard', 'settings'],
+  team: ['dashboard', 'settings'],
   intelligence: ['dashboard', 'intelligence', 'settings'],
   starter: [
     'dashboard', 'statements', 'categories', 'invoices', 'bills',
@@ -135,7 +135,7 @@ export const PLAN_PERMISSIONS: Record<string, PermissionKey[]> = {
     'dashboard', 'statements', 'categories', 'invoices', 'bills',
     'documents', 'files', 'actions', 'life_events', 'vault', 'intelligence', 'settings',
     'entities', 'household', 'reports', 'projections', 'properties',
-    'product_calculator', 'tax_timeline', 'email', 'transfers',
+    'product_calculator', 'tax_timeline', 'email',
     'providers', 'services', 'insurance', 'correspondence',
   ],
   business: [...CUSTOMER_MODULES] as PermissionKey[],

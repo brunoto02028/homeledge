@@ -27,6 +27,12 @@ export async function GET() {
       return NextResponse.json({ hasAccess: true, plan: (user as any).plan, isAdmin: true });
     }
 
+    // Empty permissions = all access (admin-created test users / full access users)
+    const perms: string[] = (user as any).permissions || [];
+    if (perms.length === 0) {
+      return NextResponse.json({ hasAccess: true, plan: (user as any).plan || 'free', allAccess: true });
+    }
+
     // Plans that include intelligence access
     const plansWithIntelligence = ['intelligence', 'starter', 'pro', 'business', 'managed'];
     const userPlan = (user as any).plan || 'none';

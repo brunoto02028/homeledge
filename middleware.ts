@@ -3,17 +3,28 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/change-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/privacy', '/terms', '/cookies', '/intelligence'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/change-password', '/verify-email', '/api/auth', '/api/signup', '/shared', '/onboarding', '/invite', '/upload', '/verify', '/verify-purchase', '/verify-dashboard', '/privacy', '/terms', '/cookies', '/intelligence', '/professional-services', '/blog'];
 
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
-const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect', '/api/news'];
-const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/'];
+const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect', '/api/news', '/api/health', '/api/marketing/leads', '/api/pdf-render'];
+const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/', '/api/verify-dashboard', '/api/automation/run'];
 // Mobile upload flow — these routes authenticate via mobileToken internally
 const mobileUploadApiRoutes = ['/api/upload/presigned', '/api/upload/local', '/api/documents/scan', '/api/bills/scan', '/api/invoices/process'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Force HTTPS in production
+  if (
+    process.env.NODE_ENV === 'production' &&
+    request.headers.get('x-forwarded-proto') === 'http' &&
+    !pathname.startsWith('/api/health')
+  ) {
+    const httpsUrl = new URL(request.url);
+    httpsUrl.protocol = 'https:';
+    return NextResponse.redirect(httpsUrl, 301);
+  }
   
   // Allow public routes
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(route))) {
@@ -72,13 +83,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Force password change for admin-created accounts
-  if (token && !pathname.startsWith('/api/') && pathname !== '/change-password') {
-    const mustChange = (token as any).mustChangePassword;
-    if (mustChange === true) {
-      return NextResponse.redirect(new URL('/change-password', request.url));
-    }
-  }
+  // Note: mustChangePassword is now handled as a non-blocking banner in the app shell,
+  // so admin-created users can access the system immediately while being prompted to change password.
 
   // Redirect non-onboarded users to onboarding (skip API routes and onboarding itself)
   if (token && !pathname.startsWith('/api/') && pathname !== '/onboarding' && pathname !== '/change-password') {
@@ -121,6 +127,7 @@ export async function middleware(request: NextRequest) {
           '/tax-timeline': 'tax_timeline', '/services': 'services',
           '/email': 'email', '/insurance': 'insurance',
           '/correspondence': 'correspondence',
+          '/self-assessment-guide': 'reports',
           '/settings': 'settings',
         };
         const matchedRoute = Object.keys(routePermMap).find(

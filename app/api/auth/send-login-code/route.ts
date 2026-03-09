@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { sendVerificationCodeEmail } from '@/lib/email';
+import { authLimiter, getClientIp } from '@/lib/rate-limit';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -9,6 +10,15 @@ function generateOTP(): string {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const { success } = authLimiter.check(`login-code:${ip}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {

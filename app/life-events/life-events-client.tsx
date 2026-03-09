@@ -188,7 +188,8 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function LifeEventsClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -335,7 +336,7 @@ export default function LifeEventsClient() {
 
       const data = await response.json();
       if (data.success) {
-        toast.success(`Created ${data.tasksGenerated} tasks for your life event!`);
+        toast.success(isPt ? `${data.tasksGenerated} tarefas criadas para seu evento!` : `Created ${data.tasksGenerated} tasks for your life event!`);
         setDialogOpen(false);
         resetForm();
         fetchEvents();
@@ -406,7 +407,7 @@ export default function LifeEventsClient() {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this life event and all its tasks?')) return;
+    if (!confirm(isPt ? 'Tem certeza que deseja excluir este evento e todas as tarefas?' : 'Are you sure you want to delete this life event and all its tasks?')) return;
     
     try {
       const response = await fetch(`/api/life-events/${eventId}`, {
@@ -468,26 +469,26 @@ export default function LifeEventsClient() {
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              New Life Event
+              {isPt ? 'Novo Evento de Vida' : 'New Life Event'}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Start a New Life Event</DialogTitle>
+              <DialogTitle>{isPt ? 'Iniciar Novo Evento de Vida' : 'Start a New Life Event'}</DialogTitle>
               <DialogDescription>
-                Tell us about your life event and we'll generate a compliance checklist for the UK.
+                {isPt ? 'Conte-nos sobre seu evento e geraremos um checklist de conformidade para o UK.' : 'Tell us about your life event and we\'ll generate a compliance checklist for the UK.'}
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label>Event Type *</Label>
+                <Label>{isPt ? 'Tipo de Evento *' : 'Event Type *'}</Label>
                 <Select
                   value={formData.eventType}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, eventType: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select event type" />
+                    <SelectValue placeholder={isPt ? 'Selecione o tipo de evento' : 'Select event type'} />
                   </SelectTrigger>
                   <SelectContent className="max-h-[400px]">
                     {EVENT_TYPE_CATEGORIES.map(cat => (
@@ -508,16 +509,16 @@ export default function LifeEventsClient() {
               </div>
 
               <div className="space-y-2">
-                <Label>Title *</Label>
+                <Label>{isPt ? 'Título *' : 'Title *'}</Label>
                 <Input
-                  placeholder="e.g., Moving to Ipswich"
+                  placeholder={isPt ? 'ex: Mudança para Ipswich' : 'e.g., Moving to Ipswich'}
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Event Date *</Label>
+                <Label>{isPt ? 'Data do Evento *' : 'Event Date *'}</Label>
                 <Input
                   type="date"
                   value={formData.eventDate}
@@ -529,12 +530,12 @@ export default function LifeEventsClient() {
                 <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <h4 className="font-medium text-blue-800 dark:text-blue-300 flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    Address Details
+                    {isPt ? 'Detalhes do Endereço' : 'Address Details'}
                   </h4>
                   
                   {/* FROM Postcode */}
                   <div className="space-y-2">
-                    <Label>Current Postcode *</Label>
+                    <Label>{isPt ? 'CEP Atual *' : 'Current Postcode *'}</Label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="e.g., IP8 3LU"
@@ -555,7 +556,7 @@ export default function LifeEventsClient() {
                         ) : (
                           <>
                             <MapPin className="h-4 w-4 mr-1" />
-                            Find
+                            {isPt ? 'Buscar' : 'Find'}
                           </>
                         )}
                       </Button>
@@ -569,7 +570,7 @@ export default function LifeEventsClient() {
 
                   {/* TO Postcode */}
                   <div className="space-y-2">
-                    <Label>New Postcode *</Label>
+                    <Label>{isPt ? 'Novo CEP *' : 'New Postcode *'}</Label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="e.g., E1 6AN"
@@ -590,7 +591,7 @@ export default function LifeEventsClient() {
                         ) : (
                           <>
                             <MapPin className="h-4 w-4 mr-1" />
-                            Find
+                            {isPt ? 'Buscar' : 'Find'}
                           </>
                         )}
                       </Button>
@@ -603,15 +604,15 @@ export default function LifeEventsClient() {
                   </div>
                   
                   <p className="text-xs text-blue-600">
-                    Postcode lookup powered by postcodes.io. We'll identify your councils to generate relevant tasks.
+                    {isPt ? 'Busca de CEP via postcodes.io. Identificaremos seus councils para gerar tarefas relevantes.' : 'Postcode lookup powered by postcodes.io. We\'ll identify your councils to generate relevant tasks.'}
                   </p>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label>Description (Optional)</Label>
+                <Label>{isPt ? 'Descrição (Opcional)' : 'Description (Optional)'}</Label>
                 <Textarea
-                  placeholder="Any additional details..."
+                  placeholder={isPt ? 'Detalhes adicionais...' : 'Any additional details...'}
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
@@ -625,10 +626,10 @@ export default function LifeEventsClient() {
                 {creating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating Checklist...
+                    {isPt ? 'Gerando Checklist...' : 'Generating Checklist...'}
                   </>
                 ) : (
-                  'Generate AI Checklist'
+                  isPt ? 'Gerar Checklist com IA' : 'Generate AI Checklist'
                 )}
               </Button>
             </div>
@@ -645,12 +646,11 @@ export default function LifeEventsClient() {
               {t('lifeEvents.noEvents')}
             </h3>
             <p className="text-muted-foreground dark:text-muted-foreground/60 text-center mb-4">
-              Start tracking a life event like moving house, getting married, or having a baby.
-              Our AI will generate a UK-compliant checklist for you.
+              {isPt ? 'Comece a acompanhar um evento de vida como mudança, casamento ou ter um bebê. Nossa IA gerará um checklist de conformidade UK para você.' : 'Start tracking a life event like moving house, getting married, or having a baby. Our AI will generate a UK-compliant checklist for you.'}
             </p>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Your First Event
+              {isPt ? 'Criar Seu Primeiro Evento' : 'Create Your First Event'}
             </Button>
           </CardContent>
         </Card>
@@ -658,7 +658,7 @@ export default function LifeEventsClient() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Events List */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Your Events</h2>
+            <h2 className="text-lg font-semibold">{isPt ? 'Seus Eventos' : 'Your Events'}</h2>
             {events.map(event => {
               const stats = getProgressStats(event.tasks);
               return (
@@ -682,7 +682,7 @@ export default function LifeEventsClient() {
                         </p>
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">{stats.completed}/{stats.total} tasks</span>
+                            <span className="text-muted-foreground">{stats.completed}/{stats.total} {isPt ? 'tarefas' : 'tasks'}</span>
                             <span className="font-medium">{stats.percentage}%</span>
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -714,7 +714,7 @@ export default function LifeEventsClient() {
                       {selectedEvent.title}
                     </CardTitle>
                     <CardDescription className="mt-2">
-                      {selectedEvent.description || `Event date: ${format(new Date(selectedEvent.eventDate), 'dd MMMM yyyy')}`}
+                      {selectedEvent.description || `${isPt ? 'Data do evento' : 'Event date'}: ${format(new Date(selectedEvent.eventDate), 'dd MMMM yyyy')}`}
                     </CardDescription>
                   </div>
                   <Button
@@ -729,9 +729,9 @@ export default function LifeEventsClient() {
                 <CardContent>
                   <Tabs defaultValue="all" className="w-full">
                     <TabsList>
-                      <TabsTrigger value="all">All Tasks</TabsTrigger>
-                      <TabsTrigger value="pending">Pending</TabsTrigger>
-                      <TabsTrigger value="completed">Completed</TabsTrigger>
+                      <TabsTrigger value="all">{isPt ? 'Todas' : 'All Tasks'}</TabsTrigger>
+                      <TabsTrigger value="pending">{isPt ? 'Pendentes' : 'Pending'}</TabsTrigger>
+                      <TabsTrigger value="completed">{isPt ? 'Concluídas' : 'Completed'}</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="all" className="mt-4 space-y-3">
@@ -770,7 +770,7 @@ export default function LifeEventsClient() {
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground/60 mb-4" />
-                  <p className="text-muted-foreground">Select an event to view its tasks</p>
+                  <p className="text-muted-foreground">{isPt ? 'Selecione um evento para ver suas tarefas' : 'Select an event to view its tasks'}</p>
                 </CardContent>
               </Card>
             )}

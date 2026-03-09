@@ -10,9 +10,13 @@
     "providers": "Providers",
     "actions": "Actions",
     "categories": "Categories",
+    "citizenship": "UK Citizenship Test",
+    "consulate": "Italian Consulate",
+    "dbs": "DBS Checks",
     "categorizationRules": "Smart Rules",
     "reports": "Reports",
     "files": "Files",
+    "smartUpload": "Smart Upload",
     "vault": "Vault",
     "insurance": "Insurance",
     "correspondence": "Correspondence",
@@ -29,11 +33,13 @@
     "email": "Email",
     "intelligence": "Intelligence",
     "services": "Services",
+    "selfAssessmentGuide": "SA Registration Guide",
     "settings": "Settings",
     "admin": "Admin",
     "users": "Users",
     "logout": "Logout",
     "integrations": "Integrations",
+    "marketing": "Marketing Hub",
     "cms": "Edit Website",
     "connections": "Connections",
     "plans": "Plans",
@@ -41,7 +47,9 @@
     "compliance": "Compliance",
     "analytics": "Site Analytics",
     "accountantSection": "Accountant",
-    "accountantDashboard": "My Clients"
+    "accountantDashboard": "My Clients",
+    "pdfEditor": "PDF Editor",
+    "automation": "Automation Hub"
   },
   "common": {
     "save": "Save",
@@ -147,7 +155,7 @@
     "business": "Business",
     "accountType": "Account Type",
     "loginTitle": "Welcome back",
-    "loginSubtitle": "Sign in to your HomeLedger account",
+    "loginSubtitle": "Sign in to your Clarity & Co account",
     "registerTitle": "Create your account",
     "registerSubtitle": "Start managing your finances today",
     "forgotTitle": "Forgot your password?",
@@ -226,7 +234,7 @@
     "accountOverview": "Account Overview",
     "lastLogin": "Last login",
     "dataExport": "Data Export",
-    "exportHint": "Download a full backup of your HomeLedger data.",
+    "exportHint": "Download a full backup of your Clarity & Co data.",
     "exportJson": "Export JSON",
     "exportCsv": "Export Transactions CSV",
     "downloadingJson": "Downloading JSON backup...",
@@ -247,7 +255,7 @@
     "goodAfternoon": "Good afternoon",
     "goodEvening": "Good evening",
     "dashboardOverview": "Dashboard Overview",
-    "subtitle": "Track your finances and manage your budget with HomeLedger",
+    "subtitle": "Track your finances and manage your budget with Clarity & Co",
     "netPosition": "Net Position",
     "recentActions": "Recent Actions",
     "upcomingBills": "Upcoming Bills",
@@ -506,7 +514,7 @@
     "createFirst": "Create your first household to start inviting team members"
   },
   "onboarding": {
-    "welcome": "Welcome to HomeLedger!",
+    "welcome": "Welcome to Clarity & Co!",
     "welcomeSubtitle": "Let's set up your account in a few quick steps so we can personalise your experience.",
     "personalInfo": "Personal Info",
     "dateOfBirth": "Date of Birth",
@@ -794,7 +802,7 @@
   "login": {
     "welcomeBack": "Welcome Back",
     "verifyIdentity": "Verify Your Identity",
-    "signIn": "Sign in to HomeLedger",
+    "signIn": "Sign in to Clarity & Co",
     "codeSentTo": "Code sent to",
     "email": "Email",
     "password": "Password",
@@ -919,19 +927,48 @@
       "getStartedFree": "Start 7-Day Free Trial"
     },
     "hero": {
-      "badge": "AI-Powered UK Finance Platform",
-      "titleLine1": "Your UK Finances,",
+      "badge": "AI-Powered Platform + Professional Accounting Services",
+      "titleLine1": "Your Finances,",
       "titleLine2": "Finally Simplified",
-      "subtitle": "Bank statements, invoices, HMRC reports, tax deadlines, secure vault and AI assistant — all in one platform built for UK individuals and businesses.",
+      "subtitle": "Manage your finances with our powerful platform — or let our qualified team handle everything for you. Bookkeeping, tax returns, VAT, payroll and more, all in one place. Built for sole traders, small businesses and professionals in the UK.",
       "ctaPrimary": "Start 7-Day Free Trial",
       "ctaSecondary": "See How It Works",
-      "noCreditCard": "7-day free trial · Plans from £8.31/month"
+      "noCreditCard": "7-day free trial · Full platform access · Plans from £8.31/month"
     },
     "stats": {
       "modules": "Financial Modules",
       "aiPowered": "Powered Automation",
       "hmrc": "Compliant Reports",
       "encryption": "AES Encryption"
+    },
+    "managed": {
+      "badge": "Platform + Professional Support",
+      "title1": "Your Finances, Managed by",
+      "title2": "Experts Who Care",
+      "desc": "Clarity & Co isn't just software — it's a complete financial management service. You get a powerful platform to see everything in real time, plus our team of qualified professionals handling your bookkeeping, tax returns, and compliance. Focus on your business, we'll handle the numbers.",
+      "platformTitle": "The Platform — Your Financial Hub",
+      "platformDesc": "Access your finances 24/7 from any device. Everything organised, automated, and HMRC-ready.",
+      "pf1": "Bank statements, invoices & bills in one place",
+      "pf2": "Smart receipt scanning with AI categorisation",
+      "pf3": "Real-time tax reports & HMRC-ready data",
+      "pf4": "Document capture, OCR & secure vault",
+      "pf5": "AI-powered transaction categorisation",
+      "pf6": "Tax timeline, deadlines & reminders",
+      "serviceTitle": "Our Team — Your Financial Partners",
+      "serviceDesc": "Qualified professionals managing your accounts, filing your returns, and keeping you compliant — all through the platform.",
+      "sv1": "Self Assessment & Corporation Tax returns filed for you",
+      "sv2": "Monthly bookkeeping & VAT returns (MTD compliant)",
+      "sv3": "Payroll processing, payslips & RTI submissions",
+      "sv4": "Company secretarial & Companies House filings",
+      "sv5": "AML supervised, ICO registered, PI insured",
+      "sv6": "Bilingual support in English & Portuguese",
+      "howTitle": "How It Works",
+      "hw1": "Sign up & connect your accounts — we set everything up for you",
+      "hw2": "We assign a dedicated professional to manage your finances",
+      "hw3": "Track everything in real time on your personalised dashboard",
+      "hw4": "We file your returns, keep you compliant & help you grow",
+      "cta1": "Explore Our Services",
+      "cta2": "Start Your Free Trial"
     },
     "features": {
       "title": "Everything You Need in One Place",
@@ -990,7 +1027,7 @@
       "ukLifeEvents": "UK Life Events",
       "ukLifeEventsDesc": "Track life milestones — buying a home, marriage, starting a business. Personalised financial checklists.",
       "pwa": "Install as App (PWA)",
-      "pwaDesc": "Install HomeLedger on your phone or desktop. Works offline, instant access from your home screen — no app store needed.",
+      "pwaDesc": "Install Clarity & Co on your phone or desktop. Works offline, instant access from your home screen — no app store needed.",
       "accountantPortal": "Accountant Portal",
       "accountantPortalDesc": "Share financial data with your accountant via secure, read-only links. No password sharing — they see exactly what you allow.",
       "propertyIntelligence": "Property Purchase Intelligence",
@@ -1021,7 +1058,7 @@
     "business": {
       "badge": "Built for UK Businesses",
       "title": "Run Your Business Finances with Confidence",
-      "description": "Whether you're a sole trader, limited company director, or running multiple businesses — HomeLedger gives you the tools to manage everything in one place.",
+      "description": "Whether you're a sole trader, limited company director, or running multiple businesses — Clarity & Co gives you the tools to manage everything in one place.",
       "feature1": "Multi-entity management — personal + multiple businesses",
       "feature2": "HMRC-ready tax reports (SA103, CT600) with auto box mapping",
       "feature3": "AI-powered categorisation at 90%+ accuracy",
@@ -1073,15 +1110,15 @@
     },
     "testimonials": {
       "title": "Trusted by UK Households & Businesses",
-      "subtitle": "Hear from real HomeLedger users across the United Kingdom",
-      "quote1": "HomeLedger saved me hours every month. The AI categorisation is incredibly accurate and HMRC reports are generated in seconds.",
+      "subtitle": "Hear from real Clarity & Co users across the United Kingdom",
+      "quote1": "Clarity & Co saved me hours every month. The AI categorisation is incredibly accurate and HMRC reports are generated in seconds.",
       "quote2": "Managing multiple entities used to be a nightmare. Now everything is in one place — invoices, tax reports, bank statements.",
       "quote3": "The accountant portal is a game-changer. I can view all my clients' data without them sharing passwords. Brilliant."
     },
     "accountants": {
       "badge": "Accountants & Bookkeepers",
       "title": "Your Clients' Finances, One Click Away",
-      "description": "HomeLedger's accountant portal lets you view your clients' financial data with secure, read-only access. No password sharing, no data exports — just real-time visibility.",
+      "description": "Clarity & Co's accountant portal lets you view your clients' financial data with secure, read-only access. No password sharing, no data exports — just real-time visibility.",
       "feature1": "Dedicated accountant dashboard with multi-client view",
       "feature2": "Secure, read-only access — no password sharing needed",
       "feature3": "View statements, invoices, tax reports, and categories",
@@ -1093,7 +1130,7 @@
       "title": "Identity Verification",
       "subtitle": "Simple, Transparent Verification Pricing",
       "noHiddenFees": "No hidden fees. No subscription. Pay once, verify as needed.",
-      "noAccountRequired": "No HomeLedger account required.",
+      "noAccountRequired": "No Clarity & Co account required.",
       "govCertified": "Government-Certified (IDVT)",
       "ukGdpr": "UK GDPR Compliant",
       "aiBiometric": "AI Biometric Matching",
@@ -1109,7 +1146,7 @@
       "ctaStart": "Start Verifying",
       "ctaLegal": "UK Legal Requirements",
       "mockIdentityCheck": "Identity Check",
-      "mockCertified": "HomeLedger • Certified",
+      "mockCertified": "Clarity & Co • Certified",
       "mockScanPrompt": "Position your ID here",
       "mockScanHint": "Passport, Driving Licence, or BRP",
       "mockAlignHint": "Align document within the frame",
@@ -1150,7 +1187,7 @@
       "law6Penalty": "Up to £17.5 million",
       "penaltyLabel": "Penalty",
       "complianceTitle": "Are You Compliant?",
-      "complianceDesc": "Since <strong>April 2022</strong>, the Home Office requires all Right to Work and Right to Rent checks to use a <strong>certified Identity Document Validation Technology (IDVT)</strong> provider. Manual checks of physical documents are no longer sufficient for most document types. HomeLedger uses <strong>Yoti</strong>, a UK-government certified IDVT provider.",
+      "complianceDesc": "Since <strong>April 2022</strong>, the Home Office requires all Right to Work and Right to Rent checks to use a <strong>certified Identity Document Validation Technology (IDVT)</strong> provider. Manual checks of physical documents are no longer sufficient for most document types. Clarity & Co uses <strong>Yoti</strong>, a UK-government certified IDVT provider.",
       "complianceCta": "Get Compliant Now",
       "whoTitle": "Who Needs Identity Verification?",
       "whoSubtitle": "Almost every business and professional in the UK. Here are the most common use cases.",
@@ -1184,7 +1221,7 @@
       "process4Desc": "AI verifies the document and matches the face. You receive a certified result by email within seconds.",
       "pricingTitle": "Simple, Transparent Verification Pricing",
       "pricingSubtitle": "No hidden fees. No subscription. Pay once, verify as needed.",
-      "pricingNoAccount": "No HomeLedger account required.",
+      "pricingNoAccount": "No Clarity & Co account required.",
       "singleName": "Single Check",
       "singlePrice": "£2.99",
       "singlePer": "/check",
@@ -1222,12 +1259,12 @@
     "newArrivals": {
       "badge": "For New UK Arrivals",
       "title": "New to the UK? We've Got You Covered",
-      "description": "Whether you're relocating for work, study, or family — HomeLedger helps you navigate UK finances, accounting qualifications, and professional services from day one.",
+      "description": "Whether you're relocating for work, study, or family — Clarity & Co helps you navigate UK finances, accounting qualifications, and professional services from day one.",
       "feat1": "AI Relocation Guide — visas, NI numbers, bank accounts, GP registration (OISC compliant)",
       "feat2": "Accounting Academy — AAT & ACCA exam practice with AI tutor and career roadmap",
       "feat3": "Service Marketplace — professional accounting, tax filing, and bookkeeping packages",
       "feat4": "Financial Health Score — track your financial wellbeing with a real-time dashboard",
-      "feat5": "Install as App — access HomeLedger offline from your phone or desktop",
+      "feat5": "Install as App — access Clarity & Co offline from your phone or desktop",
       "feature1": "NI Number application guide",
       "feature2": "UK bank account setup",
       "feature3": "GP & NHS registration",
@@ -1278,15 +1315,15 @@
       "q2": "Is my financial data secure?",
       "a2": "Absolutely. All data is encrypted in transit (TLS 1.3) and at rest. Vault entries use AES-256-GCM encryption. We never share your data with third parties.",
       "q3": "Can I manage multiple businesses?",
-      "a3": "Yes. HomeLedger supports unlimited entities — personal accounts, limited companies, CICs, sole-trader businesses — all from one login.",
+      "a3": "Yes. Clarity & Co supports unlimited entities — personal accounts, limited companies, CICs, sole-trader businesses — all from one login.",
       "q4": "Does it generate HMRC-ready reports?",
       "a4": "Yes. We generate SA103 (Self Assessment), CT600 (Corporation Tax), and detailed tax summaries with automatic box mapping. Export to PDF anytime.",
       "q5": "Can my accountant access my data?",
       "a5": "Yes. Invite your accountant via email. They get a dedicated dashboard to view your data with read-only permissions — no credential sharing needed.",
       "q6": "What file formats do you support?",
       "a6": "We accept CSV, PDF, Excel (.xlsx), and image files (JPG, PNG) for bank statements, invoices, and documents. Our AI processes them all.",
-      "q7": "Can I install HomeLedger as a desktop app?",
-      "a7": "Yes! HomeLedger is a Progressive Web App (PWA). Click \"Install\" in your browser to add it to your desktop or mobile home screen.",
+      "q7": "Can I install Clarity & Co as a desktop app?",
+      "a7": "Yes! Clarity & Co is a Progressive Web App (PWA). Click \"Install\" in your browser to add it to your desktop or mobile home screen.",
       "q8": "What property tools are included?",
       "a8": "Our Property section includes: 9 purchase mode comparisons, SDLT calculator, Mortgage Approval Simulator, AI Purchase Planner with real data, compound interest investment projections, cross-entity strategy, savings plan generator, and a Credit Score Hub — all sourced from GOV.UK.",
       "q9": "Can it help me plan a property purchase?",
@@ -1317,11 +1354,54 @@
       "aatLevel2": "AAT Level 2 — Bookkeeping",
       "complete": "Complete",
       "inProgress": "In Progress",
-      "upcoming": "Upcoming"
+      "upcoming": "Upcoming",
+      "businessEntity1": "Tech Solutions Ltd",
+      "businessEntity1Type": "Limited Company · #12345678",
+      "businessEntity2": "Sarah Consulting",
+      "businessEntity2Type": "Sole Trader · UTR: 12345",
+      "businessEntity3": "Personal Account",
+      "businessEntity3Type": "Personal",
+      "accountantClient1": "John Smith — Sole Trader",
+      "accountantClient2": "ABC Ltd — Limited Company",
+      "accountantClient3": "Sarah Jones — Freelancer",
+      "testimonialRole1": "Sole Trader, London",
+      "testimonialRole2": "Director, Tech Solutions Ltd",
+      "testimonialRole3": "Chartered Accountant",
+      "propertyStrategy": "Tech Solutions Ltd",
+      "propertyStrategyDesc": "£22k retained — dividend extraction strategy available"
+    },
+    "intelligence": {
+      "badge": "Real-Time Global Intelligence",
+      "live": "LIVE",
+      "title1": "The World at Your",
+      "title2": "Fingertips",
+      "desc": "Monitor global events, military movements, earthquakes, weather patterns, and breaking news — all on one interactive map with AI-powered analysis. Your personal war room.",
+      "liveGlobalNews": "Live Global News",
+      "liveGlobalNewsDesc": "50+ countries, 11 war searches, auto-refresh every 60s",
+      "aircraftTracking": "Aircraft Tracking",
+      "aircraftTrackingDesc": "Real-time military & civilian aircraft via OpenSky Network",
+      "earthquakeMonitor": "Earthquake Monitor",
+      "earthquakeMonitorDesc": "USGS seismic data with magnitude, depth & tsunami alerts",
+      "navalTracker": "Naval Tracker",
+      "navalTrackerDesc": "Aircraft carriers, warships & strategic waterway monitoring worldwide",
+      "aiAgent": "AI Intelligence Agent",
+      "aiAgentDesc": "Geopolitical analyst AI for news analysis & strategy",
+      "prophecyTracking": "Prophecy Tracking",
+      "prophecyTrackingDesc": "Biblical prophecy cross-reference with current events",
+      "economicCalendar": "Economic Calendar",
+      "economicCalendarDesc": "Central bank decisions, GDP, CPI, employment data from 20+ countries",
+      "worldEconomy": "World Economy",
+      "worldEconomyDesc": "GDP rankings, population stats, region data from World Bank",
+      "cta": "Open Intelligence Dashboard",
+      "ctaSub": "7-day free trial · £2.99/month · Cancel anytime",
+      "legendCrisis": "Crisis",
+      "legendOpportunity": "Opportunity",
+      "legendNeutral": "Neutral",
+      "legendMilitary": "Military"
     },
     "cta": {
       "title": "Ready to Simplify Your Finances?",
-      "subtitle": "Join thousands of UK households and businesses already using HomeLedger.",
+      "subtitle": "Join thousands of UK households and businesses already using Clarity & Co.",
       "ctaPrimary": "Start Your Free Trial",
       "ctaSecondary": "Talk to Sales",
       "noCreditCard": "7-day free trial · Cancel anytime"
@@ -1346,9 +1426,135 @@
       "newsletterDesc": "Get UK finance tips and product updates."
     }
   },
+  "proServices": {
+    "navLabel": "Our Services",
+    "badge": "Professional Support for Small Businesses & Sole Traders",
+    "heroTitle1": "Accounting & Business",
+    "heroTitle2": "Management Services",
+    "heroDesc": "Expert accounting, tax compliance, and strategic business support for sole traders, small businesses, and professionals building their future in the UK.",
+    "heroCta1": "View Services",
+    "heroCta2": "Get in Touch",
+    "brTitle": "Fala Português? We speak your language!",
+    "brDesc": "As Brazilian professionals settled in the UK, we understand the unique challenges of running a business abroad. We offer full support in Portuguese and English — from company formation to tax returns.",
+    "brCta": "Fale Conosco",
+    "servicesTitle": "Our Services",
+    "servicesSubtitle": "Everything your business needs to stay compliant, organised, and growing",
+    "cat": {
+      "tax": {
+        "title": "Tax & Accountancy",
+        "subtitle": "Essential compliance services for small businesses and sole traders"
+      },
+      "business": {
+        "title": "Business Support & Strategy",
+        "subtitle": "Go beyond the numbers — grow with confidence"
+      },
+      "cloud": {
+        "title": "Cloud & Compliance",
+        "subtitle": "Modern tools and regulatory guidance for the digital age"
+      }
+    },
+    "svc": {
+      "bookkeeping": {
+        "title": "Bookkeeping",
+        "desc": "Monthly or quarterly recording of income and expenses, bank reconciliation, and organised financial records ready for your accountant or tax return."
+      },
+      "vatReturns": {
+        "title": "VAT Returns",
+        "desc": "Preparation and submission of VAT returns via Making Tax Digital (MTD). We ensure your VAT is calculated correctly and filed on time."
+      },
+      "selfAssessment": {
+        "title": "Self Assessment",
+        "desc": "Preparation and filing of personal tax returns for sole traders, company directors, landlords, and individuals with additional income."
+      },
+      "payroll": {
+        "title": "Payroll Services",
+        "desc": "Processing salaries, issuing payslips, calculating PAYE/NI deductions, and submitting Real Time Information (RTI) to HMRC."
+      },
+      "yearEndAccounts": {
+        "title": "Year-End Accounts",
+        "desc": "Preparation of annual accounts for micro-entities and small companies in compliance with FRS 102 and FRS 105 standards."
+      },
+      "corporationTax": {
+        "title": "Corporation Tax",
+        "desc": "Preparation and submission of CT600 returns for limited companies, ensuring all allowable deductions are claimed."
+      },
+      "startupAdvice": {
+        "title": "Business Start-up Advice",
+        "desc": "Guidance on choosing the right legal structure, registering with Companies House and HMRC, and setting up your business correctly from day one."
+      },
+      "managementAccounts": {
+        "title": "Management Accounts",
+        "desc": "Monthly or quarterly financial reports including profit & loss, balance sheet, and cash flow analysis to help you make informed decisions."
+      },
+      "budgetingForecasting": {
+        "title": "Budgeting & Forecasting",
+        "desc": "Financial planning, budget creation, and cash flow projections to support your business growth and secure funding."
+      },
+      "companySecretarial": {
+        "title": "Company Secretarial",
+        "desc": "Maintaining your Companies House records — Confirmation Statements, change of address, director appointments, and share allotments."
+      },
+      "cloudAccounting": {
+        "title": "Cloud Accounting Setup",
+        "desc": "Implementation and training on leading platforms like Xero, QuickBooks, or FreeAgent. Get your accounting digital and accessible anywhere."
+      },
+      "mtdCompliance": {
+        "title": "MTD Compliance",
+        "desc": "Help transitioning from manual processes to Making Tax Digital compliant software, ensuring you meet HMRC's digital requirements."
+      },
+      "businessCompliance": {
+        "title": "Business Compliance",
+        "desc": "Guidance on Anti-Money Laundering (AML) obligations, data protection (GDPR), and other regulatory requirements for small businesses."
+      }
+    },
+    "whyTitle": "Why Choose Us",
+    "whySubtitle": "Fully regulated, qualified, and committed to your success",
+    "cred": {
+      "piInsurance": {
+        "title": "Professional Indemnity Insurance",
+        "desc": "Fully insured for your peace of mind. Our PI insurance protects you against errors and omissions."
+      },
+      "icoRegistered": {
+        "title": "ICO Registered",
+        "desc": "Registered with the Information Commissioner's Office. Your data is handled in full compliance with UK GDPR."
+      },
+      "amlSupervision": {
+        "title": "AML Supervised",
+        "desc": "Operating under Anti-Money Laundering supervision as required by UK law for accountancy service providers."
+      },
+      "qualifications": {
+        "title": "Qualified Professionals",
+        "desc": "Business Administration degree with UK-recognised accountancy qualifications. Bilingual service in English and Portuguese."
+      }
+    },
+    "howTitle": "How It Works",
+    "howSubtitle": "Getting started is simple",
+    "how": {
+      "step1": {
+        "title": "Free Consultation",
+        "desc": "Book a free 30-minute call. We'll discuss your needs, answer questions, and recommend the best services for your situation."
+      },
+      "step2": {
+        "title": "Tailored Plan",
+        "desc": "We create a personalised service package with clear pricing. No hidden fees, no surprises — just transparent support."
+      },
+      "step3": {
+        "title": "Ongoing Support",
+        "desc": "We handle your accounting and compliance while you focus on growing your business. Regular updates and always available when you need us."
+      }
+    },
+    "noticeTitle": "Transparency Notice",
+    "noticeDesc": "We provide accounting, bookkeeping, tax preparation, and business management services. We do not offer auditing, insolvency, or regulated financial advice (such as investment or mortgage advice), as these require separate licences.",
+    "ctaTitle": "Ready to Get Started?",
+    "ctaDesc": "Book your free consultation today. We'll help you understand exactly what you need and how we can support your business.",
+    "ctaEmail": "Email Us",
+    "ctaWhatsapp": "WhatsApp",
+    "ctaFree": "Free initial consultation — no obligation",
+    "footerHome": "Home"
+  },
   "register": {
     "title": "Create Account",
-    "subtitle": "Get started with HomeLedger",
+    "subtitle": "Get started with Clarity & Co",
     "accountType": "Account Type",
     "household": "Household",
     "business": "Business",
@@ -1359,5 +1565,57 @@
     "creating": "Creating account...",
     "hasAccount": "Already have an account?",
     "signIn": "Sign in"
+  },
+  "chSearch": {
+    "title": "Companies House Search",
+    "subtitle": "Search the UK Companies House register — check name availability, explore company details, officers, filings and import directly as an entity.",
+    "backToEntities": "Back to Entities",
+    "placeholder": "Search by company name or number...",
+    "search": "Search",
+    "tip": "Search by exact name, partial name, or company number (e.g. 12345678)",
+    "searching": "Searching Companies House...",
+    "resultsFound": "results found",
+    "showing": "showing",
+    "allStatuses": "All Statuses",
+    "active": "Active",
+    "dissolved": "Dissolved",
+    "dormant": "Dormant",
+    "liquidation": "Liquidation",
+    "noResults": "No companies found. Try a different search term.",
+    "loadingDetails": "Loading company details from Companies House...",
+    "viewOnCH": "View on CH",
+    "importEntity": "Import as Entity",
+    "companyInfo": "Company Information",
+    "number": "Number",
+    "status": "Status",
+    "type": "Type",
+    "incorporated": "Incorporated",
+    "registeredAddress": "Registered Address",
+    "sicCodes": "SIC Codes",
+    "keyDates": "Key Dates",
+    "nextAccounts": "Next Accounts Due",
+    "confirmationStmt": "Confirmation Statement Due",
+    "officers": "Officers",
+    "activeOfficers": "active",
+    "since": "Since",
+    "recentFilings": "Recent Filings",
+    "emptyTitle": "Search the UK Company Register",
+    "emptyDesc": "Find any UK company by name or number. View officers, filings, SIC codes and key dates. Import companies directly as entities in your account.",
+    "importTitle": "Import Company as Entity",
+    "importDesc": "This will create a new entity in your account with the company details from Companies House.",
+    "importNote": "Company data (name, number, address, officers, SIC codes) will be imported. You can edit these details later.",
+    "cancel": "Cancel",
+    "importButton": "Import Entity",
+    "imported": "Company Imported",
+    "importedAs": "added as",
+    "importError": "Import Failed",
+    "searchError": "Search Error",
+    "detailError": "Could not load company details",
+    "error": "Error",
+    "connectionError": "Could not connect to Companies House",
+    "quickSearch": "Companies House Search",
+    "quickSearchPlaceholder": "Search Companies House...",
+    "searchCH": "Search Companies House",
+    "viewAll": "Advanced Search"
   }
 }

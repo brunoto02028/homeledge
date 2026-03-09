@@ -110,7 +110,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 }
 
 export function DocumentsClient() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const isPt = locale === 'pt-BR'
   const router = useRouter()
   const searchParams = useSearchParams()
   const [documents, setDocuments] = useState<ScannedDocument[]>([])
@@ -161,7 +162,7 @@ export function DocumentsClient() {
       setDocuments(data.documents || [])
     } catch (error) {
       console.error('Error fetching documents:', error)
-      toast({ title: 'Error', description: 'Failed to load documents', variant: 'destructive' })
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao carregar documentos' : 'Failed to load documents', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -225,7 +226,7 @@ export function DocumentsClient() {
     const validTypes = [...imageTypes, pdfType]
     
     if (!validTypes.includes(file.type)) {
-      toast({ title: 'Invalid file type', description: 'Please upload an image (JPG, PNG, WebP) or PDF file', variant: 'destructive' })
+      toast({ title: isPt ? 'Tipo de arquivo inválido' : 'Invalid file type', description: isPt ? 'Envie uma imagem (JPG, PNG, WebP) ou PDF' : 'Please upload an image (JPG, PNG, WebP) or PDF file', variant: 'destructive' })
       return
     }
 
@@ -299,8 +300,8 @@ export function DocumentsClient() {
 
           if (scanData.success) {
             toast({
-              title: 'Document Scanned!',
-              description: scanData.document.summary || 'Document processed successfully',
+              title: isPt ? 'Documento Escaneado!' : 'Document Scanned!',
+              description: scanData.document.summary || (isPt ? 'Documento processado com sucesso' : 'Document processed successfully'),
             })
             fetchDocuments()
           } else {
@@ -529,7 +530,7 @@ export function DocumentsClient() {
             if (newDocs.length > initialCount) {
               // New document detected
               setDocuments(newDocs)
-              toast({ title: 'New Document!', description: 'A document was uploaded from your phone.' })
+              toast({ title: isPt ? 'Novo Documento!' : 'New Document!', description: isPt ? 'Um documento foi enviado do seu celular.' : 'A document was uploaded from your phone.' })
               setQrDialogOpen(false)
               if (qrPollRef.current) clearInterval(qrPollRef.current)
             }
@@ -589,10 +590,10 @@ export function DocumentsClient() {
           {entities.length > 0 && (
             <Select value={selectedEntityId || 'all'} onValueChange={(v) => setSelectedEntityId(v === 'all' ? '' : v)}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Entities" />
+                <SelectValue placeholder={isPt ? 'Todas as Entidades' : 'All Entities'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Entities</SelectItem>
+                <SelectItem value="all">{isPt ? 'Todas as Entidades' : 'All Entities'}</SelectItem>
                 {entities.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
                     {e.name}
@@ -632,8 +633,8 @@ export function DocumentsClient() {
                 className="gap-2"
               >
                 <Camera className="h-4 w-4" />
-                <span className="hidden sm:inline">Take Photo</span>
-                <span className="sm:hidden">Photo</span>
+                <span className="hidden sm:inline">{isPt ? 'Tirar Foto' : 'Take Photo'}</span>
+                <span className="sm:hidden">{isPt ? 'Foto' : 'Photo'}</span>
               </Button>
               
               {/* Upload button - for files and PDFs */}
@@ -642,8 +643,8 @@ export function DocumentsClient() {
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">Upload File</span>
-                <span className="sm:hidden">Upload</span>
+                <span className="hidden sm:inline">{isPt ? 'Enviar Arquivo' : 'Upload File'}</span>
+                <span className="sm:hidden">{isPt ? 'Enviar' : 'Upload'}</span>
               </Button>
             </>
           )}
@@ -657,21 +658,21 @@ export function DocumentsClient() {
             <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
               <FileText className="h-8 w-8 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No documents yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{isPt ? 'Nenhum documento ainda' : 'No documents yet'}</h3>
             <p className="text-muted-foreground mb-4">
-              Take a photo or upload any letter, bill, or document to digitize it automatically.
+              {isPt ? 'Tire uma foto ou envie qualquer carta, conta ou documento para digitalizá-lo automaticamente.' : 'Take a photo or upload any letter, bill, or document to digitize it automatically.'}
             </p>
             <p className="text-sm text-muted-foreground mb-6">
-              Supports: JPG, PNG, WebP, PDF
+              {isPt ? 'Formatos: JPG, PNG, WebP, PDF' : 'Supports: JPG, PNG, WebP, PDF'}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" onClick={handleTakePhoto}>
                 <Camera className="h-4 w-4 mr-2" />
-                Take Photo
+                {isPt ? 'Tirar Foto' : 'Take Photo'}
               </Button>
               <Button onClick={() => fileInputRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload File
+                {isPt ? 'Enviar Arquivo' : 'Upload File'}
               </Button>
             </div>
           </CardContent>
@@ -682,21 +683,21 @@ export function DocumentsClient() {
       {documents.length > 0 && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="all">All ({documents.length})</TabsTrigger>
+            <TabsTrigger value="all">{isPt ? 'Todos' : 'All'} ({documents.length})</TabsTrigger>
             <TabsTrigger value="action" className="text-red-600">
-              Action ({documents.filter(d => d.status === 'action_required').length})
+              {isPt ? 'Ação' : 'Action'} ({documents.filter(d => d.status === 'action_required').length})
             </TabsTrigger>
             <TabsTrigger value="utilities">
-              Utilities ({documents.filter(d => { const c = catOf(d); return c.startsWith('utility_') || c === 'telecom' }).length})
+              {isPt ? 'Utilidades' : 'Utilities'} ({documents.filter(d => { const c = catOf(d); return c.startsWith('utility_') || c === 'telecom' }).length})
             </TabsTrigger>
             <TabsTrigger value="government">
-              Government ({documents.filter(d => { const c = catOf(d); return c.startsWith('government_') || c === 'utility_council_tax' }).length})
+              {isPt ? 'Governo' : 'Government'} ({documents.filter(d => { const c = catOf(d); return c.startsWith('government_') || c === 'utility_council_tax' }).length})
             </TabsTrigger>
             <TabsTrigger value="financial">
-              Financial ({documents.filter(d => { const c = catOf(d); return c === 'bank' || c === 'insurance' }).length})
+              {isPt ? 'Financeiro' : 'Financial'} ({documents.filter(d => { const c = catOf(d); return c === 'bank' || c === 'insurance' }).length})
             </TabsTrigger>
             <TabsTrigger value="filed">
-              Filed ({documents.filter(d => d.status === 'filed' || d.status === 'processed').length})
+              {isPt ? 'Arquivados' : 'Filed'} ({documents.filter(d => d.status === 'filed' || d.status === 'processed').length})
             </TabsTrigger>
           </TabsList>
 

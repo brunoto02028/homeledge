@@ -79,7 +79,7 @@ export default function ChangePasswordPage() {
           </CardTitle>
           <CardDescription>
             {mustChange
-              ? 'Your account was created by an administrator. Please set a new password to continue.'
+              ? 'Your account was created by an administrator. We recommend setting a personal password for security.'
               : 'Enter your current password and choose a new one.'}
           </CardDescription>
         </CardHeader>
@@ -167,6 +167,16 @@ export default function ChangePasswordPage() {
                   'Change Password'
                 )}
               </Button>
+              {mustChange && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full mt-2 text-muted-foreground"
+                  onClick={() => router.replace('/dashboard')}
+                >
+                  Skip for now
+                </Button>
+              )}
             </form>
           )}
         </CardContent>

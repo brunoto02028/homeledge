@@ -1,6 +1,6 @@
 {
-  "name": "HomeLedger",
-  "short_name": "HomeLedger",
+  "name": "Clarity & Co",
+  "short_name": "Clarity & Co",
   "description": "Your finances, simplified",
   "start_url": "/",
   "display": "standalone",
@@ -33,9 +33,9 @@
       "purpose": "maskable"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
     }
   ],
   "categories": ["finance", "productivity"],

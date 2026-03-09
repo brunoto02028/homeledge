@@ -115,7 +115,7 @@ export async function POST(req: Request) {
           price_data: {
             currency: 'gbp',
             product_data: {
-              name: 'HomeLedger Intelligence',
+              name: 'Clarity & Co Intelligence',
               description: 'Real-time global intelligence dashboard — news, military tracking, earthquakes, economic data',
             },
             unit_amount: 299,

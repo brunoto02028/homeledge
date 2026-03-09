@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { PoundSterling, LogOut, User, PanelLeftClose, PanelLeft, Menu, X, Moon, Sun, Landmark, Building2, ChevronDown, Download } from "lucide-react"
+import { PoundSterling, LogOut, User, PanelLeftClose, PanelLeft, Menu, X, Moon, Sun, Landmark, Building2, ChevronDown, Download, Lock, AlertTriangle } from "lucide-react"
+import Link from "next/link"
 import { Navigation } from "./navigation"
 import { IntelligenceAlertBell } from "./intelligence-alerts"
 import { AiChat } from "./ai-chat"
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import LedgerFlowLogo, { LFIcon } from "@/components/ledgerflow-logo"
 
 // Sidebar context for collapsed state
 const SidebarContext = createContext<{
@@ -113,26 +115,28 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
 }
 
 function SidebarLogo() {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [src, setSrc] = useState('/site-logo.png')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     fetch('/api/settings/logo')
       .then(r => r.json())
-      .then(d => { if (d.logoUrl) setLogoUrl(d.logoUrl) })
-      .catch(() => {})
+      .then(d => {
+        if (d.logoUrl) {
+          setSrc(`/api/settings/logo/serve?v=${Date.now()}`)
+        }
+        setReady(true)
+      })
+      .catch(() => setReady(true))
   }, [])
-
-  if (logoUrl) {
-    return (
-      <div className="flex-shrink-0 h-9 w-9 rounded-lg overflow-hidden shadow-lg">
-        <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
-      </div>
-    )
-  }
 
   return (
     <div className="flex-shrink-0 h-9 w-9 rounded-lg overflow-hidden shadow-lg">
-      <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+      <img
+        src={src}
+        alt="Clarity & Co"
+        className={`h-full w-full object-contain transition-opacity duration-200 ${ready ? 'opacity-100' : 'opacity-0'}`}
+      />
     </div>
   )
 }
@@ -215,7 +219,7 @@ export function Sidebar() {
             <SidebarLogo />
             {!collapsed && (
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-white">HomeLedger</h1>
+                <h1 className="text-xl font-bold tracking-tight"><span className="text-white">Clarity </span><span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent">&amp; Co</span></h1>
                 <p className="text-xs text-slate-400 truncate">Your finances, simplified</p>
               </div>
             )}
@@ -302,9 +306,9 @@ function InstallAppButton({ collapsed = false }: { collapsed?: boolean }) {
       const isEdge = /Edg/.test(ua)
       const isChrome = /Chrome/.test(ua) && !isEdge
       const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua)
-      let msg = 'To install HomeLedger as a desktop app:\n\n'
-      if (isEdge) msg += '• Click the install icon in the address bar\n• Or: Menu (⋯) → Apps → Install HomeLedger'
-      else if (isChrome) msg += '• Click the install icon in the address bar\n• Or: Menu (⋮) → "Install HomeLedger"'
+      let msg = 'To install Clarity & Co as a desktop app:\n\n'
+      if (isEdge) msg += '• Click the install icon in the address bar\n• Or: Menu (⋯) → Apps → Install Clarity & Co'
+      else if (isChrome) msg += '• Click the install icon in the address bar\n• Or: Menu (⋮) → "Install Clarity & Co"'
       else if (isSafari) msg += '• File → Add to Dock (macOS Sonoma+)'
       else msg += '• Use Chrome or Edge for best install experience'
       alert(msg)
@@ -336,9 +340,9 @@ export function MobileTopBar() {
       </button>
       <div className="flex items-center gap-2 flex-1">
         <div className="h-7 w-7 rounded-lg overflow-hidden">
-          <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+          <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
         </div>
-        <span className="font-bold">HomeLedger</span>
+        <span className="font-bold tracking-tight"><span>Clarity</span><span className="text-amber-500">&amp; Co</span></span>
       </div>
       <div className="relative flex items-center gap-1">
         <IntelligenceAlertBell />
@@ -359,13 +363,43 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+function PasswordChangeBanner() {
+  const { data: session } = useSession()
+  const [dismissed, setDismissed] = useState(false)
+  const mustChange = (session?.user as any)?.mustChangePassword
+
+  if (!mustChange || dismissed) return null
+
+  return (
+    <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-sm text-amber-400">
+        <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+        <span>Your account uses a temporary password.</span>
+        <Link href="/change-password" className="font-semibold underline underline-offset-2 hover:text-amber-300">
+          Change it now
+        </Link>
+      </div>
+      <button onClick={() => setDismissed(true)} className="text-amber-400/60 hover:text-amber-400 text-xs flex-shrink-0">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
 
   // Show bare layout (no sidebar) for public/auth pages or when not authenticated
   const isPublicPage = pathname === "/"
-  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname === "/reset-password"
+    || pathname.startsWith("/blog")
+    || pathname.startsWith("/terms")
+    || pathname.startsWith("/privacy")
+    || pathname.startsWith("/verify-purchase")
+    || pathname.startsWith("/verify-identity")
+    || pathname.startsWith("/verify/")
+    || pathname.startsWith("/upload/")
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/verify-email"
   const isLoading = status === "loading"
   const isUnauthenticated = status === "unauthenticated"
 
@@ -382,7 +416,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20 animate-pulse">
-            <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+            <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
@@ -399,7 +433,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : pathname.startsWith('/documents') ? 'documents'
     : pathname.startsWith('/life-events') ? 'life'
     : pathname.startsWith('/vault') ? 'vault'
-    : pathname.startsWith('/projections') ? 'general'
+    : pathname.startsWith('/insurance') ? 'insurance'
+    : pathname.startsWith('/properties') ? 'properties'
+    : pathname.startsWith('/projections') ? 'projections'
+    : pathname.startsWith('/tax-timeline') ? 'tax-timeline'
+    : pathname.startsWith('/transfers') ? 'transfers'
+    : pathname.startsWith('/connections') ? 'connections'
+    : pathname.startsWith('/household') ? 'household'
+    : pathname.startsWith('/accountant') ? 'accountant'
+    : pathname.startsWith('/academy') ? 'academy'
+    : pathname.startsWith('/product-calculator') ? 'product-calculator'
+    : pathname.startsWith('/english-hub') ? 'english-hub'
+    : pathname.startsWith('/relocation') ? 'relocation'
+    : pathname.startsWith('/services') ? 'services'
+    : pathname.startsWith('/correspondence') ? 'correspondence'
+    : pathname.startsWith('/providers') ? 'providers'
+    : pathname.startsWith('/files') ? 'files'
+    : pathname.startsWith('/email') ? 'email'
+    : pathname.startsWith('/actions') ? 'actions'
+    : pathname.startsWith('/categorization-rules') ? 'categories'
+    : pathname.startsWith('/learn') ? 'learn'
+    : pathname.startsWith('/settings') ? 'settings'
+    : pathname.startsWith('/dashboard') ? 'general'
     : pathname.startsWith('/entities') ? 'general'
     : 'general';
 
@@ -413,6 +468,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <div className="flex flex-1 flex-col overflow-hidden">
               <MobileTopBar />
+              <PasswordChangeBanner />
               {isFullscreen ? (
                 <main className="relative flex-1 overflow-hidden bg-[#050510]">
                   {children}

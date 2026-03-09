@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { ModuleGuide } from '@/components/module-guide';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,6 +54,8 @@ export function SettingsClient() {
   const { data: session, update: updateSession } = useSession();
   const { theme, setTheme } = useTheme();
   const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
+  const isAdmin = (session?.user as any)?.role === 'admin';
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,6 +64,8 @@ export function SettingsClient() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [pendingLogo, setPendingLogo] = useState<{ preview: string; dataUrl: string } | null>(null);
+  const [setAsSiteLogo, setSetAsSiteLogo] = useState(true);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState({
     loginAlerts: false,
@@ -70,12 +74,16 @@ export function SettingsClient() {
     filingNotifications: true,
   });
   const [savingNotif, setSavingNotif] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
-    // Load logo from server
+    // Load logo from server — use serve endpoint for reliable display
     fetch('/api/settings/logo')
       .then(r => r.json())
-      .then(d => { if (d.logoUrl) setLogoUrl(d.logoUrl); })
+      .then(d => { if (d.logoUrl) setLogoUrl(`/api/settings/logo/serve?v=${Date.now()}`); })
       .catch(() => {});
   }, []);
 
@@ -109,7 +117,7 @@ export function SettingsClient() {
       toast({ title: t('settings.profileUpdated') });
       await updateSession({ name: fullName });
     } catch (err: any) {
-      toast({ title: err.message || 'Failed', variant: 'destructive' });
+      toast({ title: err.message || (isPt ? 'Falhou' : 'Failed'), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -136,7 +144,7 @@ export function SettingsClient() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      toast({ title: err.message || 'Failed', variant: 'destructive' });
+      toast({ title: err.message || (isPt ? 'Falhou' : 'Failed'), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -212,7 +220,8 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
-      {/* Identity Verification */}
+      {/* Identity Verification — admin only */}
+      {isAdmin && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -255,9 +264,10 @@ export function SettingsClient() {
           )}
         </CardContent>
       </Card>
+      )}
 
-      {/* Categorisation Intelligence Mode */}
-      <Card>
+      {/* Categorisation Intelligence Mode — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-5 w-5 text-purple-500" /> Categorisation Mode
@@ -278,8 +288,8 @@ export function SettingsClient() {
                   try {
                     await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categorizationMode: mode }) });
                     setProfile(p => p ? { ...p, categorizationMode: mode } as any : p);
-                    toast({ title: `Categorisation mode set to ${label}` });
-                  } catch { toast({ title: 'Failed to update', variant: 'destructive' }); }
+                    toast({ title: isPt ? `Modo de categorização definido como ${label}` : `Categorisation mode set to ${label}` });
+                  } catch { toast({ title: isPt ? 'Falha ao atualizar' : 'Failed to update', variant: 'destructive' }); }
                 }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${isSelected ? color + ' ring-2 ring-purple-500/50' : 'border-border hover:bg-muted/30'}`}
               >
@@ -296,9 +306,10 @@ export function SettingsClient() {
           })}
         </CardContent>
       </Card>
+      )}
 
       {/* Logo / Branding */}
-      <Card>
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Image className="h-5 w-5" /> {t('settings.logo')}
@@ -310,7 +321,9 @@ export function SettingsClient() {
           </p>
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30">
-              {logoUrl ? (
+              {pendingLogo ? (
+                <img src={pendingLogo.preview} alt="Preview" className="h-full w-full object-contain" />
+              ) : logoUrl ? (
                 <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
               ) : (
                 <Image className="h-6 w-6 text-muted-foreground/40" />
@@ -326,44 +339,58 @@ export function SettingsClient() {
                     const input = document.createElement('input');
                     input.type = 'file';
                     input.accept = 'image/*';
-                    input.onchange = async (e) => {
+                    input.onchange = (e) => {
                       const file = (e.target as HTMLInputElement).files?.[0];
                       if (!file) return;
                       if (file.size > 500 * 1024) {
                         toast({ title: t('settings.imageTooLarge'), variant: 'destructive' });
                         return;
                       }
-                      setUploadingLogo(true);
                       const reader = new FileReader();
-                      reader.onload = async () => {
+                      reader.onload = () => {
                         const dataUrl = reader.result as string;
-                        try {
-                          const res = await fetch('/api/settings/logo', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ dataUrl }),
-                          });
-                          const data = await res.json();
-                          if (res.ok && data.logoUrl) {
-                            setLogoUrl(data.logoUrl);
-                            toast({ title: t('settings.logoSaved') });
-                          } else {
-                            toast({ title: data.error || 'Failed to upload', variant: 'destructive' });
-                          }
-                        } catch {
-                          toast({ title: 'Upload failed', variant: 'destructive' });
-                        }
-                        setUploadingLogo(false);
+                        setPendingLogo({ preview: dataUrl, dataUrl });
                       };
                       reader.readAsDataURL(file);
                     };
                     input.click();
                   }}
                 >
-                  {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Image className="h-4 w-4 mr-1" />}
+                  <Image className="h-4 w-4 mr-1" />
                   {t('settings.uploadLogo')}
                 </Button>
-                {logoUrl && (
+                {pendingLogo && (
+                  <Button
+                    size="sm"
+                    disabled={uploadingLogo}
+                    onClick={async () => {
+                      setUploadingLogo(true);
+                      try {
+                        const res = await fetch('/api/settings/logo', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ dataUrl: pendingLogo.dataUrl, setAsSiteLogo: isAdmin && setAsSiteLogo }),
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.logoUrl) {
+                          setLogoUrl(`/api/settings/logo/serve?v=${Date.now()}`);
+                          setPendingLogo(null);
+                          const siteMsg = data.siteIconsGenerated ? (isPt ? ' + Favicon e ícones PWA atualizados!' : ' + Favicon & PWA icons updated!') : '';
+                          toast({ title: t('settings.logoSaved') + siteMsg });
+                        } else {
+                          toast({ title: data.error || (isPt ? 'Falha no envio' : 'Failed to upload'), variant: 'destructive' });
+                        }
+                      } catch {
+                        toast({ title: isPt ? 'Falha no envio' : 'Upload failed', variant: 'destructive' });
+                      }
+                      setUploadingLogo(false);
+                    }}
+                  >
+                    {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+                    Save Logo
+                  </Button>
+                )}
+                {!pendingLogo && logoUrl && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -373,19 +400,41 @@ export function SettingsClient() {
                         setLogoUrl(null);
                         toast({ title: t('settings.logoRemoved') });
                       } catch {
-                        toast({ title: 'Failed to remove logo', variant: 'destructive' });
+                        toast({ title: isPt ? 'Falha ao remover logo' : 'Failed to remove logo', variant: 'destructive' });
                       }
                     }}
                   >
                     <Trash2 className="h-4 w-4 mr-1" /> {t('settings.removeLogo')}
                   </Button>
                 )}
+                {pendingLogo && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPendingLogo(null)}
+                  >
+                    Cancel
+                  </Button>
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground">{t('settings.logoFormat')}</p>
+              {pendingLogo && (
+                <label className="flex items-center gap-2 mt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={setAsSiteLogo}
+                    onChange={e => setSetAsSiteLogo(e.target.checked)}
+                    className="rounded border-border"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {isPt ? 'Definir como logo do site, favicon e ícones PWA (homescreen)' : 'Set as site logo, favicon & PWA icons (homescreen)'}
+                  </span>
+                </label>
+              )}
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>)}
 
       {/* Change Password */}
       <Card>
@@ -413,8 +462,33 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
-      {/* Email Notifications */}
-      <Card>
+      {/* Link Google Account — admin only */}
+      {isAdmin && (<Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <svg className="h-5 w-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            {isPt ? 'Conta Google' : 'Google Account'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {isPt
+              ? 'Vincule sua conta do Google para fazer login mais rapidamente, sem precisar de senha.'
+              : 'Link your Google account to sign in faster without needing a password.'}
+          </p>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => signIn('google', { callbackUrl: '/settings' })}
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            {isPt ? 'Vincular conta do Google' : 'Link Google Account'}
+          </Button>
+        </CardContent>
+      </Card>)}
+
+      {/* Email Notifications — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Bell className="h-5 w-5" /> Email Notifications
@@ -444,10 +518,10 @@ export function SettingsClient() {
                     body: JSON.stringify({ notificationPreferences: updated }),
                   });
                   if (!res.ok) throw new Error();
-                  toast({ title: `${label} ${updated[key] ? 'enabled' : 'disabled'}` });
+                  toast({ title: `${label} ${updated[key] ? (isPt ? 'ativado' : 'enabled') : (isPt ? 'desativado' : 'disabled')}` });
                 } catch {
                   setNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
-                  toast({ title: 'Failed to update', variant: 'destructive' });
+                  toast({ title: isPt ? 'Falha ao atualizar' : 'Failed to update', variant: 'destructive' });
                 } finally { setSavingNotif(false); }
               }}
               className={`w-full text-left p-3 rounded-lg border transition-all flex items-center justify-between gap-3 ${
@@ -473,10 +547,10 @@ export function SettingsClient() {
             </button>
           ))}
         </CardContent>
-      </Card>
+      </Card>)}
 
-      {/* Subscription */}
-      <Card>
+      {/* Subscription — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <CreditCard className="h-5 w-5" /> {t('settings.subscription')}
@@ -533,8 +607,8 @@ export function SettingsClient() {
                           });
                           const data = await res.json();
                           if (data.url) window.location.href = data.url;
-                          else toast({ title: data.error || 'Failed', variant: 'destructive' });
-                        } catch { toast({ title: 'Failed', variant: 'destructive' }); }
+                          else toast({ title: data.error || (isPt ? 'Falhou' : 'Failed'), variant: 'destructive' });
+                        } catch { toast({ title: isPt ? 'Falhou' : 'Failed', variant: 'destructive' }); }
                         finally { setLoadingPlan(null); }
                       }}
                     >
@@ -557,18 +631,18 @@ export function SettingsClient() {
                   const res = await fetch('/api/stripe/portal', { method: 'POST' });
                   const data = await res.json();
                   if (data.url) window.location.href = data.url;
-                  else toast({ title: data.error || 'Failed', variant: 'destructive' });
-                } catch { toast({ title: 'Failed', variant: 'destructive' }); }
+                  else toast({ title: data.error || (isPt ? 'Falhou' : 'Failed'), variant: 'destructive' });
+                } catch { toast({ title: isPt ? 'Falhou' : 'Failed', variant: 'destructive' }); }
               }}
             >
               <ExternalLink className="h-4 w-4 mr-2" /> {t('settings.manageBilling')}
             </Button>
           )}
         </CardContent>
-      </Card>
+      </Card>)}
 
-      {/* Appearance */}
-      <Card>
+      {/* Appearance — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Palette className="h-5 w-5" /> {t('settings.appearance')}
@@ -594,10 +668,10 @@ export function SettingsClient() {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </Card>)}
 
-      {/* Account Stats */}
-      <Card>
+      {/* Account Stats — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <BarChart3 className="h-5 w-5" /> {t('settings.accountOverview')}
@@ -624,10 +698,10 @@ export function SettingsClient() {
             </p>
           )}
         </CardContent>
-      </Card>
+      </Card>)}
 
-      {/* Data Export */}
-      <Card>
+      {/* Data Export & GDPR — admin only */}
+      {isAdmin && (<Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Download className="h-5 w-5" /> {t('settings.dataExport')}
@@ -657,8 +731,106 @@ export function SettingsClient() {
               <Download className="h-4 w-4 mr-2" /> {t('settings.exportCsv')}
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            GDPR Article 20 — Your data export includes all personal data we hold about you.
+          </p>
         </CardContent>
-      </Card>
+      </Card>)}
+
+      {/* Delete Account — GDPR Article 17 — admin only */}
+      {isAdmin && (<Card className="border-red-500/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2 text-red-500">
+            <Trash2 className="h-5 w-5" /> Delete Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+            <p className="text-sm font-medium text-red-500">This action is permanent and cannot be undone.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Deleting your account will permanently remove all your data including: entities, statements, invoices, bills, documents, vault entries, email accounts, insurance policies, life events, and all other associated records.
+            </p>
+          </div>
+          {!showDeleteConfirm ? (
+            <Button
+              variant="outline"
+              className="border-red-500/30 text-red-500 hover:bg-red-500/10"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> I want to delete my account
+            </Button>
+          ) : (
+            <div className="space-y-3 p-4 rounded-lg border border-red-500/30 bg-red-500/5">
+              <p className="text-sm font-medium">Before deleting, we recommend downloading your data:</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open('/api/export?format=json&sections=all', '_blank');
+                  toast({ title: isPt ? 'Baixando seus dados...' : 'Downloading your data...' });
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" /> Download All Data (JSON)
+              </Button>
+              <div className="space-y-2 pt-2 border-t border-red-500/20">
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Enter your password to confirm</Label>
+                  <Input
+                    type="password"
+                    value={deletePassword}
+                    onChange={e => setDeletePassword(e.target.value)}
+                    placeholder="Your current password"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Type <span className="font-mono font-bold">DELETE MY ACCOUNT</span> to confirm</Label>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE MY ACCOUNT"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="destructive"
+                    disabled={deletingAccount || deleteConfirmText !== 'DELETE MY ACCOUNT' || !deletePassword}
+                    onClick={async () => {
+                      setDeletingAccount(true);
+                      try {
+                        const res = await fetch('/api/settings/delete-account', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ password: deletePassword, confirmation: deleteConfirmText }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error);
+                        toast({ title: isPt ? 'Conta excluída. Redirecionando...' : 'Account deleted. Redirecting...' });
+                        setTimeout(() => { window.location.href = '/login'; }, 2000);
+                      } catch (err: any) {
+                        toast({ title: err.message || (isPt ? 'Falha ao excluir conta' : 'Failed to delete account'), variant: 'destructive' });
+                        setDeletingAccount(false);
+                      }
+                    }}
+                  >
+                    {deletingAccount ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Permanently Delete Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeletePassword('');
+                      setDeleteConfirmText('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>)}
     </div>
   );
 }

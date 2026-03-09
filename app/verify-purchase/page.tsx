@@ -126,9 +126,9 @@ export default function VerifyPurchasePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="h-9 w-9 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20">
-              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+              <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
             </div>
-            <span className="text-lg font-bold text-white">HomeLedger</span>
+            <span className="text-lg font-bold text-white">Clarity & Co</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Fingerprint className="h-4 w-4 text-violet-400" />
@@ -383,7 +383,7 @@ export default function VerifyPurchasePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-6 text-center text-xs text-slate-500">
-        <p>© {new Date().getFullYear()} HomeLedger. Secure payments by Stripe. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Clarity & Co. Secure payments by Stripe. All rights reserved.</p>
       </footer>
     </div>
   );

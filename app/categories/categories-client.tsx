@@ -70,7 +70,8 @@ const INCOME_COLORS = [
 ];
 
 export default function CategoriesClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -132,7 +133,7 @@ export default function CategoriesClient() {
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast({ title: 'Name required', variant: 'destructive' });
+      toast({ title: isPt ? 'Nome obrigatório' : 'Name required', variant: 'destructive' });
       return;
     }
 
@@ -147,7 +148,7 @@ export default function CategoriesClient() {
       });
 
       if (res.ok) {
-        toast({ title: editCategory ? 'Category Updated' : 'Category Created' });
+        toast({ title: editCategory ? (isPt ? 'Categoria Atualizada' : 'Category Updated') : (isPt ? 'Categoria Criada' : 'Category Created') });
         setDialogOpen(false);
         fetchCategories();
       } else {
@@ -164,7 +165,7 @@ export default function CategoriesClient() {
     try {
       const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'Category Deleted' });
+        toast({ title: isPt ? 'Categoria Excluída' : 'Category Deleted' });
         fetchCategories();
       } else {
         const error = await res.json();
@@ -197,11 +198,11 @@ export default function CategoriesClient() {
               <div className="flex items-center gap-2 mt-1">
                 {category.type === 'income' ? (
                   <Badge variant="outline" className="text-xs text-muted-foreground/60 border-border bg-slate-50 dark:bg-slate-800/50">
-                    <ArrowDownCircle className="h-3 w-3 mr-1" /> Income
+                    <ArrowDownCircle className="h-3 w-3 mr-1" /> {isPt ? 'Receita' : 'Income'}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="text-xs text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30">
-                    <ArrowUpCircle className="h-3 w-3 mr-1" /> Expense
+                    <ArrowUpCircle className="h-3 w-3 mr-1" /> {isPt ? 'Despesa' : 'Expense'}
                   </Badge>
                 )}
                 {category.isDefault && (
@@ -222,20 +223,18 @@ export default function CategoriesClient() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Permanently delete "{category.name}"?</AlertDialogTitle>
+                  <AlertDialogTitle>{isPt ? `Excluir permanentemente "${category.name}"?` : `Permanently delete "${category.name}"?`}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. The category will be permanently removed from the system.
-                    Bills, invoices, and transactions using this category will become uncategorized.
-                    Any budgets and categorization rules linked to it will also be deleted.
+                    {isPt ? 'Esta ação não pode ser desfeita. A categoria será removida permanentemente. Contas, faturas e transações usando esta categoria ficarão sem categoria. Orçamentos e regras vinculados também serão excluídos.' : 'This action cannot be undone. The category will be permanently removed from the system. Bills, invoices, and transactions using this category will become uncategorized. Any budgets and categorization rules linked to it will also be deleted.'}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{isPt ? 'Cancelar' : 'Cancel'}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleDelete(category.id)}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Delete Permanently
+                    {isPt ? 'Excluir Permanentemente' : 'Delete Permanently'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -265,11 +264,11 @@ export default function CategoriesClient() {
             <span className="font-medium text-sm truncate">{category.name}</span>
             {category.type === 'income' ? (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground/60 border-border bg-slate-50 dark:bg-slate-800/50">
-                Income
+                {isPt ? 'Receita' : 'Income'}
               </Badge>
             ) : (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30">
-                Expense
+                {isPt ? 'Despesa' : 'Expense'}
               </Badge>
             )}
             {category.isDefault && (
@@ -293,20 +292,18 @@ export default function CategoriesClient() {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Permanently delete "{category.name}"?</AlertDialogTitle>
+              <AlertDialogTitle>{isPt ? `Excluir permanentemente "${category.name}"?` : `Permanently delete "${category.name}"?`}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. The category will be permanently removed from the system.
-                Bills, invoices, and transactions using this category will become uncategorized.
-                Any budgets and categorization rules linked to it will also be deleted.
+                {isPt ? 'Esta ação não pode ser desfeita. A categoria será removida permanentemente.' : 'This action cannot be undone. The category will be permanently removed from the system.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{isPt ? 'Cancelar' : 'Cancel'}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleDelete(category.id)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete Permanently
+                {isPt ? 'Excluir Permanentemente' : 'Delete Permanently'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -361,19 +358,19 @@ export default function CategoriesClient() {
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Category
+              {isPt ? 'Nova Categoria' : 'Add Category'}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{editCategory ? 'Edit Category' : 'New Category'}</DialogTitle>
+              <DialogTitle>{editCategory ? (isPt ? 'Editar Categoria' : 'Edit Category') : (isPt ? 'Nova Categoria' : 'New Category')}</DialogTitle>
               <DialogDescription>
-                {editCategory ? 'Update the category details' : 'Create a new category for tracking'}
+                {editCategory ? (isPt ? 'Atualize os detalhes da categoria' : 'Update the category details') : (isPt ? 'Crie uma nova categoria para rastreamento' : 'Create a new category for tracking')}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div>
-                <Label>Type</Label>
+                <Label>{isPt ? 'Tipo' : 'Type'}</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value: CategoryType) => {
@@ -390,35 +387,35 @@ export default function CategoriesClient() {
                   <SelectContent>
                     <SelectItem value="expense">
                       <span className="flex items-center gap-2">
-                        <ArrowUpCircle className="h-4 w-4 text-muted-foreground" /> Expense
+                        <ArrowUpCircle className="h-4 w-4 text-muted-foreground" /> {isPt ? 'Despesa' : 'Expense'}
                       </span>
                     </SelectItem>
                     <SelectItem value="income">
                       <span className="flex items-center gap-2">
-                        <ArrowDownCircle className="h-4 w-4 text-green-500" /> Income
+                        <ArrowDownCircle className="h-4 w-4 text-green-500" /> {isPt ? 'Receita' : 'Income'}
                       </span>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Name</Label>
+                <Label>{isPt ? 'Nome' : 'Name'}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={formData.type === 'income' ? 'e.g., Salary' : 'e.g., Utilities'}
+                  placeholder={formData.type === 'income' ? (isPt ? 'ex: Salário' : 'e.g., Salary') : (isPt ? 'ex: Utilidades' : 'e.g., Utilities')}
                 />
               </div>
               <div>
-                <Label>Description</Label>
+                <Label>{isPt ? 'Descrição' : 'Description'}</Label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={formData.type === 'income' ? 'e.g., Monthly employment income' : 'e.g., Gas, electricity, water'}
+                  placeholder={formData.type === 'income' ? (isPt ? 'ex: Renda mensal de emprego' : 'e.g., Monthly employment income') : (isPt ? 'ex: Gás, eletricidade, água' : 'e.g., Gas, electricity, water')}
                 />
               </div>
               <div>
-                <Label>Icon</Label>
+                <Label>{isPt ? 'Ícone' : 'Icon'}</Label>
                 <div className="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto">
                   {AVAILABLE_ICONS.map((icon) => (
                     <button
@@ -433,7 +430,7 @@ export default function CategoriesClient() {
                 </div>
               </div>
               <div>
-                <Label>Color</Label>
+                <Label>{isPt ? 'Cor' : 'Color'}</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {currentColors.map((color) => (
                     <button
@@ -448,8 +445,8 @@ export default function CategoriesClient() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSubmit}>{editCategory ? 'Update' : 'Create'}</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{isPt ? 'Cancelar' : 'Cancel'}</Button>
+              <Button onClick={handleSubmit}>{editCategory ? (isPt ? 'Atualizar' : 'Update') : (isPt ? 'Criar' : 'Create')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

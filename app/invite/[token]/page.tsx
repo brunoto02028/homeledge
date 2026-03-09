@@ -56,9 +56,9 @@ export default function InviteAcceptPage() {
           {/* Header */}
           <div className="flex items-center justify-center gap-3 mb-2">
             <div className="h-10 w-10 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
-              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+              <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
             </div>
-            <span className="font-bold text-xl">HomeLedger</span>
+            <span className="font-bold text-xl">Clarity & Co</span>
           </div>
 
           {state === 'ready' && (

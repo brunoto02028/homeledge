@@ -79,7 +79,8 @@ interface Account {
 }
 
 export default function StatementsClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [statements, setStatements] = useState<BankStatement[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -375,17 +376,17 @@ export default function StatementsClient() {
             if (autoCategorised > 0) {
               msg += ` • ${autoCategorised} auto-categorised`;
             }
-            toast({ title: 'Statement Processed ✓', description: msg });
+            toast({ title: isPt ? 'Extrato Processado ✓' : 'Statement Processed ✓', description: msg });
           } else if (status === 'needs_review') {
             toast({ 
-              title: 'Statement Needs Review', 
-              description: result.parseError || `${txCount} transactions found - please review`,
+              title: isPt ? 'Extrato Precisa de Revisão' : 'Statement Needs Review', 
+              description: result.parseError || (isPt ? `${txCount} transações encontradas - revise` : `${txCount} transactions found - please review`),
               variant: 'default'
             });
           } else {
             toast({ 
-              title: 'Statement Saved (Review Required)', 
-              description: result.parseError || 'Could not extract transactions automatically',
+              title: isPt ? 'Extrato Salvo (Revisão Necessária)' : 'Statement Saved (Review Required)', 
+              description: result.parseError || (isPt ? 'Não foi possível extrair transações automaticamente' : 'Could not extract transactions automatically'),
               variant: 'destructive'
             });
           }
@@ -468,11 +469,11 @@ export default function StatementsClient() {
         
         if (data.success && data.rule) {
           toast({ 
-            title: '🧠 Rule Learned!', 
+            title: isPt ? '🧠 Regra Aprendida!' : '🧠 Rule Learned!', 
             description: data.message,
           });
         } else {
-          toast({ title: 'Category Updated' });
+          toast({ title: isPt ? 'Categoria Atualizada' : 'Category Updated' });
         }
       } else {
         await fetch(`/api/statements/transactions/${transactionId}`, {
@@ -480,13 +481,13 @@ export default function StatementsClient() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ categoryId }),
         });
-        toast({ title: 'Category Updated' });
+        toast({ title: isPt ? 'Categoria Atualizada' : 'Category Updated' });
       }
       await fetchStatements();
       setEditingTransaction(null);
     } catch (error) {
       console.error('Error updating category:', error);
-      toast({ title: 'Error', description: 'Failed to update category', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao atualizar categoria' : 'Failed to update category', variant: 'destructive' });
     }
   };
 
@@ -509,8 +510,8 @@ export default function StatementsClient() {
       }
       
       toast({ 
-        title: '✅ Bulk Categorisation Complete', 
-        description: `Applied category to ${successCount} similar transactions`
+        title: isPt ? '✅ Categorização em Massa Concluída' : '✅ Bulk Categorisation Complete', 
+        description: isPt ? `Categoria aplicada a ${successCount} transações similares` : `Applied category to ${successCount} similar transactions`
       });
       
       setShowApplyToSimilarDialog(false);
@@ -519,7 +520,7 @@ export default function StatementsClient() {
       await fetchStatements();
     } catch (error) {
       console.error('Error applying to similar:', error);
-      toast({ title: 'Error', description: 'Failed to apply to some transactions', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao aplicar em algumas transações' : 'Failed to apply to some transactions', variant: 'destructive' });
     } finally {
       setApplyingToSimilar(false);
     }
@@ -527,8 +528,8 @@ export default function StatementsClient() {
 
   const skipSimilarTransactions = () => {
     toast({ 
-      title: '🧠 Rule Learned!', 
-      description: `Future "${pendingCategorisation?.keyword}" transactions will be auto-categorised`
+      title: isPt ? '🧠 Regra Aprendida!' : '🧠 Rule Learned!', 
+      description: isPt ? `Transações futuras com "${pendingCategorisation?.keyword}" serão categorizadas automaticamente` : `Future "${pendingCategorisation?.keyword}" transactions will be auto-categorised`
     });
     setShowApplyToSimilarDialog(false);
     setSimilarTransactions([]);
@@ -577,7 +578,7 @@ export default function StatementsClient() {
   // Re-classify transactions with HMRC AI
   const classifyTransactions = async (statementId: string) => {
     try {
-      toast({ title: 'Classifying...', description: 'Using AI to categorise transactions for HMRC' });
+      toast({ title: isPt ? 'Classificando...' : 'Classifying...', description: isPt ? 'Usando IA para categorizar transações para HMRC' : 'Using AI to categorise transactions for HMRC' });
       const res = await fetch('/api/statements/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -586,16 +587,16 @@ export default function StatementsClient() {
       const data = await res.json();
       if (data.success) {
         toast({ 
-          title: '✅ Classification Complete', 
-          description: `${data.rulesApplied} by rules, ${data.aiClassified} by AI`,
+          title: isPt ? '✅ Classificação Concluída' : '✅ Classification Complete', 
+          description: isPt ? `${data.rulesApplied} por regras, ${data.aiClassified} por IA` : `${data.rulesApplied} by rules, ${data.aiClassified} by AI`,
         });
         fetchStatements();
       } else {
-        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        toast({ title: isPt ? 'Erro' : 'Error', description: data.error, variant: 'destructive' });
       }
     } catch (error) {
       console.error('Error classifying:', error);
-      toast({ title: 'Error', description: 'Failed to classify transactions', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao classificar transações' : 'Failed to classify transactions', variant: 'destructive' });
     }
   };
 
@@ -638,11 +639,11 @@ export default function StatementsClient() {
         const data = await res.json();
         setAiSuggestion({ transactionId: tx.id, suggestion: data.suggestion });
       } else {
-        toast({ title: 'AI Error', description: 'Could not get suggestion', variant: 'destructive' });
+        toast({ title: isPt ? 'Erro de IA' : 'AI Error', description: isPt ? 'Não foi possível obter sugestão' : 'Could not get suggestion', variant: 'destructive' });
       }
     } catch (error) {
       console.error('AI suggest error:', error);
-      toast({ title: 'AI Error', description: 'Service unavailable', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro de IA' : 'AI Error', description: isPt ? 'Serviço indisponível' : 'Service unavailable', variant: 'destructive' });
     } finally {
       setAiSuggestingFor(null);
     }
@@ -662,7 +663,7 @@ export default function StatementsClient() {
     if (suggestion.suggestedCategoryId) {
       setDraftCategory(transactionId, suggestion.suggestedCategoryId);
       setAiSuggestion(null);
-      toast({ title: 'AI Suggestion Applied', description: `Category: ${suggestion.suggestedCategoryName}` });
+      toast({ title: isPt ? 'Sugestão de IA Aplicada' : 'AI Suggestion Applied', description: isPt ? `Categoria: ${suggestion.suggestedCategoryName}` : `Category: ${suggestion.suggestedCategoryName}` });
     } else if (suggestion.suggestNewCategory && suggestion.newCategoryDetails) {
       // Open create category dialog pre-filled with AI suggestion
       const details = suggestion.newCategoryDetails;
@@ -704,7 +705,7 @@ export default function StatementsClient() {
           setNewCategoryHmrcMapping(s.hmrcBox?.includes('17') ? 'office_costs' : s.hmrcBox?.includes('20') ? 'travel_costs' : 'none');
           setNewCategoryDeductibility(s.deductibilityPercent ?? 0);
         }
-        toast({ title: 'AI Filled', description: 'HMRC mapping and description auto-filled' });
+        toast({ title: isPt ? 'IA Preenchido' : 'AI Filled', description: isPt ? 'Mapeamento HMRC e descrição preenchidos automaticamente' : 'HMRC mapping and description auto-filled' });
       }
     } catch (error) {
       console.error('AI assist error:', error);
@@ -729,7 +730,7 @@ export default function StatementsClient() {
       });
       if (res.ok) {
         const newCat = await res.json();
-        toast({ title: 'Category Created', description: `${newCategoryName} added with HMRC mapping` });
+        toast({ title: isPt ? 'Categoria Criada' : 'Category Created', description: isPt ? `${newCategoryName} adicionada com mapeamento HMRC` : `${newCategoryName} added with HMRC mapping` });
         await fetchCategories();
         setShowNewCategoryDialog(false);
         
@@ -753,7 +754,7 @@ export default function StatementsClient() {
   const deleteStatement = async (id: string) => {
     try {
       await fetch(`/api/statements/${id}`, { method: 'DELETE' });
-      toast({ title: 'Statement Deleted' });
+      toast({ title: isPt ? 'Extrato Excluído' : 'Statement Deleted' });
       fetchStatements();
       setShowDeleteDialog(null);
     } catch (error) {
@@ -773,12 +774,12 @@ export default function StatementsClient() {
   const deleteTransaction = async (id: string) => {
     try {
       await fetch(`/api/statements/transactions/${id}`, { method: 'DELETE' });
-      toast({ title: 'Transaction Deleted', description: 'Transaction removed. This action is logged for audit purposes.' });
+      toast({ title: isPt ? 'Transação Excluída' : 'Transaction Deleted', description: isPt ? 'Transação removida. Esta ação é registrada para auditoria.' : 'Transaction removed. This action is logged for audit purposes.' });
       fetchStatements();
       setDeleteTransactionId(null);
     } catch (error) {
       console.error('Error deleting transaction:', error);
-      toast({ title: 'Error', description: 'Failed to delete transaction', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir transação' : 'Failed to delete transaction', variant: 'destructive' });
     }
   };
 
@@ -795,12 +796,12 @@ export default function StatementsClient() {
           type: editingTransactionData.type,
         }),
       });
-      toast({ title: 'Transaction Updated', description: 'Changes saved. Edit history is preserved for audit.' });
+      toast({ title: isPt ? 'Transação Atualizada' : 'Transaction Updated', description: isPt ? 'Alterações salvas. Histórico de edição preservado para auditoria.' : 'Changes saved. Edit history is preserved for audit.' });
       fetchStatements();
       setEditingTransactionData(null);
     } catch (error) {
       console.error('Error updating transaction:', error);
-      toast({ title: 'Error', description: 'Failed to update transaction', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao atualizar transação' : 'Failed to update transaction', variant: 'destructive' });
     }
   };
 
@@ -863,12 +864,12 @@ export default function StatementsClient() {
       for (const id of selectedTransactions) {
         await fetch(`/api/statements/transactions/${id}`, { method: 'DELETE' });
       }
-      toast({ title: 'Bulk Delete Complete', description: `${selectedTransactions.size} transactions deleted` });
+      toast({ title: isPt ? 'Exclusão em Massa Concluída' : 'Bulk Delete Complete', description: isPt ? `${selectedTransactions.size} transações excluídas` : `${selectedTransactions.size} transactions deleted` });
       setSelectedTransactions(new Set());
       fetchStatements();
     } catch (error) {
       console.error('Bulk delete error:', error);
-      toast({ title: 'Error', description: 'Failed to delete some transactions', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir algumas transações' : 'Failed to delete some transactions', variant: 'destructive' });
     }
   };
 
@@ -888,15 +889,15 @@ export default function StatementsClient() {
       }
       
       toast({ 
-        title: '🧠 Bulk Categorisation Complete', 
-        description: `${selectedTransactions.size} transactions categorised. ${learnedCount} new rules learned!`
+        title: isPt ? '🧠 Categorização em Massa Concluída' : '🧠 Bulk Categorisation Complete', 
+        description: isPt ? `${selectedTransactions.size} transações categorizadas. ${learnedCount} novas regras aprendidas!` : `${selectedTransactions.size} transactions categorised. ${learnedCount} new rules learned!`
       });
       setSelectedTransactions(new Set());
       setBulkCategoryId(null);
       fetchStatements();
     } catch (error) {
       console.error('Bulk categorise error:', error);
-      toast({ title: 'Error', description: 'Failed to categorise some transactions', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao categorizar algumas transações' : 'Failed to categorise some transactions', variant: 'destructive' });
     }
   };
 
@@ -1092,7 +1093,7 @@ export default function StatementsClient() {
               className="hidden"
               onChange={(e) => {
                 if (!selectedEntityId) {
-                  toast({ title: 'Entity Required', description: 'Please select an entity before uploading a statement.', variant: 'destructive' });
+                  toast({ title: isPt ? 'Entidade Obrigatória' : 'Entity Required', description: isPt ? 'Selecione uma entidade antes de enviar um extrato.' : 'Please select an entity before uploading a statement.', variant: 'destructive' });
                   return;
                 }
                 handleFileUpload(e.target.files);

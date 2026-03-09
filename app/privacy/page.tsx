@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | HomeLedger',
-  description: 'How HomeLedger collects, uses, and protects your personal data under UK GDPR.',
+  title: 'Privacy Policy | Clarity & Co',
+  description: 'How Clarity & Co collects, uses, and protects your personal data under UK GDPR.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -19,12 +19,12 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">1. Who We Are</h2>
             <p className="text-muted-foreground leading-relaxed">
-              HomeLedger is a UK-based financial management platform operated by Bruno Azenha Tonheta
+              Clarity & Co is a UK-based financial management platform operated by Bruno Azenha Tonheta
               (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;). We are the data controller for the personal data
-              processed through <strong>homeledger.co.uk</strong>.
+              processed through <strong>clarityco.co.uk</strong>.
             </p>
             <p className="text-muted-foreground leading-relaxed mt-2">
-              Contact: <a href="mailto:privacy@homeledger.co.uk" className="text-primary hover:underline">privacy@homeledger.co.uk</a>
+              Contact: <a href="mailto:privacy@clarityco.co.uk" className="text-primary hover:underline">privacy@clarityco.co.uk</a>
             </p>
           </section>
 
@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">4. Legal Basis for Processing</h2>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-              <li><strong>Contract</strong> — Processing necessary to provide the HomeLedger service you signed up for.</li>
+              <li><strong>Contract</strong> — Processing necessary to provide the Clarity & Co service you signed up for.</li>
               <li><strong>Consent</strong> — Open Banking connections, identity verification, and optional AI features.</li>
               <li><strong>Legitimate Interest</strong> — Service improvement, security monitoring, and fraud prevention.</li>
               <li><strong>Legal Obligation</strong> — Where required by UK law or HMRC regulations.</li>
@@ -117,7 +117,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Withdraw Consent</strong> — Withdraw consent for Open Banking or identity verification at any time.</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-3">
-              To exercise any of these rights, email <a href="mailto:privacy@homeledger.co.uk" className="text-primary hover:underline">privacy@homeledger.co.uk</a>. We will respond within 30 days.
+              To exercise any of these rights, email <a href="mailto:privacy@clarityco.co.uk" className="text-primary hover:underline">privacy@clarityco.co.uk</a>. We will respond within 30 days.
             </p>
           </section>
 
@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">10. Children</h2>
             <p className="text-muted-foreground leading-relaxed">
-              HomeLedger is not intended for use by anyone under 18 years of age. We do not knowingly collect data from children.
+              Clarity & Co is not intended for use by anyone under 18 years of age. We do not knowingly collect data from children.
             </p>
           </section>
 
@@ -154,7 +154,7 @@ export default function PrivacyPolicyPage() {
 
         <div className="mt-16 pt-8 border-t text-center">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-            &larr; Back to HomeLedger
+            &larr; Back to Clarity & Co
           </Link>
         </div>
       </div>

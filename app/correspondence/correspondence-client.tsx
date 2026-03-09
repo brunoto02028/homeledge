@@ -92,7 +92,8 @@ const emptyForm = {
 };
 
 export function CorrespondenceClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { selectedEntityId } = useEntityContext();
   const { toast } = useToast();
   const [items, setItems] = useState<CorrespondenceItem[]>([]);
@@ -116,7 +117,7 @@ export function CorrespondenceClient() {
       const res = await fetch(`/api/correspondence?${params.toString()}`);
       if (res.ok) setItems(await res.json());
     } catch {
-      toast({ title: 'Error loading correspondence', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao carregar correspondências' : 'Error loading correspondence', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ export function CorrespondenceClient() {
 
   const handleSave = async () => {
     if (!form.senderName || !form.subject || !form.dateReceived) {
-      toast({ title: 'Please fill required fields', variant: 'destructive' });
+      toast({ title: isPt ? 'Preencha os campos obrigatórios' : 'Please fill required fields', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -143,7 +144,7 @@ export function CorrespondenceClient() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        toast({ title: editId ? 'Updated' : 'Added' });
+        toast({ title: editId ? (isPt ? 'Atualizado' : 'Updated') : (isPt ? 'Adicionado' : 'Added') });
         setShowDialog(false);
         setEditId(null);
         setForm(emptyForm);
@@ -153,7 +154,7 @@ export function CorrespondenceClient() {
         toast({ title: err.error || 'Error', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error saving', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao salvar' : 'Error saving', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -164,12 +165,12 @@ export function CorrespondenceClient() {
     try {
       const res = await fetch(`/api/correspondence/${deleteId}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'Deleted' });
+        toast({ title: isPt ? 'Excluído' : 'Deleted' });
         fetchItems();
         if (detailItem?.id === deleteId) setDetailItem(null);
       }
     } catch {
-      toast({ title: 'Error deleting', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao excluir' : 'Error deleting', variant: 'destructive' });
     }
     setDeleteId(null);
   };
@@ -188,7 +189,7 @@ export function CorrespondenceClient() {
         fetchItems();
       }
     } catch {
-      toast({ title: 'Error updating status', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao atualizar status' : 'Error updating status', variant: 'destructive' });
     }
   };
 

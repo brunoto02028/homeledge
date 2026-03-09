@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import EnglishHubClient from './english-hub-client';
 
 export const metadata = {
-  title: 'English Hub | HomeLedger',
+  title: 'English Hub | Clarity & Co',
   description: 'Learn English for life in the UK — AI tutor, voice practice, CEFR levels, exam guides',
 };
 

@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | HomeLedger',
-  description: 'Terms and conditions for using the HomeLedger financial management platform.',
+  title: 'Terms of Service | Clarity & Co',
+  description: 'Terms and conditions for using the Clarity & Co financial management platform.',
 };
 
 export default function TermsOfServicePage() {
@@ -19,7 +19,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">1. Agreement</h2>
             <p className="text-muted-foreground leading-relaxed">
-              By accessing or using HomeLedger (&ldquo;the Service&rdquo;), operated at <strong>homeledger.co.uk</strong>,
+              By accessing or using Clarity & Co (&ldquo;the Service&rdquo;), operated at <strong>clarityco.co.uk</strong>,
               you agree to be bound by these Terms of Service (&ldquo;Terms&rdquo;). If you do not agree, do not use the Service.
             </p>
             <p className="text-muted-foreground leading-relaxed mt-2">
@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-2xl font-semibold mb-3">3. The Service</h2>
-            <p className="text-muted-foreground leading-relaxed mb-3">HomeLedger provides financial management tools including:</p>
+            <p className="text-muted-foreground leading-relaxed mb-3">Clarity & Co provides financial management tools including:</p>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
               <li>Bank statement upload, parsing, and AI-powered transaction categorisation.</li>
               <li>Invoice creation, tracking, and management.</li>
@@ -58,7 +58,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">4. Not Financial or Tax Advice</h2>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>HomeLedger is a tool, not an advisor.</strong> The Service does not provide financial, tax, legal,
+              <strong>Clarity & Co is a tool, not an advisor.</strong> The Service does not provide financial, tax, legal,
               or accounting advice. AI-generated categorisations, tax calculations, and reports are provided for
               informational purposes only. You should always consult a qualified accountant or tax advisor before
               making financial decisions or submitting tax returns.
@@ -109,7 +109,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">8. Intellectual Property</h2>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-              <li>The HomeLedger brand, logo, interface design, and codebase are our property.</li>
+              <li>The Clarity & Co brand, logo, interface design, and codebase are our property.</li>
               <li>Your data remains your property. We claim no ownership over your financial data.</li>
               <li>You grant us a limited licence to process your data solely to provide the Service.</li>
             </ul>
@@ -169,14 +169,14 @@ export default function TermsOfServicePage() {
             <h2 className="text-2xl font-semibold mb-3">14. Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms, contact us at{' '}
-              <a href="mailto:legal@homeledger.co.uk" className="text-primary hover:underline">legal@homeledger.co.uk</a>.
+              <a href="mailto:legal@clarityco.co.uk" className="text-primary hover:underline">legal@clarityco.co.uk</a>.
             </p>
           </section>
         </div>
 
         <div className="mt-16 pt-8 border-t text-center">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-            &larr; Back to HomeLedger
+            &larr; Back to Clarity & Co
           </Link>
         </div>
       </div>

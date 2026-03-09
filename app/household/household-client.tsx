@@ -16,9 +16,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import {
   Users, Plus, Crown, Shield, Eye, UserPlus, Mail, Trash2, Pencil, Loader2,
-  Home, Clock, CheckCircle, XCircle, Copy, UserMinus, Settings,
+  Home, Clock, CheckCircle, XCircle, Copy, UserMinus, Settings, ShieldCheck,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { CUSTOMER_MODULES, PERMISSION_LABELS, type PermissionKey } from '@/lib/permissions';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Member {
   id: string;
@@ -50,6 +52,7 @@ function useRoleConfig() {
   const { t } = useTranslation();
   return {
     owner: { label: t('household.owner'), icon: Crown, color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30' },
+    admin: { label: 'Admin', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30' },
     editor: { label: t('household.editor'), icon: Pencil, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' },
     viewer: { label: t('household.viewer'), icon: Eye, color: 'text-muted-foreground bg-muted' },
     accountant: { label: t('household.accountant'), icon: Shield, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30' },
@@ -69,6 +72,7 @@ export function HouseholdClient() {
   const [newName, setNewName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('viewer');
+  const [invitePermissions, setInvitePermissions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -127,7 +131,7 @@ export function HouseholdClient() {
       const res = await fetch(`/api/households/${selectedHousehold.id}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole, permissions: inviteRole === 'admin' ? [] : invitePermissions }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -135,12 +139,13 @@ export function HouseholdClient() {
         toast({ title: t('household.inviteSent'), description: inviteEmail });
       } else {
         toast({
-          title: 'Invitation Created',
-          description: `Invitation saved but email could not be sent. Share the invite link manually.`,
+          title: locale === 'pt-BR' ? 'Convite Criado' : 'Invitation Created',
+          description: locale === 'pt-BR' ? 'Convite salvo mas o email não pôde ser enviado. Compartilhe o link manualmente.' : 'Invitation saved but email could not be sent. Share the invite link manually.',
           variant: 'destructive',
         });
       }
       setInviteEmail('');
+      setInvitePermissions([]);
       setShowInviteDialog(false);
       fetchHouseholds();
     } catch (err: any) {
@@ -249,7 +254,8 @@ export function HouseholdClient() {
         <div className="grid gap-6">
           {allHouseholds.map((h) => {
             const isOwner = h.ownerId === userId;
-            const canManage = isOwner || h.myRole === 'editor';
+            const isAdmin = h.myRole === 'admin';
+            const canManage = isOwner || isAdmin || h.myRole === 'editor';
 
             return (
               <Card key={h.id}>
@@ -318,7 +324,7 @@ export function HouseholdClient() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {isOwner && !isOwnerMember && !isSelf ? (
+                              {(isOwner || isAdmin) && !isOwnerMember && !isSelf ? (
                                 <Select
                                   value={m.role}
                                   onValueChange={(v) => handleChangeRole(h.id, m.user.id, v)}
@@ -327,6 +333,7 @@ export function HouseholdClient() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="editor">{t('household.editor')}</SelectItem>
                                     <SelectItem value="viewer">{t('household.viewer')}</SelectItem>
                                     <SelectItem value="accountant">{t('household.accountant')}</SelectItem>
@@ -338,7 +345,7 @@ export function HouseholdClient() {
                                   {roleConfig.label}
                                 </Badge>
                               )}
-                              {isOwner && !isOwnerMember && !isSelf && (
+                              {(isOwner || isAdmin) && !isOwnerMember && !isSelf && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -356,7 +363,7 @@ export function HouseholdClient() {
                   </div>
 
                   {/* Pending Invitations */}
-                  {isOwner && h.invitations && h.invitations.length > 0 && (
+                  {(isOwner || isAdmin) && h.invitations && h.invitations.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
                         <Mail className="h-3.5 w-3.5" />
@@ -427,7 +434,7 @@ export function HouseholdClient() {
 
       {/* Invite Dialog */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('household.invite')}</DialogTitle>
             <DialogDescription>
@@ -446,23 +453,77 @@ export function HouseholdClient() {
             </div>
             <div className="space-y-2">
               <Label>{t('household.inviteRole')}</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
+              <Select value={inviteRole} onValueChange={(v) => { setInviteRole(v); if (v === 'admin') setInvitePermissions([]); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="viewer">
-                    <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> {t('household.viewer')}</span>
+                  <SelectItem value="admin">
+                    <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-500" /> Admin (Full Access)</span>
                   </SelectItem>
                   <SelectItem value="editor">
                     <span className="flex items-center gap-2"><Pencil className="h-4 w-4" /> {t('household.editor')}</span>
+                  </SelectItem>
+                  <SelectItem value="viewer">
+                    <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> {t('household.viewer')}</span>
                   </SelectItem>
                   <SelectItem value="accountant">
                     <span className="flex items-center gap-2"><Shield className="h-4 w-4" /> {t('household.accountant')}</span>
                   </SelectItem>
                 </SelectContent>
               </Select>
+              {inviteRole === 'admin' && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">Admin has full access to all modules, just like the owner.</p>
+              )}
             </div>
+
+            {inviteRole !== 'admin' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Module Permissions</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline"
+                      onClick={() => setInvitePermissions([...CUSTOMER_MODULES])}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground hover:underline"
+                      onClick={() => setInvitePermissions([])}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Choose which modules this member can access. Leave empty for all access.
+                </p>
+                <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto p-2 border rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  {CUSTOMER_MODULES.filter(m => m !== 'dashboard' && m !== 'settings').map((mod) => (
+                    <label key={mod} className="flex items-center gap-2 py-1 px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700/50 cursor-pointer">
+                      <Checkbox
+                        checked={invitePermissions.includes(mod)}
+                        onCheckedChange={(checked) => {
+                          setInvitePermissions(prev =>
+                            checked ? [...prev, mod] : prev.filter(p => p !== mod)
+                          );
+                        }}
+                      />
+                      <span className="text-xs">{PERMISSION_LABELS[mod as PermissionKey] || mod}</span>
+                    </label>
+                  ))}
+                </div>
+                {invitePermissions.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {invitePermissions.length} module{invitePermissions.length !== 1 ? 's' : ''} selected
+                    {' '}(+ Dashboard & Settings always included)
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowInviteDialog(false)}>{t('common.cancel')}</Button>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserId, getAccessibleUserIds } from '@/lib/auth';
+import { auditLog } from '@/lib/audit-log';
 
 // GET - List all bank statements (filtered by user)
 export async function GET(request: NextRequest) {
@@ -138,6 +139,10 @@ export async function POST(request: NextRequest) {
         categorizedCount,
       });
     }
+
+    await auditLog(userId, 'statement.uploaded', 'bank_statement', statement.id, {
+      metadata: { fileName: data.fileName, entityId: data.entityId || null },
+    });
 
     return NextResponse.json({ statement });
   } catch (error) {

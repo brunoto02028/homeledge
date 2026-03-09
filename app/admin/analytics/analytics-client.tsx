@@ -471,6 +471,9 @@ export function AnalyticsDashboard() {
           <p className="text-xs text-muted-foreground mt-1">System-wide behavior tracking and insights</p>
         </div>
         <div className="flex items-center gap-2">
+          <a href="/admin/analytics/monitoring" className="px-3 py-1.5 text-xs border rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/30 flex items-center gap-1.5 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700">
+            <Eye className="h-3.5 w-3.5" /> Monitoring
+          </a>
           <button onClick={() => { setMainView('users'); setActiveTab('overview'); }} className="px-3 py-1.5 text-xs border rounded-lg hover:bg-muted flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" /> Per-User
           </button>

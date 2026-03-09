@@ -345,7 +345,7 @@ export default function ComplianceDashboard() {
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Company Name (optional — shown to client)</label>
                 <input
                   type="text"
-                  placeholder="HomeLedger Ltd"
+                  placeholder="Clarity & Co Ltd"
                   value={newLink.companyName}
                   onChange={e => setNewLink(p => ({ ...p, companyName: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -376,7 +376,7 @@ export default function ComplianceDashboard() {
               <div className="flex items-center gap-2 text-green-500 font-semibold">
                 <CheckCircle2 className="h-5 w-5" /> Verification Link Created!
               </div>
-              <p className="text-sm text-muted-foreground">Send this link to your client. They can verify their identity without needing a HomeLedger account.</p>
+              <p className="text-sm text-muted-foreground">Send this link to your client. They can verify their identity without needing a Clarity & Co account.</p>
               <div className="flex items-center gap-2 bg-background rounded-lg p-2 border">
                 <input type="text" readOnly value={createdUrl} className="flex-1 bg-transparent text-sm outline-none truncate" />
                 <button onClick={() => copyUrl(createdUrl)} className="flex-shrink-0 p-1.5 rounded-md hover:bg-muted">

@@ -16,8 +16,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   CreditCard, Plus, Pencil, Trash2, Loader2, Check, Users, Crown,
-  UserPlus, Search,
+  UserPlus, Search, ShieldCheck, Save,
 } from 'lucide-react';
+
+const IDV_KEYS = [
+  { key: 'single', label: 'Single Check', priceKey: 'singlePrice', perKey: 'singlePer', checksKey: 'singleChecks' },
+  { key: 'businessPack', label: 'Business Pack', priceKey: 'businessPackPrice', perKey: 'businessPackPer', checksKey: 'businessPackChecks' },
+  { key: 'enterprise', label: 'Enterprise', priceKey: 'enterprisePrice', perKey: 'enterprisePer', checksKey: 'enterpriseChecks' },
+];
 
 interface Plan {
   id: string;
@@ -57,6 +63,47 @@ export default function AdminPlansPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyPlan);
 
+  // IDV package prices (stored in en.json via CMS)
+  const [idvPrices, setIdvPrices] = useState<Record<string, string>>({
+    singlePrice: '£2.99', singlePer: '/check', singleChecks: '1 verification',
+    businessPackPrice: '£19.99', businessPackPer: '/pack', businessPackChecks: '10 verifications',
+    enterprisePrice: '£49.99', enterprisePer: '/pack', enterpriseChecks: '50 verifications',
+  });
+  const [idvSaving, setIdvSaving] = useState(false);
+
+  const fetchIdvPrices = useCallback(async () => {
+    try {
+      const res = await fetch('/api/cms?all=true');
+      if (res.ok) {
+        const sections: any[] = await res.json();
+        const idvSection = sections.find((s: any) => s.sectionKey === 'idv');
+        if (idvSection?.content) {
+          const c = typeof idvSection.content === 'string' ? JSON.parse(idvSection.content) : idvSection.content;
+          setIdvPrices(prev => ({ ...prev, ...c }));
+        }
+      }
+    } catch {}
+  }, []);
+
+  const saveIdvPrices = async () => {
+    setIdvSaving(true);
+    try {
+      const res = await fetch('/api/cms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionKey: 'idv', content: idvPrices, isPublished: true }),
+      });
+      if (res.ok) {
+        toast({ title: 'IDV prices saved', description: 'Changes will appear on the landing page.' });
+      } else {
+        toast({ title: 'Failed to save IDV prices', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error saving IDV prices', variant: 'destructive' });
+    }
+    setIdvSaving(false);
+  };
+
   // Assign plan dialog
   const [showAssign, setShowAssign] = useState(false);
   const [assignUserId, setAssignUserId] = useState('');
@@ -85,8 +132,8 @@ export default function AdminPlansPage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchPlans(), fetchUsers()]).finally(() => setLoading(false));
-  }, [fetchPlans, fetchUsers]);
+    Promise.all([fetchPlans(), fetchUsers(), fetchIdvPrices()]).finally(() => setLoading(false));
+  }, [fetchPlans, fetchUsers, fetchIdvPrices]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -108,7 +155,7 @@ export default function AdminPlansPage() {
       const body = {
         name: form.name,
         displayName: form.displayName,
-        price: Number(form.price),
+        price: parseFloat(String(form.price)) || 0,
         interval: form.interval,
         features,
         limits,
@@ -255,7 +302,7 @@ export default function AdminPlansPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold">£{plan.price}</span>
+                <span className="text-3xl font-bold">£{Number(plan.price).toFixed(2)}</span>
                 <span className="text-sm text-muted-foreground">/{plan.interval === 'yearly' ? 'year' : 'mo'}</span>
               </div>
 
@@ -301,6 +348,55 @@ export default function AdminPlansPage() {
         )}
       </div>
 
+      {/* IDV Packages */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-violet-400" /> IDV Verification Packages
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Edit the prices shown on the public IDV landing page.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {IDV_KEYS.map(({ key, label, priceKey, perKey, checksKey }) => (
+              <div key={key} className="space-y-3 p-4 rounded-xl border">
+                <p className="font-semibold text-sm">{label}</p>
+                <div className="space-y-2">
+                  <div>
+                    <Label className="text-xs">Price (e.g. £2.99)</Label>
+                    <Input
+                      value={idvPrices[priceKey] || ''}
+                      onChange={e => setIdvPrices(p => ({ ...p, [priceKey]: e.target.value }))}
+                      placeholder="£2.99"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Per (e.g. /check)</Label>
+                    <Input
+                      value={idvPrices[perKey] || ''}
+                      onChange={e => setIdvPrices(p => ({ ...p, [perKey]: e.target.value }))}
+                      placeholder="/check"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Subtitle (e.g. 1 verification)</Label>
+                    <Input
+                      value={idvPrices[checksKey] || ''}
+                      onChange={e => setIdvPrices(p => ({ ...p, [checksKey]: e.target.value }))}
+                      placeholder="1 verification"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button onClick={saveIdvPrices} disabled={idvSaving} className="gap-2">
+            {idvSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save IDV Prices
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Users on Plans */}
       <Card>
         <CardHeader>
@@ -326,8 +422,8 @@ export default function AdminPlansPage() {
                   <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={u.plan === 'free' ? 'outline' : 'default'}>
-                    {plans.find(p => p.name === u.plan)?.displayName || u.plan}
+                  <Badge variant={!u.plan || u.plan === 'free' || u.plan === 'none' ? 'outline' : 'default'}>
+                    {plans.find(p => p.name === u.plan)?.displayName || u.plan || 'free'}
                   </Badge>
                   {u.planExpiresAt && (
                     <span className="text-xs text-muted-foreground">
@@ -381,8 +477,10 @@ export default function AdminPlansPage() {
                 <Input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={form.price}
-                  onChange={e => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+                  onChange={e => setForm({ ...form, price: e.target.value as any })}
+                  onBlur={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
               <div className="space-y-2">
@@ -469,9 +567,11 @@ export default function AdminPlansPage() {
               <Select value={assignPlan} onValueChange={setAssignPlan}>
                 <SelectTrigger><SelectValue placeholder="Select plan..." /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Free / No Plan</SelectItem>
+                  <SelectItem value="free">Free (legacy)</SelectItem>
                   {plans.filter(p => p.isActive).map(p => (
                     <SelectItem key={p.id} value={p.name}>
-                      {p.displayName} — £{p.price}/{p.interval === 'yearly' ? 'yr' : 'mo'}
+                      {p.displayName} — £{Number(p.price).toFixed(2)}/{p.interval === 'yearly' ? 'yr' : 'mo'}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -10,9 +10,13 @@
     "providers": "Fornecedores",
     "actions": "Ações",
     "categories": "Categorias",
+    "citizenship": "Teste de Cidadania UK",
+    "consulate": "Consulado Italiano",
+    "dbs": "Verificação DBS",
     "categorizationRules": "Regras Inteligentes",
     "reports": "Relatórios",
     "files": "Arquivos",
+    "smartUpload": "Upload Inteligente",
     "vault": "Cofre",
     "insurance": "Seguros",
     "correspondence": "Correspondência",
@@ -29,11 +33,13 @@
     "email": "E-mail",
     "intelligence": "Inteligência",
     "services": "Serviços",
+    "selfAssessmentGuide": "Guia Registro SA",
     "settings": "Configurações",
     "admin": "Admin",
     "users": "Usuários",
     "logout": "Sair",
     "integrations": "Integrações",
+    "marketing": "Marketing Hub",
     "cms": "Editar Site",
     "connections": "Conexões Gov",
     "plans": "Planos",
@@ -41,7 +47,9 @@
     "compliance": "Conformidade",
     "analytics": "Analytics do Site",
     "accountantSection": "Contabilidade",
-    "accountantDashboard": "Meus Clientes"
+    "accountantDashboard": "Meus Clientes",
+    "pdfEditor": "Editor de PDF",
+    "automation": "Automação Hub"
   },
   "common": {
     "save": "Salvar",
@@ -147,7 +155,7 @@
     "business": "Empresa",
     "accountType": "Tipo de Conta",
     "loginTitle": "Bem-vindo de volta",
-    "loginSubtitle": "Entre na sua conta HomeLedger",
+    "loginSubtitle": "Entre na sua conta Clarity & Co",
     "registerTitle": "Crie sua conta",
     "registerSubtitle": "Comece a gerenciar suas finanças hoje",
     "forgotTitle": "Esqueceu sua senha?",
@@ -226,7 +234,7 @@
     "accountOverview": "Resumo da Conta",
     "lastLogin": "Último acesso",
     "dataExport": "Exportar Dados",
-    "exportHint": "Baixe um backup completo dos seus dados do HomeLedger.",
+    "exportHint": "Baixe um backup completo dos seus dados do Clarity & Co.",
     "exportJson": "Exportar JSON",
     "exportCsv": "Exportar Transações CSV",
     "downloadingJson": "Baixando backup JSON...",
@@ -247,7 +255,7 @@
     "goodAfternoon": "Boa tarde",
     "goodEvening": "Boa noite",
     "dashboardOverview": "Painel de Controle",
-    "subtitle": "Acompanhe suas finanças e gerencie seu orçamento com o HomeLedger",
+    "subtitle": "Acompanhe suas finanças e gerencie seu orçamento com o Clarity & Co",
     "netPosition": "Posição Líquida",
     "recentActions": "Ações Recentes",
     "upcomingBills": "Próximas Contas",
@@ -506,7 +514,7 @@
     "createFirst": "Crie sua primeira família para começar a convidar membros da equipe"
   },
   "onboarding": {
-    "welcome": "Bem-vindo ao HomeLedger!",
+    "welcome": "Bem-vindo ao Clarity & Co!",
     "welcomeSubtitle": "Vamos configurar sua conta em alguns passos rápidos para personalizar sua experiência.",
     "personalInfo": "Informações Pessoais",
     "dateOfBirth": "Data de Nascimento",
@@ -794,7 +802,7 @@
   "login": {
     "welcomeBack": "Bem-vindo de Volta",
     "verifyIdentity": "Verifique sua Identidade",
-    "signIn": "Entrar no HomeLedger",
+    "signIn": "Entrar no Clarity & Co",
     "codeSentTo": "Código enviado para",
     "email": "E-mail",
     "password": "Senha",
@@ -919,19 +927,48 @@
       "getStartedFree": "Teste 7 Dias Grátis"
     },
     "hero": {
-      "badge": "Plataforma Financeira UK com IA",
-      "titleLine1": "Suas Finanças no UK,",
+      "badge": "Plataforma com IA + Serviços Profissionais de Contabilidade",
+      "titleLine1": "Suas Finanças,",
       "titleLine2": "Finalmente Simplificadas",
-      "subtitle": "Extratos bancários, faturas, relatórios HMRC, prazos fiscais, cofre seguro e assistente IA — tudo em uma plataforma feita para indivíduos e empresas no Reino Unido.",
+      "subtitle": "Gerencie suas finanças com a nossa plataforma poderosa — ou deixe a nossa equipe qualificada cuidar de tudo por você. Escrituração, declarações fiscais, IVA, folha de pagamento e muito mais, tudo em um só lugar. Para autônomos, pequenas empresas e profissionais no Reino Unido.",
       "ctaPrimary": "Teste 7 Dias Grátis",
       "ctaSecondary": "Veja Como Funciona",
-      "noCreditCard": "7 dias grátis · Planos a partir de £8,31/mês"
+      "noCreditCard": "7 dias grátis · Acesso completo à plataforma · Planos a partir de £8,31/mês"
     },
     "stats": {
       "modules": "Módulos Financeiros",
       "aiPowered": "Automação com IA",
       "hmrc": "Relatórios Conformes",
       "encryption": "Criptografia AES"
+    },
+    "managed": {
+      "badge": "Plataforma + Suporte Profissional",
+      "title1": "Suas Finanças, Gerenciadas por",
+      "title2": "Especialistas que se Importam",
+      "desc": "O Clarity & Co não é apenas software — é um serviço completo de gestão financeira. Você recebe uma plataforma poderosa para ver tudo em tempo real, mais a nossa equipe de profissionais qualificados cuidando da sua contabilidade, declarações fiscais e conformidade. Foque no seu negócio, nós cuidamos dos números.",
+      "platformTitle": "A Plataforma — Seu Centro Financeiro",
+      "platformDesc": "Acesse suas finanças 24/7 de qualquer dispositivo. Tudo organizado, automatizado e pronto para o HMRC.",
+      "pf1": "Extratos bancários, faturas e contas em um só lugar",
+      "pf2": "Digitalização inteligente de recibos com IA",
+      "pf3": "Relatórios fiscais em tempo real prontos para o HMRC",
+      "pf4": "Captura de documentos, OCR e cofre seguro",
+      "pf5": "Categorização automática de transações com IA",
+      "pf6": "Calendário fiscal, prazos e lembretes",
+      "serviceTitle": "Nossa Equipe — Seus Parceiros Financeiros",
+      "serviceDesc": "Profissionais qualificados gerenciando suas contas, entregando suas declarações e mantendo você em conformidade — tudo pela plataforma.",
+      "sv1": "Self Assessment e Corporation Tax entregues por nós",
+      "sv2": "Escrituração mensal e declarações de IVA (MTD)",
+      "sv3": "Processamento de salários, payslips e submissões RTI",
+      "sv4": "Secretariado empresarial e registros no Companies House",
+      "sv5": "Supervisão AML, registro ICO, seguro PI",
+      "sv6": "Atendimento bilíngue em Inglês e Português",
+      "howTitle": "Como Funciona",
+      "hw1": "Cadastre-se e conecte suas contas — nós configuramos tudo",
+      "hw2": "Atribuímos um profissional dedicado às suas finanças",
+      "hw3": "Acompanhe tudo em tempo real no seu painel personalizado",
+      "hw4": "Entregamos suas declarações e ajudamos seu negócio a crescer",
+      "cta1": "Explorar Nossos Serviços",
+      "cta2": "Começar Período Gratuito"
     },
     "features": {
       "title": "Tudo Que Você Precisa em Um Só Lugar",
@@ -990,7 +1027,7 @@
       "ukLifeEvents": "Eventos de Vida UK",
       "ukLifeEventsDesc": "Acompanhe marcos da vida — comprar um imóvel, casamento, abrir uma empresa. Checklists financeiros personalizados.",
       "pwa": "Instalar como App (PWA)",
-      "pwaDesc": "Instale o HomeLedger no celular ou desktop. Funciona offline, acesso instantâneo da tela inicial — sem app store.",
+      "pwaDesc": "Instale o Clarity & Co no celular ou desktop. Funciona offline, acesso instantâneo da tela inicial — sem app store.",
       "accountantPortal": "Portal do Contador",
       "accountantPortalDesc": "Compartilhe dados financeiros com seu contador via links seguros, somente leitura. Sem compartilhar senhas — eles veem exatamente o que você permitir.",
       "propertyIntelligence": "Inteligência de Compra de Imóveis",
@@ -1021,7 +1058,7 @@
     "business": {
       "badge": "Feito para Empresas UK",
       "title": "Gerencie as Finanças do Seu Negócio com Confiança",
-      "description": "Seja autônomo, diretor de empresa limitada ou com múltiplos negócios — o HomeLedger te dá as ferramentas para gerenciar tudo em um só lugar.",
+      "description": "Seja autônomo, diretor de empresa limitada ou com múltiplos negócios — o Clarity & Co te dá as ferramentas para gerenciar tudo em um só lugar.",
       "feature1": "Gestão multi-entidade — pessoal + múltiplas empresas",
       "feature2": "Relatórios fiscais HMRC (SA103, CT600) com mapeamento automático",
       "feature3": "Categorização com IA a 90%+ de precisão",
@@ -1073,15 +1110,15 @@
     },
     "testimonials": {
       "title": "Aprovado por Famílias e Empresas UK",
-      "subtitle": "Ouça usuários reais do HomeLedger em todo o Reino Unido",
-      "quote1": "O HomeLedger me economizou horas todo mês. A categorização por IA é incrivelmente precisa e os relatórios HMRC são gerados em segundos.",
+      "subtitle": "Ouça usuários reais do Clarity & Co em todo o Reino Unido",
+      "quote1": "O Clarity & Co me economizou horas todo mês. A categorização por IA é incrivelmente precisa e os relatórios HMRC são gerados em segundos.",
       "quote2": "Gerenciar múltiplas entidades era um pesadelo. Agora tudo está em um só lugar — faturas, relatórios fiscais, extratos bancários.",
       "quote3": "O portal do contador é revolucionário. Posso ver todos os dados dos meus clientes sem que compartilhem senhas. Brilhante."
     },
     "accountants": {
       "badge": "Contadores & Escriturários",
       "title": "As Finanças dos Seus Clientes, a Um Clique",
-      "description": "O portal do contador do HomeLedger permite visualizar os dados financeiros dos seus clientes com acesso seguro e somente leitura. Sem compartilhar senhas, sem exportar dados — apenas visibilidade em tempo real.",
+      "description": "O portal do contador do Clarity & Co permite visualizar os dados financeiros dos seus clientes com acesso seguro e somente leitura. Sem compartilhar senhas, sem exportar dados — apenas visibilidade em tempo real.",
       "feature1": "Painel dedicado para contador com visão multi-cliente",
       "feature2": "Acesso seguro somente leitura — sem compartilhar senhas",
       "feature3": "Veja extratos, faturas, relatórios fiscais e categorias",
@@ -1093,7 +1130,7 @@
       "title": "Verificação de Identidade",
       "subtitle": "Preços Simples e Transparentes de Verificação",
       "noHiddenFees": "Sem taxas ocultas. Sem assinatura. Pague uma vez, verifique quando precisar.",
-      "noAccountRequired": "Conta HomeLedger não necessária.",
+      "noAccountRequired": "Conta Clarity & Co não necessária.",
       "govCertified": "Certificado pelo Governo (IDVT)",
       "ukGdpr": "Conforme com UK GDPR",
       "aiBiometric": "Biometria com IA",
@@ -1109,7 +1146,7 @@
       "ctaStart": "Começar Verificação",
       "ctaLegal": "Requisitos Legais UK",
       "mockIdentityCheck": "Verificação de Identidade",
-      "mockCertified": "HomeLedger • Certificado",
+      "mockCertified": "Clarity & Co • Certificado",
       "mockScanPrompt": "Posicione seu documento aqui",
       "mockScanHint": "Passaporte, Carteira de Motorista ou BRP",
       "mockAlignHint": "Alinhe o documento dentro do quadro",
@@ -1150,7 +1187,7 @@
       "law6Penalty": "Até £17,5 milhões",
       "penaltyLabel": "Penalidade",
       "complianceTitle": "Você Está em Conformidade?",
-      "complianceDesc": "Desde <strong>abril de 2022</strong>, o Home Office exige que todas as verificações de Direito ao Trabalho e Direito ao Aluguel usem um <strong>provedor certificado de Tecnologia de Validação de Documentos de Identidade (IDVT)</strong>. Verificações manuais de documentos físicos não são mais suficientes para a maioria dos tipos de documentos. O HomeLedger usa <strong>Yoti</strong>, um provedor IDVT certificado pelo governo do UK.",
+      "complianceDesc": "Desde <strong>abril de 2022</strong>, o Home Office exige que todas as verificações de Direito ao Trabalho e Direito ao Aluguel usem um <strong>provedor certificado de Tecnologia de Validação de Documentos de Identidade (IDVT)</strong>. Verificações manuais de documentos físicos não são mais suficientes para a maioria dos tipos de documentos. O Clarity & Co usa <strong>Yoti</strong>, um provedor IDVT certificado pelo governo do UK.",
       "complianceCta": "Fique em Conformidade Agora",
       "whoTitle": "Quem Precisa de Verificação de Identidade?",
       "whoSubtitle": "Quase todas as empresas e profissionais no UK. Aqui estão os casos mais comuns.",
@@ -1184,7 +1221,7 @@
       "process4Desc": "A IA verifica o documento e compara o rosto. Você recebe um resultado certificado por e-mail em segundos.",
       "pricingTitle": "Preços Simples e Transparentes de Verificação",
       "pricingSubtitle": "Sem taxas ocultas. Sem assinatura. Pague uma vez, verifique quando precisar.",
-      "pricingNoAccount": "Conta HomeLedger não necessária.",
+      "pricingNoAccount": "Conta Clarity & Co não necessária.",
       "singleName": "Verificação Avulsa",
       "singlePrice": "£2,99",
       "singlePer": "/verificação",
@@ -1222,12 +1259,12 @@
     "newArrivals": {
       "badge": "Novo no Reino Unido",
       "title": "Novo no UK? Estamos Aqui Para Ajudar",
-      "description": "Seja para trabalho, estudo ou família — o HomeLedger te ajuda a navegar as finanças do UK, qualificações contábeis e serviços profissionais desde o primeiro dia.",
+      "description": "Seja para trabalho, estudo ou família — o Clarity & Co te ajuda a navegar as finanças do UK, qualificações contábeis e serviços profissionais desde o primeiro dia.",
       "feat1": "Guia de Relocação com IA — vistos, NI numbers, contas bancárias, cadastro no GP (conforme OISC)",
       "feat2": "Academia Contábil — prática de exames AAT & ACCA com tutor IA e mapa de carreira",
       "feat3": "Marketplace de Serviços — contabilidade profissional, declaração fiscal e escrituração",
       "feat4": "Score de Saúde Financeira — acompanhe seu bem-estar financeiro em tempo real",
-      "feat5": "Instalar como App — acesse o HomeLedger offline do celular ou desktop",
+      "feat5": "Instalar como App — acesse o Clarity & Co offline do celular ou desktop",
       "feature1": "Guia para solicitação do NI Number",
       "feature2": "Abertura de conta bancária UK",
       "feature3": "Cadastro no GP e NHS",
@@ -1278,7 +1315,7 @@
       "q2": "Meus dados financeiros estão seguros?",
       "a2": "Com certeza. Todos os dados são criptografados em trânsito (TLS 1.3) e em repouso. Entradas do cofre usam criptografia AES-256-GCM. Nunca compartilhamos seus dados.",
       "q3": "Posso gerenciar múltiplas empresas?",
-      "a3": "Sim. O HomeLedger suporta entidades ilimitadas — contas pessoais, empresas limitadas, CICs, autônomos — tudo em um login.",
+      "a3": "Sim. O Clarity & Co suporta entidades ilimitadas — contas pessoais, empresas limitadas, CICs, autônomos — tudo em um login.",
       "q4": "Gera relatórios prontos para o HMRC?",
       "a4": "Sim. Geramos SA103 (Self Assessment), CT600 (Corporation Tax) e resumos fiscais detalhados com mapeamento automático. Exporte para PDF a qualquer momento.",
       "q5": "Meu contador pode acessar meus dados?",
@@ -1286,7 +1323,7 @@
       "q6": "Quais formatos de arquivo vocês aceitam?",
       "a6": "Aceitamos CSV, PDF, Excel (.xlsx) e imagens (JPG, PNG) para extratos bancários, faturas e documentos. Nossa IA processa todos.",
       "q7": "Posso instalar como app no desktop?",
-      "a7": "Sim! O HomeLedger é um Progressive Web App (PWA). Clique em \"Instalar\" no navegador para adicionar ao seu desktop ou celular.",
+      "a7": "Sim! O Clarity & Co é um Progressive Web App (PWA). Clique em \"Instalar\" no navegador para adicionar ao seu desktop ou celular.",
       "q8": "Quais ferramentas de imóveis estão incluídas?",
       "a8": "Nossa seção de Imóveis inclui: 9 modos de compra, calculadora SDLT, Simulador de Hipoteca, Planejador com IA e dados reais, projeções de juros compostos, estratégia entre entidades, gerador de plano de economia e Hub de Score de Crédito.",
       "q9": "Pode me ajudar a planejar a compra de um imóvel?",
@@ -1317,11 +1354,54 @@
       "aatLevel2": "AAT Nível 2 — Escrituração",
       "complete": "Concluído",
       "inProgress": "Em Andamento",
-      "upcoming": "Próximo"
+      "upcoming": "Próximo",
+      "businessEntity1": "Tech Solutions Ltd",
+      "businessEntity1Type": "Empresa Limitada · #12345678",
+      "businessEntity2": "Sarah Consulting",
+      "businessEntity2Type": "Autônomo · UTR: 12345",
+      "businessEntity3": "Conta Pessoal",
+      "businessEntity3Type": "Pessoal",
+      "accountantClient1": "John Smith — Autônomo",
+      "accountantClient2": "ABC Ltd — Empresa Limitada",
+      "accountantClient3": "Sarah Jones — Freelancer",
+      "testimonialRole1": "Autônomo, Londres",
+      "testimonialRole2": "Diretor, Tech Solutions Ltd",
+      "testimonialRole3": "Contador Certificado",
+      "propertyStrategy": "Tech Solutions Ltd",
+      "propertyStrategyDesc": "£22k retidos — estratégia de extração de dividendos disponível"
+    },
+    "intelligence": {
+      "badge": "Inteligência Global em Tempo Real",
+      "live": "AO VIVO",
+      "title1": "O Mundo na Palma",
+      "title2": "da Sua Mão",
+      "desc": "Monitore eventos globais, movimentações militares, terremotos, padrões climáticos e notícias de última hora — tudo em um mapa interativo com análise por IA. Sua sala de comando pessoal.",
+      "liveGlobalNews": "Notícias Globais ao Vivo",
+      "liveGlobalNewsDesc": "50+ países, 11 buscas de conflitos, atualização a cada 60s",
+      "aircraftTracking": "Rastreamento de Aeronaves",
+      "aircraftTrackingDesc": "Aeronaves militares e civis em tempo real via OpenSky Network",
+      "earthquakeMonitor": "Monitor de Terremotos",
+      "earthquakeMonitorDesc": "Dados sísmicos USGS com magnitude, profundidade e alertas de tsunami",
+      "navalTracker": "Rastreamento Naval",
+      "navalTrackerDesc": "Porta-aviões, navios de guerra e monitoramento de águas estratégicas",
+      "aiAgent": "Agente de Inteligência IA",
+      "aiAgentDesc": "IA geopolítica para análise de notícias e estratégia",
+      "prophecyTracking": "Rastreamento de Profecias",
+      "prophecyTrackingDesc": "Referência cruzada de profecias bíblicas com eventos atuais",
+      "economicCalendar": "Calendário Econômico",
+      "economicCalendarDesc": "Decisões de bancos centrais, PIB, IPC, dados de emprego de 20+ países",
+      "worldEconomy": "Economia Mundial",
+      "worldEconomyDesc": "Rankings de PIB, estatísticas populacionais, dados regionais do Banco Mundial",
+      "cta": "Abrir Painel de Inteligência",
+      "ctaSub": "7 dias grátis · £2,99/mês · Cancele quando quiser",
+      "legendCrisis": "Crise",
+      "legendOpportunity": "Oportunidade",
+      "legendNeutral": "Neutro",
+      "legendMilitary": "Militar"
     },
     "cta": {
       "title": "Pronto para Simplificar Suas Finanças?",
-      "subtitle": "Junte-se a milhares de famílias e empresas UK que já usam o HomeLedger.",
+      "subtitle": "Junte-se a milhares de famílias e empresas UK que já usam o Clarity & Co.",
       "ctaPrimary": "Comece Seu Teste Grátis",
       "ctaSecondary": "Falar com Vendas",
       "noCreditCard": "7 dias grátis · Cancele quando quiser"
@@ -1346,9 +1426,135 @@
       "newsletterDesc": "Receba dicas de finanças UK e atualizações do produto."
     }
   },
+  "proServices": {
+    "navLabel": "Nossos Serviços",
+    "badge": "Suporte Profissional para Pequenos Negócios e Autônomos",
+    "heroTitle1": "Contabilidade & Gestão",
+    "heroTitle2": "Empresarial",
+    "heroDesc": "Contabilidade especializada, conformidade fiscal e apoio estratégico para autônomos, pequenas empresas e profissionais construindo o seu futuro no Reino Unido.",
+    "heroCta1": "Ver Serviços",
+    "heroCta2": "Fale Conosco",
+    "brTitle": "Fala Português? A gente também!",
+    "brDesc": "Como profissionais brasileiros estabelecidos no Reino Unido, entendemos os desafios únicos de gerenciar um negócio no exterior. Oferecemos suporte completo em Português e Inglês — desde a abertura da empresa até as declarações fiscais.",
+    "brCta": "Fale Conosco",
+    "servicesTitle": "Nossos Serviços",
+    "servicesSubtitle": "Tudo o que o seu negócio precisa para estar em conformidade, organizado e em crescimento",
+    "cat": {
+      "tax": {
+        "title": "Impostos & Contabilidade",
+        "subtitle": "Serviços essenciais de conformidade para pequenas empresas e autônomos"
+      },
+      "business": {
+        "title": "Apoio à Gestão & Estratégia",
+        "subtitle": "Vá além dos números — cresça com confiança"
+      },
+      "cloud": {
+        "title": "Cloud & Conformidade",
+        "subtitle": "Ferramentas modernas e orientação regulatória para a era digital"
+      }
+    },
+    "svc": {
+      "bookkeeping": {
+        "title": "Escrituração Contábil",
+        "desc": "Registro mensal ou trimestral de receitas e despesas, reconciliação bancária e registros financeiros organizados, prontos para sua declaração de impostos."
+      },
+      "vatReturns": {
+        "title": "Declarações de IVA (VAT)",
+        "desc": "Preparação e submissão de declarações de VAT via Making Tax Digital (MTD). Garantimos que o seu IVA é calculado corretamente e entregue a tempo."
+      },
+      "selfAssessment": {
+        "title": "Self Assessment",
+        "desc": "Preparação e envio de declarações de imposto de renda para autônomos, diretores de empresas, proprietários de imóveis e pessoas com rendimentos adicionais."
+      },
+      "payroll": {
+        "title": "Folha de Pagamento",
+        "desc": "Processamento de salários, emissão de payslips, cálculo de deduções PAYE/NI e submissões RTI ao HMRC."
+      },
+      "yearEndAccounts": {
+        "title": "Contas Anuais",
+        "desc": "Preparação de contas anuais para micro-entidades e pequenas empresas em conformidade com as normas FRS 102 e FRS 105."
+      },
+      "corporationTax": {
+        "title": "Imposto Corporativo",
+        "desc": "Preparação e submissão do formulário CT600 para empresas limitadas, garantindo que todas as deduções permitidas são reclamadas."
+      },
+      "startupAdvice": {
+        "title": "Consultoria para Novos Negócios",
+        "desc": "Orientação na escolha da estrutura jurídica, registro no Companies House e HMRC, e configuração correta do seu negócio desde o primeiro dia."
+      },
+      "managementAccounts": {
+        "title": "Relatórios de Gestão",
+        "desc": "Relatórios financeiros mensais ou trimestrais incluindo lucros e perdas, balanço e análise de fluxo de caixa para decisões informadas."
+      },
+      "budgetingForecasting": {
+        "title": "Orçamento & Projeções",
+        "desc": "Planejamento financeiro, criação de orçamentos e projeções de fluxo de caixa para apoiar o crescimento do negócio e obter financiamento."
+      },
+      "companySecretarial": {
+        "title": "Secretariado Empresarial",
+        "desc": "Manutenção dos registros da empresa no Companies House — Confirmation Statements, mudança de endereço, nomeação de diretores e emissão de ações."
+      },
+      "cloudAccounting": {
+        "title": "Contabilidade na Cloud",
+        "desc": "Implementação e treinamento em plataformas líderes como Xero, QuickBooks ou FreeAgent. Digitalize sua contabilidade e acesse de qualquer lugar."
+      },
+      "mtdCompliance": {
+        "title": "Conformidade MTD",
+        "desc": "Ajuda na transição de processos manuais para software compatível com Making Tax Digital, garantindo que cumpre os requisitos digitais do HMRC."
+      },
+      "businessCompliance": {
+        "title": "Conformidade Empresarial",
+        "desc": "Orientação sobre obrigações de Anti-Lavagem de Dinheiro (AML), proteção de dados (GDPR) e outros requisitos regulatórios para pequenos negócios."
+      }
+    },
+    "whyTitle": "Por Que Nos Escolher",
+    "whySubtitle": "Totalmente regulamentados, qualificados e comprometidos com o seu sucesso",
+    "cred": {
+      "piInsurance": {
+        "title": "Seguro de Indenização Profissional",
+        "desc": "Totalmente segurados para sua tranquilidade. Nosso seguro PI protege você contra erros e omissões."
+      },
+      "icoRegistered": {
+        "title": "Registrados no ICO",
+        "desc": "Registrados no Information Commissioner's Office. Seus dados são tratados em total conformidade com o GDPR do Reino Unido."
+      },
+      "amlSupervision": {
+        "title": "Supervisão AML",
+        "desc": "Operando sob supervisão de Anti-Lavagem de Dinheiro conforme exigido pela lei britânica para prestadores de serviços de contabilidade."
+      },
+      "qualifications": {
+        "title": "Profissionais Qualificados",
+        "desc": "Formação em Administração de Empresas com qualificações contábeis reconhecidas no Reino Unido. Atendimento bilíngue em Inglês e Português."
+      }
+    },
+    "howTitle": "Como Funciona",
+    "howSubtitle": "Começar é simples",
+    "how": {
+      "step1": {
+        "title": "Consulta Gratuita",
+        "desc": "Marque uma chamada gratuita de 30 minutos. Discutimos suas necessidades, respondemos perguntas e recomendamos os melhores serviços."
+      },
+      "step2": {
+        "title": "Plano Personalizado",
+        "desc": "Criamos um pacote de serviços personalizado com preços claros. Sem taxas ocultas, sem surpresas — apenas suporte transparente."
+      },
+      "step3": {
+        "title": "Suporte Contínuo",
+        "desc": "Cuidamos da sua contabilidade e conformidade enquanto você foca em fazer crescer o seu negócio. Atualizações regulares e sempre disponíveis."
+      }
+    },
+    "noticeTitle": "Aviso de Transparência",
+    "noticeDesc": "Prestamos serviços de contabilidade, escrituração, preparação fiscal e gestão empresarial. Não oferecemos auditoria, insolvência ou consultoria financeira regulamentada (como investimentos ou hipotecas), pois estes requerem licenças separadas.",
+    "ctaTitle": "Pronto para Começar?",
+    "ctaDesc": "Marque sua consulta gratuita hoje. Ajudamos a entender exatamente o que você precisa e como podemos apoiar o seu negócio.",
+    "ctaEmail": "Enviar Email",
+    "ctaWhatsapp": "WhatsApp",
+    "ctaFree": "Consulta inicial gratuita — sem compromisso",
+    "footerHome": "Início"
+  },
   "register": {
     "title": "Criar Conta",
-    "subtitle": "Comece a usar o HomeLedger",
+    "subtitle": "Comece a usar o Clarity & Co",
     "accountType": "Tipo de Conta",
     "household": "Família",
     "business": "Empresarial",
@@ -1359,5 +1565,57 @@
     "creating": "Criando conta...",
     "hasAccount": "Já tem uma conta?",
     "signIn": "Entrar"
+  },
+  "chSearch": {
+    "title": "Busca no Companies House",
+    "subtitle": "Pesquise no registro do Companies House do Reino Unido — verifique disponibilidade de nomes, explore detalhes de empresas, diretores, documentos e importe diretamente como entidade.",
+    "backToEntities": "Voltar para Entidades",
+    "placeholder": "Buscar por nome ou número da empresa...",
+    "search": "Buscar",
+    "tip": "Busque por nome exato, nome parcial ou número da empresa (ex: 12345678)",
+    "searching": "Buscando no Companies House...",
+    "resultsFound": "resultados encontrados",
+    "showing": "exibindo",
+    "allStatuses": "Todos os Status",
+    "active": "Ativa",
+    "dissolved": "Dissolvida",
+    "dormant": "Inativa",
+    "liquidation": "Em Liquidação",
+    "noResults": "Nenhuma empresa encontrada. Tente um termo diferente.",
+    "loadingDetails": "Carregando detalhes do Companies House...",
+    "viewOnCH": "Ver no CH",
+    "importEntity": "Importar como Entidade",
+    "companyInfo": "Informações da Empresa",
+    "number": "Número",
+    "status": "Status",
+    "type": "Tipo",
+    "incorporated": "Incorporada em",
+    "registeredAddress": "Endereço Registrado",
+    "sicCodes": "Códigos SIC",
+    "keyDates": "Datas Importantes",
+    "nextAccounts": "Próximas Contas",
+    "confirmationStmt": "Confirmation Statement",
+    "officers": "Diretores",
+    "activeOfficers": "ativos",
+    "since": "Desde",
+    "recentFilings": "Documentos Recentes",
+    "emptyTitle": "Pesquise no Registro de Empresas UK",
+    "emptyDesc": "Encontre qualquer empresa do Reino Unido por nome ou número. Veja diretores, documentos, códigos SIC e datas importantes. Importe empresas diretamente como entidades na sua conta.",
+    "importTitle": "Importar Empresa como Entidade",
+    "importDesc": "Isso criará uma nova entidade na sua conta com os dados do Companies House.",
+    "importNote": "Dados da empresa (nome, número, endereço, diretores, códigos SIC) serão importados. Você pode editar esses dados depois.",
+    "cancel": "Cancelar",
+    "importButton": "Importar Entidade",
+    "imported": "Empresa Importada",
+    "importedAs": "adicionada como",
+    "importError": "Falha na Importação",
+    "searchError": "Erro na Busca",
+    "detailError": "Não foi possível carregar os detalhes da empresa",
+    "error": "Erro",
+    "connectionError": "Não foi possível conectar ao Companies House",
+    "quickSearch": "Busca no Companies House",
+    "quickSearchPlaceholder": "Buscar no Companies House...",
+    "searchCH": "Buscar no Companies House",
+    "viewAll": "Busca Avançada"
   }
 }

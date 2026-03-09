@@ -32,7 +32,7 @@ export const MODULE_GUIDES: Record<string, ModuleGuideData> = {
       { label: 'Browse available courses by topic', labelPt: 'Navegue pelos cursos disponíveis por tema' },
       { label: 'Start with beginner modules if you are new to UK finance', labelPt: 'Comece com módulos iniciantes se é novo nas finanças do UK' },
       { label: 'Complete lessons and track your progress', labelPt: 'Complete lições e acompanhe seu progresso' },
-      { label: 'Apply what you learn directly in HomeLedger', labelPt: 'Aplique o que aprendeu diretamente no HomeLedger' },
+      { label: 'Apply what you learn directly in Clarity & Co', labelPt: 'Aplique o que aprendeu diretamente no Clarity & Co' },
     ],
     whyImportant: 'Financial literacy is the foundation of wealth building. Understanding how UK taxes, savings accounts, and pensions work can save you thousands of pounds per year.',
     whyImportantPt: 'Educação financeira é a base da construção de patrimônio. Entender como funcionam impostos, contas de poupança e pensões no UK pode economizar milhares de libras por ano.',
@@ -339,7 +339,7 @@ export const MODULE_GUIDES: Record<string, ModuleGuideData> = {
     steps: [
       { label: 'Browse services by category', labelPt: 'Navegue por serviços por categoria' },
       { label: 'Compare offers from different providers', labelPt: 'Compare ofertas de diferentes fornecedores' },
-      { label: 'Access exclusive deals through HomeLedger', labelPt: 'Acesse ofertas exclusivas pelo HomeLedger' },
+      { label: 'Access exclusive deals through Clarity & Co', labelPt: 'Acesse ofertas exclusivas pelo Clarity & Co' },
       { label: 'Track services you have subscribed to', labelPt: 'Rastreie serviços que você assinou' },
     ],
     whyImportant: 'UK households can save hundreds of pounds per year by switching providers. Having all options in one place makes comparison easy and saves money.',
@@ -432,8 +432,8 @@ export const MODULE_GUIDES: Record<string, ModuleGuideData> = {
   settings: {
     title: 'Settings — Personalise Your Experience',
     titlePt: 'Configurações — Personalize Sua Experiência',
-    description: 'Configure HomeLedger to work exactly the way you need. Set your language, currency display, notification preferences, categorisation mode, and account details.',
-    descriptionPt: 'Configure o HomeLedger para funcionar exatamente do jeito que você precisa. Defina idioma, exibição de moeda, preferências de notificação, modo de categorização e detalhes da conta.',
+    description: 'Configure Clarity & Co to work exactly the way you need. Set your language, currency display, notification preferences, categorisation mode, and account details.',
+    descriptionPt: 'Configure o Clarity & Co para funcionar exatamente do jeito que você precisa. Defina idioma, exibição de moeda, preferências de notificação, modo de categorização e detalhes da conta.',
     steps: [
       { label: 'Set your preferred language and region', labelPt: 'Defina seu idioma e região preferidos' },
       { label: 'Upload your profile logo or avatar', labelPt: 'Faça upload do seu logo ou avatar de perfil' },

@@ -32,6 +32,7 @@ export async function GET() {
         permissions: true,
         hiddenModules: true,
         mustChangePassword: true,
+        isTestUser: true,
         createdAt: true,
         lastLoginAt: true,
         _count: {
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
           plan,
           permissions,
           mustChangePassword: true,
+          onboardingCompleted: true,
         } as any,
       });
 

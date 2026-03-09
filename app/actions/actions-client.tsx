@@ -14,7 +14,8 @@ import { useTranslation } from "@/lib/i18n"
 import { ModuleGuide } from '@/components/module-guide'
 
 export function ActionsClient() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const isPt = locale === 'pt-BR'
   const [actions, setActions] = useState<Action[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -61,11 +62,11 @@ export function ActionsClient() {
     try {
       const res = await fetch(`/api/actions/${actionId}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
-      toast({ title: "Success", description: "Action deleted successfully" })
+      toast({ title: isPt ? 'Sucesso' : 'Success', description: isPt ? 'Ação excluída com sucesso' : 'Action deleted successfully' })
       fetchActions()
     } catch (error) {
       console.error("Error deleting action:", error)
-      toast({ title: "Error", description: "Failed to delete action", variant: "destructive" })
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir ação' : 'Failed to delete action', variant: 'destructive' })
     }
   }
 
@@ -77,11 +78,11 @@ export function ActionsClient() {
         body: JSON.stringify({ status: newStatus }),
       })
       if (!res.ok) throw new Error("Failed to update")
-      toast({ title: "Success", description: `Action marked as ${newStatus}` })
+      toast({ title: isPt ? 'Sucesso' : 'Success', description: isPt ? `Ação marcada como ${newStatus}` : `Action marked as ${newStatus}` })
       fetchActions()
     } catch (error) {
       console.error("Error updating action:", error)
-      toast({ title: "Error", description: "Failed to update action", variant: "destructive" })
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao atualizar ação' : 'Failed to update action', variant: 'destructive' })
     }
   }
 
@@ -95,12 +96,12 @@ export function ActionsClient() {
         body: JSON.stringify(data),
       })
       if (!res.ok) throw new Error("Failed to save")
-      toast({ title: "Success", description: `Action ${editingAction ? "updated" : "created"} successfully` })
+      toast({ title: isPt ? 'Sucesso' : 'Success', description: isPt ? `Ação ${editingAction ? 'atualizada' : 'criada'} com sucesso` : `Action ${editingAction ? 'updated' : 'created'} successfully` })
       setDialogOpen(false)
       fetchActions()
     } catch (error) {
       console.error("Error saving action:", error)
-      toast({ title: "Error", description: "Failed to save action", variant: "destructive" })
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar ação' : 'Failed to save action', variant: 'destructive' })
     }
   }
 
@@ -143,25 +144,25 @@ export function ActionsClient() {
           </div>
           <Button onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Action
+            {isPt ? 'Nova Ação' : 'Add Action'}
           </Button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-center p-4 bg-card rounded-xl border border-border shadow-sm">
         <Filter className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-muted-foreground/60">Filters:</span>
+        <span className="text-sm font-medium text-muted-foreground/60">{isPt ? 'Filtros:' : 'Filters:'}</span>
         
         <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v === "all" ? "" : v }))}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="all">{isPt ? 'Todos os Status' : 'All Status'}</SelectItem>
+            <SelectItem value="pending">{isPt ? 'Pendente' : 'Pending'}</SelectItem>
+            <SelectItem value="approved">{isPt ? 'Aprovada' : 'Approved'}</SelectItem>
+            <SelectItem value="completed">{isPt ? 'Concluída' : 'Completed'}</SelectItem>
+            <SelectItem value="rejected">{isPt ? 'Rejeitada' : 'Rejected'}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -170,10 +171,10 @@ export function ActionsClient() {
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Priorities</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="all">{isPt ? 'Todas as Prioridades' : 'All Priorities'}</SelectItem>
+            <SelectItem value="high">{isPt ? 'Alta' : 'High'}</SelectItem>
+            <SelectItem value="medium">{isPt ? 'Média' : 'Medium'}</SelectItem>
+            <SelectItem value="low">{isPt ? 'Baixa' : 'Low'}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -186,7 +187,7 @@ export function ActionsClient() {
         >
           <Button onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Your First Action
+            {isPt ? 'Criar Sua Primeira Ação' : 'Create Your First Action'}
           </Button>
         </EmptyState>
       ) : (

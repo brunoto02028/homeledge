@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendSignupVerificationEmail, isEmailConfigured } from '@/lib/email';
 import { getPermissionsForPlan, PURCHASABLE_PLANS } from '@/lib/permissions';
+import { sensitiveLimiter, getClientIp } from '@/lib/rate-limit';
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -11,8 +12,17 @@ function generateVerificationCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
+    const { success } = sensitiveLimiter.check(`signup:${ip}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     const body = await request.json();
-    const { email, password, fullName, accountType, selectedPlan } = body;
+    const { email, password, fullName, accountType, selectedPlan, isInviteFlow } = body;
 
     // Validation
     if (!email || !password || !fullName) {
@@ -94,8 +104,9 @@ export async function POST(request: NextRequest) {
 
     // Create user with transaction — PENDING verification
     const result = await prisma.$transaction(async (tx) => {
-      const plan = selectedPlan && PURCHASABLE_PLANS.includes(selectedPlan) ? selectedPlan : 'none';
-      const permissions = getPermissionsForPlan(plan);
+      // Invite flow: no plan needed, permissions will come from invitation acceptance
+      const plan = isInviteFlow ? 'team' : (selectedPlan && PURCHASABLE_PLANS.includes(selectedPlan) ? selectedPlan : 'none');
+      const permissions = isInviteFlow ? [] as string[] : getPermissionsForPlan(plan);
       const user = await tx.user.create({
         data: {
           email: email.toLowerCase(),
@@ -104,27 +115,29 @@ export async function POST(request: NextRequest) {
           role: accountType === 'business' ? 'business' : 'user',
           status: 'pending_verification',
           emailVerified: false,
-          onboardingCompleted: false,
+          onboardingCompleted: isInviteFlow ? true : false,
           plan,
           permissions,
         } as any,
       });
 
-      // Create household or business
-      if (accountType === 'business') {
-        const business = await tx.business.create({
-          data: { name: `${fullName}'s Business`, ownerId: user.id },
-        });
-        await tx.membership.create({
-          data: { userId: user.id, businessId: business.id, role: 'owner' },
-        });
-      } else {
-        const household = await tx.household.create({
-          data: { name: `${fullName}'s Household`, ownerId: user.id },
-        });
-        await tx.membership.create({
-          data: { userId: user.id, householdId: household.id, role: 'owner' },
-        });
+      // Invite flow: don't create a household — user will join one via invitation
+      if (!isInviteFlow) {
+        if (accountType === 'business') {
+          const business = await tx.business.create({
+            data: { name: `${fullName}'s Business`, ownerId: user.id },
+          });
+          await tx.membership.create({
+            data: { userId: user.id, businessId: business.id, role: 'owner' },
+          });
+        } else {
+          const household = await tx.household.create({
+            data: { name: `${fullName}'s Household`, ownerId: user.id },
+          });
+          await tx.membership.create({
+            data: { userId: user.id, householdId: household.id, role: 'owner' },
+          });
+        }
       }
 
       // Create verification token

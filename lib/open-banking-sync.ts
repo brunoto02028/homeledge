@@ -8,6 +8,37 @@ import {
 import { callAI } from '@/lib/ai-client';
 
 /**
+ * Keyword-based pre-categorisation for obvious patterns.
+ * Runs BEFORE AI to catch transactions the AI sometimes misses.
+ * Keys are category names (must match DEFAULT_CATEGORIES), values are keyword arrays.
+ * Matching is case-insensitive against the transaction description.
+ */
+const KEYWORD_PRE_CATEGORIES: Record<string, string[]> = {
+  'Benefits': ['dwp uc', 'dwp uc ', 'universal credit', 'child benefit', 'tax credit', 'hmrc p800', 'hmrc refund'],
+  'Salary': ['salary', 'wages paid', 'payroll'],
+  'Interest': ['interest earned', 'savings interest', 'bank interest'],
+  'Dividends': ['dividend'],
+  'Refunds': ['refund', 'reimbursement', 'cashback'],
+};
+
+/**
+ * Try to match a transaction description to a category using keywords.
+ * Returns category ID if matched, null otherwise.
+ */
+function keywordMatch(description: string, categories: any[]): string | null {
+  const desc = description.toLowerCase();
+  for (const [catName, keywords] of Object.entries(KEYWORD_PRE_CATEGORIES)) {
+    for (const kw of keywords) {
+      if (desc.includes(kw.toLowerCase())) {
+        const cat = categories.find((c: any) => c.name === catName);
+        if (cat) return cat.id;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Get or create a monthly bank statement for a connection.
  *
  * Ensures one statement per bank per entity per month. Uses entity-scoped
@@ -91,7 +122,26 @@ export async function ensureAccountLinked(
   bankName: string,
   userId: string,
 ): Promise<string | null> {
-  if (conn.accountId) return conn.accountId;
+  // Validate existing link: ensure the linked account belongs to the same entity
+  if (conn.accountId) {
+    try {
+      const linked = await prisma.account.findUnique({ where: { id: conn.accountId }, select: { id: true, entityId: true } });
+      if (linked && conn.entityId && linked.entityId !== conn.entityId) {
+        console.warn(`[Sync] Account ${conn.accountId} entity mismatch: account=${linked.entityId}, connection=${conn.entityId} — re-linking`);
+        // Entity mismatch — find or create the correct account
+        const correct = await prisma.account.findFirst({
+          where: { entityId: conn.entityId, accountName: { contains: bankName } },
+        });
+        if (correct) {
+          await (prisma as any).bankConnection.update({ where: { id: conn.id }, data: { accountId: correct.id } });
+          return correct.id;
+        }
+        // Fall through to create new account below
+      } else {
+        return conn.accountId;
+      }
+    } catch { return conn.accountId; }
+  }
 
   try {
     let provider = await prisma.provider.findFirst({
@@ -178,15 +228,43 @@ export async function autoCategorizeTransactions(
     });
 
     const catMap = new Map(categories.map((c: any) => [c.id, c]));
+
+    // ── Step 1: Keyword pre-categorisation (instant, no AI cost) ──
+    const remainingForAI: typeof transactions = [];
+    let totalCategorised = 0;
+
+    for (const tx of transactions) {
+      const matchedCatId = keywordMatch(tx.description, categories);
+      if (matchedCatId) {
+        await prisma.bankTransaction.update({
+          where: { id: tx.id },
+          data: {
+            categoryId: matchedCatId,
+            suggestedCategoryId: matchedCatId,
+            confidenceScore: 0.99,
+            needsReview: false,
+            isApproved: true, // Keyword match + bank-verified = auto-approved
+          },
+        });
+        totalCategorised++;
+      } else {
+        remainingForAI.push(tx);
+      }
+    }
+
+    if (remainingForAI.length > 0) {
+      console.log(`[AutoCategorise] ${totalCategorised} keyword-matched, ${remainingForAI.length} for AI`);
+    }
+
+    // ── Step 2: AI categorisation for remaining transactions ──
     const catList = categories.map((c: any) =>
       `"${c.name}" (ID: ${c.id}, type: ${c.type}${c.hmrcMapping && c.hmrcMapping !== 'none' ? ', HMRC: ' + c.hmrcMapping : ''})`
     ).join('\n');
 
     const batchSize = 20;
-    let totalCategorised = 0;
 
-    for (let i = 0; i < transactions.length; i += batchSize) {
-      const batch = transactions.slice(i, i + batchSize);
+    for (let i = 0; i < remainingForAI.length; i += batchSize) {
+      const batch = remainingForAI.slice(i, i + batchSize);
       const txLines = batch.map((tx, idx) =>
         `${idx + 1}. "${tx.description}" | £${tx.amount} | ${tx.type === 'credit' ? 'INCOME' : 'EXPENSE'} | ${new Date(tx.date).toISOString().split('T')[0]}`
       ).join('\n');
@@ -215,14 +293,15 @@ Only return the JSON array, no markdown.`;
           const tx = batch[s.index - 1];
           if (!tx || !s.categoryId || !catMap.has(s.categoryId)) continue;
 
+          const highConfidence = s.confidence >= 0.85;
           await prisma.bankTransaction.update({
             where: { id: tx.id },
             data: {
               suggestedCategoryId: s.categoryId,
-              categoryId: s.confidence >= 0.85 ? s.categoryId : undefined,
+              categoryId: highConfidence ? s.categoryId : undefined,
               confidenceScore: s.confidence,
-              needsReview: s.confidence < 0.85,
-              isApproved: false,
+              needsReview: !highConfidence,
+              isApproved: highConfidence, // Bank-verified + high AI confidence = auto-approved
             },
           });
           totalCategorised++;
@@ -300,31 +379,43 @@ export async function syncConnectionTransactions(params: {
   // Ensure Account is linked
   const accountId = await ensureAccountLinked(conn, bankName, userId);
 
-  // Fetch balance
+  // Fetch balance — try current first, fallback to available
   let currentBalance = 0;
   try {
     const balances = await getBalance(accessToken, targetAccount.account_id);
+    console.log(`[Sync] Balance response for ${bankName} (accountId=${accountId}):`, JSON.stringify(balances));
     if (balances.length > 0) {
-      currentBalance = balances[0].current;
+      // Prefer 'available' (what users see in banking apps), fallback to 'current'
+      currentBalance = balances[0].available ?? balances[0].current ?? 0;
       if (accountId) {
         await prisma.account.update({
           where: { id: accountId },
           data: { balance: currentBalance },
         });
+        console.log(`[Sync] Updated Account ${accountId} balance to £${currentBalance}`);
+      } else {
+        console.warn(`[Sync] No accountId linked for ${bankName} — cannot update balance`);
       }
+    } else {
+      console.warn(`[Sync] Empty balance array for ${bankName}`);
     }
-  } catch { /* balance fetch is optional */ }
+  } catch (balErr: any) {
+    console.error(`[Sync] Balance fetch FAILED for ${bankName}:`, balErr.message || balErr);
+  }
 
   // Fetch transactions
   let transactions: TrueLayerTransaction[];
   try {
     transactions = await getTransactions(accessToken, targetAccount.account_id, fromDate, toDate);
   } catch (txErr: any) {
-    if (txErr.code === 'SCA_EXCEEDED') {
-      // If there was a recent successful sync (within 24h), don't overwrite with scary SCA error
-      const recentSync = conn.lastSyncAt && (Date.now() - new Date(conn.lastSyncAt).getTime()) < 24 * 60 * 60 * 1000;
+    // Handle SCA_EXCEEDED (403) and invalid_token (401) — both mean bank requires re-auth for transactions
+    const isSCA = txErr.code === 'SCA_EXCEEDED';
+    const isTokenExpiredForData = txErr.message?.includes('invalid_token') || txErr.message?.includes('401');
+    
+    if (isSCA || isTokenExpiredForData) {
+      // If there was a recent successful sync (within 48h), treat as non-critical
+      const recentSync = conn.lastSyncAt && (Date.now() - new Date(conn.lastSyncAt).getTime()) < 48 * 60 * 60 * 1000;
       if (recentSync) {
-        // Don't overwrite lastSyncError — keep it clean
         return {
           synced: 0, skipped: 0, categorised: 0, total: 0,
           months: [], balance: currentBalance, bank: bankName,
@@ -334,7 +425,7 @@ export async function syncConnectionTransactions(params: {
       }
       await (prisma as any).bankConnection.update({
         where: { id: conn.id },
-        data: { lastSyncError: 'SCA expired — reconnect bank for historical data' },
+        data: { lastSyncError: 'Bank requires re-authentication for new transactions — click Reconnect & Sync' },
       });
       return {
         synced: 0, skipped: 0, categorised: 0, total: 0,

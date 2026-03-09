@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import {
   Brain, Plus, Search, Filter, Trash2, Edit2, Save, X, RefreshCw,
   CheckCircle2, Zap, BookOpen, Bot, TrendingUp, AlertTriangle, ChevronDown,
-  ChevronUp, HelpCircle, Info, ArrowRight, Shield, Lightbulb, MessageSquare, RotateCcw
+  ChevronUp, HelpCircle, Info, ArrowRight, Shield, Lightbulb, MessageSquare, RotateCcw,
+  ArrowUpDown, ArrowUp, ArrowDown, Building2, Globe
 } from 'lucide-react';
+
+type SortField = 'keyword' | 'matchType' | 'category' | 'source' | 'usageCount' | 'isActive';
+type SortDir = 'asc' | 'desc';
 
 interface Rule {
   id: string;
@@ -21,7 +25,15 @@ interface Rule {
   isActive: boolean;
   usageCount: number;
   lastUsedAt: string | null;
+  entityId: string | null;
+  userId: string | null;
   category: { id: string; name: string; type: string; color?: string; icon?: string };
+}
+
+interface Entity {
+  id: string;
+  name: string;
+  type: string;
 }
 
 interface Metrics {
@@ -63,8 +75,14 @@ export default function CategorizationRulesPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ keyword: '', matchType: 'contains', categoryId: '', patternField: 'description', transactionType: '', description: '', priority: 5 });
   const [form, setForm] = useState({ keyword: '', matchType: 'contains', categoryId: '', patternField: 'description', transactionType: '', description: '', priority: 5 });
+  const [savingEdit, setSavingEdit] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [entityFilter, setEntityFilter] = useState<string>('all');
 
   useEffect(() => {
     loadAll();
@@ -72,16 +90,34 @@ export default function CategorizationRulesPage() {
 
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadRules(), loadMetrics(), loadCategories()]);
+    await Promise.all([loadRules(), loadMetrics(), loadCategories(), loadEntities()]);
     setLoading(false);
   };
 
   const loadRules = async () => {
     try {
-      const res = await fetch('/api/categorization-rules');
+      const url = entityFilter && entityFilter !== 'all'
+        ? `/api/categorization-rules?entityId=${entityFilter}`
+        : '/api/categorization-rules';
+      const res = await fetch(url);
       if (res.ok) setRules(await res.json());
     } catch { /* ignore */ }
   };
+
+  const loadEntities = async () => {
+    try {
+      const res = await fetch('/api/entities');
+      if (res.ok) {
+        const data = await res.json();
+        setEntities(Array.isArray(data) ? data : data.entities || []);
+      }
+    } catch { /* ignore */ }
+  };
+
+  // Reload rules when entity filter changes
+  useEffect(() => {
+    loadRules();
+  }, [entityFilter]);
 
   const loadMetrics = async () => {
     try {
@@ -106,6 +142,7 @@ export default function CategorizationRulesPage() {
         body: JSON.stringify({
           ...form,
           transactionType: form.transactionType || null,
+          entityId: entityFilter !== 'all' ? entityFilter : null,
         }),
       });
       if (res.ok) {
@@ -137,6 +174,71 @@ export default function CategorizationRulesPage() {
     } catch { /* ignore */ }
   };
 
+  const startEditing = (rule: Rule) => {
+    setEditingId(rule.id);
+    setEditForm({
+      keyword: rule.keyword,
+      matchType: rule.matchType,
+      categoryId: rule.category.id,
+      patternField: rule.patternField,
+      transactionType: rule.transactionType || '',
+      description: rule.description || '',
+      priority: rule.priority,
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setSavingEdit(false);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editForm.keyword || !editForm.categoryId) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/categorization-rules/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyword: editForm.keyword,
+          matchType: editForm.matchType,
+          categoryId: editForm.categoryId,
+          patternField: editForm.patternField,
+          transactionType: editForm.transactionType || null,
+          description: editForm.description || null,
+          priority: editForm.priority,
+          // Pass entityId so system rules get entity-scoped overrides instead of global mutation
+          entityId: entityFilter !== 'all' ? entityFilter : null,
+        }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        loadRules();
+        loadMetrics();
+      }
+    } catch { /* ignore */ }
+    setSavingEdit(false);
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1 text-purple-500" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-purple-500" />;
+  };
+
+  const MATCH_ORDER: Record<string, number> = { exact: 0, starts_with: 1, contains: 2, regex: 3 };
+  const SOURCE_ORDER: Record<string, number> = { system: 0, manual: 1, auto_learned: 2 };
+
   const filteredRules = rules.filter(r => {
     if (sourceFilter !== 'all' && r.source !== sourceFilter) return false;
     if (search) {
@@ -145,6 +247,33 @@ export default function CategorizationRulesPage() {
     }
     return true;
   });
+
+  if (sortField) {
+    filteredRules.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'keyword':
+          cmp = a.keyword.localeCompare(b.keyword, undefined, { sensitivity: 'base' });
+          break;
+        case 'category':
+          cmp = a.category.name.localeCompare(b.category.name, undefined, { sensitivity: 'base' });
+          break;
+        case 'matchType':
+          cmp = (MATCH_ORDER[a.matchType] ?? 9) - (MATCH_ORDER[b.matchType] ?? 9);
+          break;
+        case 'source':
+          cmp = (SOURCE_ORDER[a.source] ?? 9) - (SOURCE_ORDER[b.source] ?? 9);
+          break;
+        case 'usageCount':
+          cmp = a.usageCount - b.usageCount;
+          break;
+        case 'isActive':
+          cmp = (a.isActive === b.isActive) ? 0 : a.isActive ? -1 : 1;
+          break;
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }
 
   if (loading) {
     return (
@@ -339,16 +468,107 @@ export default function CategorizationRulesPage() {
               </div>
             </div>
 
+            {/* Entity-Scoped Rules — KEY CONCEPT */}
+            <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-indigo-400" />
+                <p className="text-sm font-semibold text-indigo-300">Rules per Entity — How it works</p>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                You may have multiple entities (e.g. a <strong className="text-foreground">personal account</strong> and a <strong className="text-foreground">limited company</strong>). The same merchant — like McDonald's — can mean very different things depending on which entity you are managing:
+              </p>
+
+              {/* Visual example */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg border border-white/10 bg-background p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-amber-400">P</span>
+                    </div>
+                    <p className="text-xs font-semibold">Personal (Individual)</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <code className="px-1.5 py-0.5 rounded bg-muted font-mono">mcdonalds</code>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="text-amber-400 font-medium">Dining & Takeaway</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">A personal meal out — it's a personal expense.</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-background p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-indigo-400">C</span>
+                    </div>
+                    <p className="text-xs font-semibold">Company (Ltd)</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <code className="px-1.5 py-0.5 rounded bg-muted font-mono">mcdonalds</code>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="text-blue-400 font-medium">Office Expenses</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">A team lunch paid by the company — it's a business expense.</p>
+                </div>
+              </div>
+
+              {/* Step-by-step instructions */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">How to set entity-specific rules:</p>
+                <ol className="space-y-2">
+                  <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <span className="shrink-0 h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold mt-0.5">1</span>
+                    <span>Select the entity you want to configure using the <strong className="text-foreground">entity dropdown</strong> in the filter bar above (e.g. "Patricia Pizzonia — individual").</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <span className="shrink-0 h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold mt-0.5">2</span>
+                    <span>Click the <strong className="text-foreground">✏️ edit icon</strong> next to any rule in the table, change the category, then click <strong className="text-foreground">Save</strong>.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <span className="shrink-0 h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold mt-0.5">3</span>
+                    <span>The system creates a <strong className="text-foreground">private override</strong> for that entity — the original system rule is <strong className="text-foreground">not changed</strong> for your other entities.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <span className="shrink-0 h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold mt-0.5">4</span>
+                    <span>Repeat for other entities — each one keeps its own independent category mapping.</span>
+                  </li>
+                </ol>
+              </div>
+
+              {/* Priority note */}
+              <div className="rounded-md bg-background border border-white/10 p-3 flex items-start gap-2">
+                <Info className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">Priority order:</strong> Entity rule → Your global rule → System rule. When a transaction is categorised, the engine always checks entity-specific rules first, ensuring the most relevant category wins.
+                </p>
+              </div>
+
+              {/* Visual badge explanation */}
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px]">
+                    <Building2 className="h-2.5 w-2.5" /> Entity name
+                  </span>
+                  = rule applies only to that entity
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px]">
+                    <Globe className="h-2.5 w-2.5" /> All
+                  </span>
+                  = rule applies to all your entities
+                </span>
+              </div>
+            </div>
+
             {/* Practical tips */}
             <div className="rounded-lg bg-purple-500/5 border border-purple-500/20 p-4">
               <p className="text-sm font-semibold flex items-center gap-2 text-purple-500 mb-2"><MessageSquare className="h-4 w-4" /> Practical Tips</p>
               <ul className="text-xs text-muted-foreground space-y-1.5">
+                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Always select the correct entity before creating or editing rules — this determines which entity the rule applies to.</li>
                 <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Correct categories on the Statements page — the engine learns from every correction.</li>
                 <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />After 3 corrections for the same merchant, an auto-rule appears in the table above with a green "Auto-Learned" badge.</li>
                 <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Use "+ New Rule" to manually add rules for merchants the system hasn't learned yet.</li>
                 <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />The "Most Corrected Transactions" section above shows which merchants need attention — create rules for them.</li>
                 <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Disable rules you don't need instead of deleting them — you can re-enable later.</li>
-                <li className="flex items-start gap-2"><ArrowRight className="h-3 w-3 mt-0.5 shrink-0 text-purple-400" />Change your categorisation mode in Settings → Preferences to control how aggressively the system auto-approves.</li>
               </ul>
             </div>
           </div>
@@ -367,6 +587,12 @@ export default function CategorizationRulesPage() {
             className="w-full pl-9 pr-3 py-2 rounded-lg border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
+        <select value={entityFilter} onChange={e => setEntityFilter(e.target.value)} className="px-3 py-2 rounded-lg border bg-card text-sm">
+          <option value="all">All Entities</option>
+          {entities.map(e => (
+            <option key={e.id} value={e.id}>{e.name} ({e.type})</option>
+          ))}
+        </select>
         <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)} className="px-3 py-2 rounded-lg border bg-card text-sm">
           <option value="all">All Sources</option>
           <option value="system">System</option>
@@ -386,6 +612,15 @@ export default function CategorizationRulesPage() {
         <div className="rounded-xl border bg-card p-5 space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <Plus className="h-4 w-4 text-purple-500" /> Create Categorisation Rule
+            {entityFilter !== 'all' ? (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-normal">
+                <Building2 className="h-3 w-3" /> {entities.find(e => e.id === entityFilter)?.name || 'Entity'}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20 font-normal">
+                <Globe className="h-3 w-3" /> All entities
+              </span>
+            )}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -462,12 +697,36 @@ export default function CategorizationRulesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-left p-3 font-medium">Keyword</th>
-                <th className="text-left p-3 font-medium">Match</th>
-                <th className="text-left p-3 font-medium">Category</th>
-                <th className="text-left p-3 font-medium">Source</th>
-                <th className="text-left p-3 font-medium">Used</th>
-                <th className="text-left p-3 font-medium">Status</th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('keyword')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Keyword <SortIcon field="keyword" />
+                  </button>
+                </th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('matchType')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Match <SortIcon field="matchType" />
+                  </button>
+                </th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('category')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Category <SortIcon field="category" />
+                  </button>
+                </th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('source')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Source <SortIcon field="source" />
+                  </button>
+                </th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('usageCount')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Used <SortIcon field="usageCount" />
+                  </button>
+                </th>
+                <th className="text-left p-3 font-medium">
+                  <button onClick={() => toggleSort('isActive')} className="inline-flex items-center hover:text-purple-500 transition-colors">
+                    Status <SortIcon field="isActive" />
+                  </button>
+                </th>
                 <th className="text-left p-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -483,10 +742,114 @@ export default function CategorizationRulesPage() {
                 filteredRules.map(rule => {
                   const sourceInfo = SOURCE_LABELS[rule.source] || SOURCE_LABELS.manual;
                   const SourceIcon = sourceInfo.icon;
+                  const isEditing = editingId === rule.id;
+
+                  if (isEditing) {
+                    return (
+                      <tr key={rule.id} className="border-b last:border-0 bg-purple-500/5">
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={editForm.keyword}
+                            onChange={e => setEditForm(f => ({ ...f, keyword: e.target.value }))}
+                            className="w-full px-2 py-1.5 rounded border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Keyword..."
+                          />
+                          <input
+                            type="text"
+                            value={editForm.description}
+                            onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                            className="w-full px-2 py-1 rounded border bg-background text-xs mt-1 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            placeholder="Description (optional)"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <select
+                            value={editForm.matchType}
+                            onChange={e => setEditForm(f => ({ ...f, matchType: e.target.value }))}
+                            className="w-full px-2 py-1.5 rounded border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="contains">Contains</option>
+                            <option value="exact">Exact Match</option>
+                            <option value="starts_with">Starts With</option>
+                            <option value="regex">Regex</option>
+                          </select>
+                          <select
+                            value={editForm.transactionType}
+                            onChange={e => setEditForm(f => ({ ...f, transactionType: e.target.value }))}
+                            className="w-full px-2 py-1 rounded border bg-background text-xs mt-1"
+                          >
+                            <option value="">Both</option>
+                            <option value="credit">Income</option>
+                            <option value="debit">Expense</option>
+                          </select>
+                        </td>
+                        <td className="p-2">
+                          <select
+                            value={editForm.categoryId}
+                            onChange={e => setEditForm(f => ({ ...f, categoryId: e.target.value }))}
+                            className="w-full px-2 py-1.5 rounded border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="">Select...</option>
+                            {categories.map(c => (
+                              <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="p-2">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${sourceInfo.color}`}>
+                            <SourceIcon className="h-3 w-3" /> {sourceInfo.label}
+                          </span>
+                        </td>
+                        <td className="p-2 text-muted-foreground text-xs">{rule.usageCount}x</td>
+                        <td className="p-2">
+                          <button
+                            onClick={() => toggleActive(rule)}
+                            className={`text-xs px-2 py-0.5 rounded-full border ${rule.isActive ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
+                          >
+                            {rule.isActive ? 'Active' : 'Disabled'}
+                          </button>
+                        </td>
+                        <td className="p-2">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={saveEdit}
+                              disabled={savingEdit || !editForm.keyword || !editForm.categoryId}
+                              className="p-1.5 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                              title="Save changes"
+                            >
+                              <Save className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title="Cancel"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  const entityName = rule.entityId ? entities.find(e => e.id === rule.entityId)?.name : null;
+
                   return (
                     <tr key={rule.id} className={`border-b last:border-0 hover:bg-muted/20 transition-colors ${!rule.isActive ? 'opacity-50' : ''}`}>
                       <td className="p-3">
-                        <p className="font-mono font-medium text-sm">{rule.keyword}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-mono font-medium text-sm">{rule.keyword}</p>
+                          {entityName ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" title={`Scoped to ${entityName}`}>
+                              <Building2 className="h-2.5 w-2.5" />{entityName}
+                            </span>
+                          ) : rule.userId ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20" title="Applies to all your entities">
+                              <Globe className="h-2.5 w-2.5" />All
+                            </span>
+                          ) : null}
+                        </div>
                         {rule.description && <p className="text-xs text-muted-foreground mt-0.5">{rule.description}</p>}
                         {rule.transactionType && (
                           <span className={`text-xs px-1.5 py-0.5 rounded ${rule.transactionType === 'credit' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
@@ -495,7 +858,12 @@ export default function CategorizationRulesPage() {
                         )}
                       </td>
                       <td className="p-3">
-                        <span className="text-xs px-2 py-0.5 rounded bg-muted">{MATCH_TYPE_LABELS[rule.matchType] || rule.matchType}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded border font-medium ${
+                          rule.matchType === 'exact' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                          rule.matchType === 'starts_with' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20' :
+                          rule.matchType === 'regex' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                          'bg-muted border-transparent'
+                        }`}>{MATCH_TYPE_LABELS[rule.matchType] || rule.matchType}</span>
                       </td>
                       <td className="p-3">
                         <span className="font-medium">{rule.category.name}</span>
@@ -516,15 +884,24 @@ export default function CategorizationRulesPage() {
                         </button>
                       </td>
                       <td className="p-3">
-                        {rule.source !== 'system' && (
+                        <div className="flex items-center gap-1">
                           <button
-                            onClick={() => deleteRule(rule.id)}
-                            className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
-                            title="Delete rule"
+                            onClick={() => startEditing(rule)}
+                            className="p-1.5 rounded hover:bg-purple-500/10 text-muted-foreground hover:text-purple-500 transition-colors"
+                            title="Edit rule"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Edit2 className="h-3.5 w-3.5" />
                           </button>
-                        )}
+                          {rule.source !== 'system' && (
+                            <button
+                              onClick={() => deleteRule(rule.id)}
+                              className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+                              title="Delete rule"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -540,6 +917,8 @@ export default function CategorizationRulesPage() {
         <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-blue-500" /> System = Built-in UK rules</span>
         <span className="flex items-center gap-1"><BookOpen className="h-3 w-3 text-purple-500" /> Manual = Created by you</span>
         <span className="flex items-center gap-1"><Bot className="h-3 w-3 text-green-500" /> Auto-Learned = From 3+ corrections</span>
+        <span className="flex items-center gap-1"><Building2 className="h-3 w-3 text-indigo-400" /> Entity-scoped = Applies only to that company</span>
+        <span className="flex items-center gap-1"><Globe className="h-3 w-3 text-slate-400" /> All = Applies to all your entities</span>
       </div>
     </div>
   );

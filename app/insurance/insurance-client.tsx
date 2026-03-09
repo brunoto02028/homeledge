@@ -20,8 +20,9 @@ import {
   Stethoscope, Dog, Briefcase, MoreHorizontal, Calendar, AlertTriangle,
   CheckCircle2, PoundSterling, Clock, Bike, Phone, FileText, ExternalLink,
   HelpCircle, TrendingDown, TrendingUp, Minus, ChevronRight, Lightbulb, Scale,
+  Search, Sparkles, Star, BarChart3, ArrowRight, Trophy, Info, Send,
 } from 'lucide-react';
-import { getClaimGuide, getComparisonLinks, getPriceAssessment, RENEWAL_TIPS, type ClaimGuide } from '@/lib/insurance-data';
+import { getClaimGuide, getComparisonLinks, getPriceAssessment, RENEWAL_TIPS, UK_PRICE_RANGES, COMPARISON_LINKS, type ClaimGuide } from '@/lib/insurance-data';
 
 const POLICY_TYPES = [
   { value: 'car', label: 'Car Insurance', icon: Car, color: 'bg-blue-500' },
@@ -112,7 +113,8 @@ const emptyForm = {
 };
 
 export function InsuranceClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { selectedEntityId } = useEntityContext();
   const { toast } = useToast();
   const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
@@ -134,6 +136,22 @@ export function InsuranceClient() {
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimForm, setClaimForm] = useState({ claimDate: '', claimReference: '', amount: '', description: '', status: 'submitted' });
   const [savingClaim, setSavingClaim] = useState(false);
+  // Tabs & Quote Finder
+  const [activeTab, setActiveTab] = useState<'policies' | 'finder' | 'quotes'>('policies');
+  const [finderType, setFinderType] = useState('car');
+  const [finderDetails, setFinderDetails] = useState('');
+  const [finderLoading, setFinderLoading] = useState(false);
+  const [finderResult, setFinderResult] = useState<{ advice: string; marketData: any; comparisonLinks: any[] } | null>(null);
+  // Quote Tracker
+  const [savedQuotes, setSavedQuotes] = useState<any[]>([]);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({
+    type: 'car', providerName: '', premiumAmount: '', premiumFrequency: 'monthly',
+    coverageAmount: '', excessAmount: '', coverType: '', quoteReference: '', expiryDate: '', source: 'manual', notes: '', policyId: '',
+  });
+  const [savingQuote, setSavingQuote] = useState(false);
+  const [quoteFilterType, setQuoteFilterType] = useState('all');
 
   const fetchPolicies = useCallback(async () => {
     try {
@@ -143,7 +161,7 @@ export function InsuranceClient() {
       const res = await fetch(url);
       if (res.ok) setPolicies(await res.json());
     } catch {
-      toast({ title: 'Error loading policies', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao carregar apólices' : 'Error loading policies', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -153,7 +171,7 @@ export function InsuranceClient() {
 
   const handleSave = async () => {
     if (!form.providerName || !form.premiumAmount || !form.startDate) {
-      toast({ title: 'Please fill required fields', variant: 'destructive' });
+      toast({ title: isPt ? 'Preencha os campos obrigatórios' : 'Please fill required fields', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -166,7 +184,7 @@ export function InsuranceClient() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        toast({ title: editId ? 'Policy updated' : 'Policy added' });
+        toast({ title: editId ? (isPt ? 'Apólice atualizada' : 'Policy updated') : (isPt ? 'Apólice adicionada' : 'Policy added') });
         setShowDialog(false);
         setEditId(null);
         setForm(emptyForm);
@@ -176,7 +194,7 @@ export function InsuranceClient() {
         toast({ title: err.error || 'Error', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error saving policy', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao salvar apólice' : 'Error saving policy', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -187,11 +205,11 @@ export function InsuranceClient() {
     try {
       const res = await fetch(`/api/insurance/${deleteId}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'Policy deleted' });
+        toast({ title: isPt ? 'Apólice excluída' : 'Policy deleted' });
         fetchPolicies();
       }
     } catch {
-      toast({ title: 'Error deleting', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao excluir' : 'Error deleting', variant: 'destructive' });
     }
     setDeleteId(null);
   };
@@ -248,10 +266,10 @@ export function InsuranceClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentPath: cloudPath }),
       });
-      toast({ title: 'Document attached', description: file.name });
+      toast({ title: isPt ? 'Documento anexado' : 'Document attached', description: file.name });
       fetchPolicies();
     } catch (err: any) {
-      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      toast({ title: isPt ? 'Falha no envio' : 'Upload failed', description: err.message, variant: 'destructive' });
     } finally {
       setUploadingDocFor(null);
       e.target.value = '';
@@ -265,10 +283,10 @@ export function InsuranceClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentPath: null }),
       });
-      toast({ title: 'Document removed' });
+      toast({ title: isPt ? 'Documento removido' : 'Document removed' });
       fetchPolicies();
     } catch {
-      toast({ title: 'Failed to remove document', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha ao remover documento' : 'Failed to remove document', variant: 'destructive' });
     }
   };
 
@@ -284,7 +302,7 @@ export function InsuranceClient() {
         window.open(data.url, '_blank');
       }
     } catch {
-      toast({ title: 'Failed to open document', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha ao abrir documento' : 'Failed to open document', variant: 'destructive' });
     }
   };
 
@@ -297,7 +315,7 @@ export function InsuranceClient() {
       const res = await fetch(`/api/insurance/${policy.id}/claims`);
       if (res.ok) setClaims(await res.json());
     } catch {
-      toast({ title: 'Error loading claims', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao carregar sinistros' : 'Error loading claims', variant: 'destructive' });
     } finally {
       setClaimsLoading(false);
     }
@@ -313,7 +331,7 @@ export function InsuranceClient() {
         body: JSON.stringify(claimForm),
       });
       if (res.ok) {
-        toast({ title: 'Claim recorded' });
+        toast({ title: isPt ? 'Sinistro registrado' : 'Claim recorded' });
         setShowClaimForm(false);
         setClaimForm({ claimDate: '', claimReference: '', amount: '', description: '', status: 'submitted' });
         openClaims(claimsPolicy);
@@ -322,7 +340,7 @@ export function InsuranceClient() {
         toast({ title: err.error || 'Error', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error saving claim', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao salvar sinistro' : 'Error saving claim', variant: 'destructive' });
     } finally {
       setSavingClaim(false);
     }
@@ -333,12 +351,103 @@ export function InsuranceClient() {
     try {
       const res = await fetch(`/api/insurance/${claimsPolicy.id}/claims/${claimId}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'Claim deleted' });
+        toast({ title: isPt ? 'Sinistro excluído' : 'Claim deleted' });
         openClaims(claimsPolicy);
       }
     } catch {
-      toast({ title: 'Error deleting claim', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro ao excluir sinistro' : 'Error deleting claim', variant: 'destructive' });
     }
+  };
+
+  // Quote Finder handlers
+  const handleFindQuotes = async () => {
+    if (!finderType) return;
+    setFinderLoading(true);
+    setFinderResult(null);
+    try {
+      const res = await fetch('/api/insurance/advisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: finderType, details: finderDetails }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFinderResult(data);
+      } else {
+        toast({ title: isPt ? 'Erro ao obter consultoria' : 'Error getting advice', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: isPt ? 'Erro de conexão' : 'Connection error', variant: 'destructive' });
+    } finally {
+      setFinderLoading(false);
+    }
+  };
+
+  // Quotes tracker handlers
+  const fetchQuotes = useCallback(async () => {
+    setQuotesLoading(true);
+    try {
+      const res = await fetch('/api/insurance/quotes');
+      if (res.ok) setSavedQuotes(await res.json());
+    } catch {
+      toast({ title: isPt ? 'Erro ao carregar cotações' : 'Error loading quotes', variant: 'destructive' });
+    } finally {
+      setQuotesLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (activeTab === 'quotes') fetchQuotes();
+  }, [activeTab, fetchQuotes]);
+
+  const handleSaveQuote = async () => {
+    if (!quoteForm.providerName || !quoteForm.premiumAmount) {
+      toast({ title: isPt ? 'Fornecedor e prêmio são obrigatórios' : 'Provider and premium are required', variant: 'destructive' });
+      return;
+    }
+    setSavingQuote(true);
+    try {
+      const res = await fetch('/api/insurance/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quoteForm),
+      });
+      if (res.ok) {
+        toast({ title: isPt ? 'Cotação salva' : 'Quote saved' });
+        setShowQuoteForm(false);
+        setQuoteForm({ type: 'car', providerName: '', premiumAmount: '', premiumFrequency: 'monthly', coverageAmount: '', excessAmount: '', coverType: '', quoteReference: '', expiryDate: '', source: 'manual', notes: '', policyId: '' });
+        fetchQuotes();
+      } else {
+        const err = await res.json();
+        toast({ title: err.error || 'Error', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: isPt ? 'Erro ao salvar cotação' : 'Error saving quote', variant: 'destructive' });
+    } finally {
+      setSavingQuote(false);
+    }
+  };
+
+  const handleDeleteQuote = async (id: string) => {
+    try {
+      const res = await fetch('/api/insurance/quotes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        toast({ title: isPt ? 'Cotação excluída' : 'Quote deleted' });
+        fetchQuotes();
+      }
+    } catch {
+      toast({ title: isPt ? 'Erro ao excluir cotação' : 'Error deleting quote', variant: 'destructive' });
+    }
+  };
+
+  const getAnnualFromQuote = (amount: number, freq: string) => {
+    if (freq === 'monthly') return amount * 12;
+    if (freq === 'quarterly') return amount * 4;
+    return amount;
   };
 
   const formatCurrency = (amount: number) =>
@@ -390,16 +499,16 @@ export function InsuranceClient() {
             <Shield className="h-7 w-7 text-primary" />
             {t('nav.insurance')}
           </h1>
-          <p className="text-muted-foreground mt-1">Manage all your insurance policies in one place</p>
+          <p className="text-muted-foreground mt-1">{isPt ? 'Gerencie todas as suas apólices de seguro em um só lugar' : 'Manage all your insurance policies in one place'}</p>
         </div>
         <div className="flex gap-2">
           {activePolicies.length > 0 && (
             <Button variant="outline" onClick={() => setRenewalTipsOpen(true)} className="gap-1.5">
-              <Lightbulb className="h-4 w-4" /> Renewal Tips
+              <Lightbulb className="h-4 w-4" /> {isPt ? 'Dicas de Renovação' : 'Renewal Tips'}
             </Button>
           )}
           <Button onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Add Policy
+            <Plus className="h-4 w-4 mr-2" /> {isPt ? 'Adicionar Apólice' : 'Add Policy'}
           </Button>
         </div>
       </div>
@@ -412,7 +521,7 @@ export function InsuranceClient() {
               <Shield className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Active Policies</p>
+              <p className="text-xs text-muted-foreground">{isPt ? 'Apólices Ativas' : 'Active Policies'}</p>
               <p className="text-xl font-bold">{activePolicies.length}</p>
             </div>
           </CardContent>
@@ -423,7 +532,7 @@ export function InsuranceClient() {
               <PoundSterling className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Monthly Cost</p>
+              <p className="text-xs text-muted-foreground">{isPt ? 'Custo Mensal' : 'Monthly Cost'}</p>
               <p className="text-xl font-bold">{formatCurrency(totalMonthlyPremium)}</p>
             </div>
           </CardContent>
@@ -434,7 +543,7 @@ export function InsuranceClient() {
               <Calendar className="h-5 w-5 text-purple-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Annual Cost</p>
+              <p className="text-xs text-muted-foreground">{isPt ? 'Custo Anual' : 'Annual Cost'}</p>
               <p className="text-xl font-bold">{formatCurrency(totalAnnualPremium)}</p>
             </div>
           </CardContent>
@@ -445,17 +554,42 @@ export function InsuranceClient() {
               <AlertTriangle className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Expiring Soon</p>
+              <p className="text-xs text-muted-foreground">{isPt ? 'Expirando em Breve' : 'Expiring Soon'}</p>
               <p className="text-xl font-bold">{expiringCount}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('policies')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'policies' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <Shield className="h-4 w-4" /> {isPt ? 'Minhas Apólices' : 'My Policies'}
+        </button>
+        <button
+          onClick={() => setActiveTab('finder')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'finder' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <Sparkles className="h-4 w-4" /> {isPt ? 'Buscar Cotação' : 'Quote Finder'}
+        </button>
+        <button
+          onClick={() => setActiveTab('quotes')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'quotes' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <BarChart3 className="h-4 w-4" /> {isPt ? 'Minhas Cotações' : 'My Quotes'} ({savedQuotes.length})
+        </button>
+      </div>
+
+      {/* ═══════════════════ TAB: POLICIES ═══════════════════ */}
+      {activeTab === 'policies' && (<>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant={filterType === 'all' ? 'default' : 'outline'} onClick={() => setFilterType('all')}>
-          All ({policies.length})
+          {isPt ? 'Todos' : 'All'} ({policies.length})
         </Button>
         {POLICY_TYPES.filter(pt => policies.some(p => p.type === pt.value)).map(pt => {
           const Icon = pt.icon;
@@ -472,10 +606,10 @@ export function InsuranceClient() {
       {filtered.length === 0 ? (
         <Card className="p-12 text-center">
           <Shield className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-muted-foreground">No insurance policies yet</h3>
-          <p className="text-sm text-muted-foreground/60 mt-1">Add your first policy to start tracking your insurance coverage.</p>
+          <h3 className="text-lg font-semibold text-muted-foreground">{isPt ? 'Nenhuma apólice de seguro ainda' : 'No insurance policies yet'}</h3>
+          <p className="text-sm text-muted-foreground/60 mt-1">{isPt ? 'Adicione sua primeira apólice para acompanhar sua cobertura de seguro.' : 'Add your first policy to start tracking your insurance coverage.'}</p>
           <Button className="mt-4" onClick={() => { setEditId(null); setForm(emptyForm); setShowDialog(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Add Policy
+            <Plus className="h-4 w-4 mr-2" /> {isPt ? 'Adicionar Apólice' : 'Add Policy'}
           </Button>
         </Card>
       ) : (
@@ -674,6 +808,456 @@ export function InsuranceClient() {
         </div>
       )}
 
+      </>)}
+
+      {/* ═══════════════════ TAB: QUOTE FINDER ═══════════════════ */}
+      {activeTab === 'finder' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                AI Insurance Quote Finder
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Get personalised price estimates, money-saving tips, and comparison site recommendations powered by AI.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Type selector */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">What type of insurance?</Label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                  {POLICY_TYPES.map(pt => {
+                    const Icon = pt.icon;
+                    return (
+                      <button
+                        key={pt.value}
+                        onClick={() => { setFinderType(pt.value); setFinderResult(null); }}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-xs font-medium ${
+                          finderType === pt.value
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {pt.label.replace(' Insurance', '')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Market data preview */}
+              {UK_PRICE_RANGES[finderType] && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/30">
+                  <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <div className="text-sm">
+                    <span className="font-medium text-blue-800 dark:text-blue-200">UK Market Average: </span>
+                    <span className="text-blue-700 dark:text-blue-300">
+                      £{UK_PRICE_RANGES[finderType].monthlyLow} — £{UK_PRICE_RANGES[finderType].monthlyHigh}/month
+                    </span>
+                    <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-0.5">
+                      Factors: {UK_PRICE_RANGES[finderType].factors.slice(0, 4).join(', ')}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Details input */}
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Tell us about your situation (optional)</Label>
+                <Textarea
+                  value={finderDetails}
+                  onChange={e => setFinderDetails(e.target.value)}
+                  placeholder={`e.g. "I'm 28, live in London, drive a 2020 Honda Civic, 3 years NCD, no claims..." or "Looking for the cheapest home insurance for a 3-bed semi in Manchester"`}
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              {/* Search button */}
+              <Button
+                onClick={handleFindQuotes}
+                disabled={finderLoading}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {finderLoading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Analysing market data...</>
+                ) : (
+                  <><Search className="h-4 w-4" /> Get AI Quote Advice</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* AI Result */}
+          {finderResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Sparkles className="h-5 w-5 text-amber-500" />
+                  Insurance Advice
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* AI advice text */}
+                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">
+                  {finderResult.advice}
+                </div>
+
+                {/* Quick comparison links */}
+                {finderResult.comparisonLinks.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" /> Compare Prices Now
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {finderResult.comparisonLinks.map((link: any) => (
+                        <a
+                          key={link.name}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group text-sm"
+                        >
+                          <span className="font-medium">{link.name}</span>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Save a quote CTA */}
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Found a good quote? Save it to compare later.</p>
+                  <Button size="sm" variant="outline" onClick={() => { setQuoteForm({ ...quoteForm, type: finderType }); setShowQuoteForm(true); setActiveTab('quotes'); }}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Save a Quote
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════ TAB: MY QUOTES ═══════════════════ */}
+      {activeTab === 'quotes' && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">My Saved Quotes</h2>
+              <p className="text-sm text-muted-foreground">Compare quotes from different providers side by side</p>
+            </div>
+            <Button onClick={() => { setShowQuoteForm(true); setQuoteForm({ ...quoteForm, type: quoteFilterType === 'all' ? 'car' : quoteFilterType }); }} className="gap-1.5">
+              <Plus className="h-4 w-4" /> Add Quote
+            </Button>
+          </div>
+
+          {/* Quote form */}
+          {showQuoteForm && (
+            <Card>
+              <CardContent className="p-4 space-y-4">
+                <h3 className="font-semibold text-sm">New Quote</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Insurance Type *</Label>
+                    <Select value={quoteForm.type} onValueChange={v => setQuoteForm({ ...quoteForm, type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {POLICY_TYPES.map(pt => (
+                          <SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Provider *</Label>
+                    <Input value={quoteForm.providerName} onChange={e => setQuoteForm({ ...quoteForm, providerName: e.target.value })} placeholder="e.g. Admiral, Aviva" />
+                  </div>
+                  <div>
+                    <Label>Source</Label>
+                    <Select value={quoteForm.source} onValueChange={v => setQuoteForm({ ...quoteForm, source: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Direct / Manual</SelectItem>
+                        <SelectItem value="comparethemarket">CompareTheMarket</SelectItem>
+                        <SelectItem value="gocompare">GoCompare</SelectItem>
+                        <SelectItem value="moneysupermarket">MoneySupermarket</SelectItem>
+                        <SelectItem value="confused">Confused.com</SelectItem>
+                        <SelectItem value="uswitch">uSwitch</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <Label>Premium (£) *</Label>
+                    <Input type="number" step="0.01" value={quoteForm.premiumAmount} onChange={e => setQuoteForm({ ...quoteForm, premiumAmount: e.target.value })} placeholder="29.99" />
+                  </div>
+                  <div>
+                    <Label>Frequency</Label>
+                    <Select value={quoteForm.premiumFrequency} onValueChange={v => setQuoteForm({ ...quoteForm, premiumFrequency: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Coverage (£)</Label>
+                    <Input type="number" step="0.01" value={quoteForm.coverageAmount} onChange={e => setQuoteForm({ ...quoteForm, coverageAmount: e.target.value })} placeholder="Cover amount" />
+                  </div>
+                  <div>
+                    <Label>Excess (£)</Label>
+                    <Input type="number" step="0.01" value={quoteForm.excessAmount} onChange={e => setQuoteForm({ ...quoteForm, excessAmount: e.target.value })} placeholder="Voluntary excess" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Quote Reference</Label>
+                    <Input value={quoteForm.quoteReference} onChange={e => setQuoteForm({ ...quoteForm, quoteReference: e.target.value })} placeholder="Quote ref number" />
+                  </div>
+                  <div>
+                    <Label>Expires</Label>
+                    <Input type="date" value={quoteForm.expiryDate} onChange={e => setQuoteForm({ ...quoteForm, expiryDate: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea value={quoteForm.notes} onChange={e => setQuoteForm({ ...quoteForm, notes: e.target.value })} placeholder="What's included, special features..." rows={2} />
+                </div>
+
+                {/* Link to existing policy (for renewal comparison) */}
+                {policies.length > 0 && (
+                  <div>
+                    <Label>Compare against existing policy (optional)</Label>
+                    <Select value={quoteForm.policyId} onValueChange={v => setQuoteForm({ ...quoteForm, policyId: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select a policy..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {policies.filter(p => p.type === quoteForm.type || quoteForm.type === 'all').map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.providerName} — {POLICY_TYPES.find(pt => pt.value === p.type)?.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setShowQuoteForm(false)}>Cancel</Button>
+                  <Button onClick={handleSaveQuote} disabled={savingQuote}>
+                    {savingQuote && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Quote
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Filter by type */}
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant={quoteFilterType === 'all' ? 'default' : 'outline'} onClick={() => setQuoteFilterType('all')}>
+              All ({savedQuotes.length})
+            </Button>
+            {POLICY_TYPES.filter(pt => savedQuotes.some((q: any) => q.type === pt.value)).map(pt => {
+              const Icon = pt.icon;
+              const count = savedQuotes.filter((q: any) => q.type === pt.value).length;
+              return (
+                <Button key={pt.value} size="sm" variant={quoteFilterType === pt.value ? 'default' : 'outline'} onClick={() => setQuoteFilterType(pt.value)}>
+                  <Icon className="h-3.5 w-3.5 mr-1" /> {pt.label.replace(' Insurance', '')} ({count})
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Quotes comparison */}
+          {quotesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : savedQuotes.length === 0 ? (
+            <Card className="p-12 text-center">
+              <BarChart3 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-muted-foreground">No saved quotes yet</h3>
+              <p className="text-sm text-muted-foreground/60 mt-1">
+                Use the Quote Finder to get AI advice, then save quotes from comparison sites to compare here.
+              </p>
+              <div className="flex gap-2 justify-center mt-4">
+                <Button variant="outline" onClick={() => setActiveTab('finder')}>
+                  <Search className="h-4 w-4 mr-2" /> Find Quotes
+                </Button>
+                <Button onClick={() => setShowQuoteForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Quote Manually
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {(quoteFilterType === 'all' ? savedQuotes : savedQuotes.filter((q: any) => q.type === quoteFilterType)).map((quote: any) => {
+                const typeConfig = POLICY_TYPES.find(pt => pt.value === quote.type) || POLICY_TYPES[8];
+                const Icon = typeConfig.icon;
+                const annual = getAnnualFromQuote(quote.premiumAmount, quote.premiumFrequency);
+                const monthly = annual / 12;
+                const assessment = getPriceAssessment(quote.type, monthly);
+                const isExpired = quote.expiryDate && new Date(quote.expiryDate) < new Date();
+
+                // Find cheapest for this type
+                const sameType = savedQuotes.filter((q: any) => q.type === quote.type);
+                const cheapest = sameType.length > 1 && sameType.every((q: any) => getAnnualFromQuote(q.premiumAmount, q.premiumFrequency) >= annual);
+
+                return (
+                  <Card key={quote.id} className={`overflow-hidden transition-shadow hover:shadow-md ${isExpired ? 'opacity-60' : ''} ${cheapest ? 'ring-2 ring-green-500/50' : ''}`}>
+                    <div className={`h-1 ${typeConfig.color}`} />
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-8 w-8 rounded-lg ${typeConfig.color}/10 flex items-center justify-center`}>
+                            <Icon className={`h-4 w-4 ${typeConfig.color.replace('bg-', 'text-')}`} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-sm">{quote.providerName}</h3>
+                            <p className="text-xs text-muted-foreground">{typeConfig.label}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteQuote(quote.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {cheapest && (
+                          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-950/20">
+                            <Trophy className="h-3 w-3 mr-1" /> Best Price
+                          </Badge>
+                        )}
+                        {quote.source !== 'manual' && (
+                          <Badge variant="secondary" className="text-xs capitalize">{quote.source}</Badge>
+                        )}
+                        {isExpired && (
+                          <Badge variant="destructive" className="text-xs">Expired</Badge>
+                        )}
+                      </div>
+
+                      {/* Price */}
+                      <div className="text-center py-2 rounded-lg bg-muted/50">
+                        <div className="text-2xl font-bold">{formatCurrency(quote.premiumAmount)}<span className="text-sm font-normal text-muted-foreground">/{quote.premiumFrequency === 'monthly' ? 'mo' : quote.premiumFrequency === 'quarterly' ? 'qtr' : 'yr'}</span></div>
+                        {quote.premiumFrequency !== 'yearly' && (
+                          <div className="text-xs text-muted-foreground">{formatCurrency(annual)}/year</div>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div className="space-y-1 text-sm">
+                        {quote.coverageAmount && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Cover</span>
+                            <span>{formatCurrency(quote.coverageAmount)}</span>
+                          </div>
+                        )}
+                        {quote.excessAmount && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Excess</span>
+                            <span>{formatCurrency(quote.excessAmount)}</span>
+                          </div>
+                        )}
+                        {quote.quoteReference && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Ref</span>
+                            <span className="font-mono text-xs">{quote.quoteReference}</span>
+                          </div>
+                        )}
+                        {quote.expiryDate && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Expires</span>
+                            <span>{new Date(quote.expiryDate).toLocaleDateString('en-GB')}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price assessment */}
+                      <div className={`flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-md ${
+                        assessment.status === 'low' ? 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300' :
+                        assessment.status === 'high' ? 'bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300' :
+                        'bg-muted/50 text-muted-foreground'
+                      }`}>
+                        {assessment.status === 'low' && <TrendingDown className="h-3 w-3 flex-shrink-0" />}
+                        {assessment.status === 'high' && <TrendingUp className="h-3 w-3 flex-shrink-0" />}
+                        {assessment.status === 'typical' && <Minus className="h-3 w-3 flex-shrink-0" />}
+                        <span className="truncate">{assessment.message}</span>
+                      </div>
+
+                      {/* vs existing policy */}
+                      {quote.policy && (
+                        <div className="pt-2 border-t text-xs">
+                          <span className="text-muted-foreground">vs current: </span>
+                          <span className="font-medium">{quote.policy.providerName} — {formatCurrency(quote.policy.premiumAmount)}/{quote.policy.premiumFrequency === 'monthly' ? 'mo' : quote.policy.premiumFrequency === 'quarterly' ? 'qtr' : 'yr'}</span>
+                          {(() => {
+                            const currentAnnual = getAnnualFromQuote(quote.policy.premiumAmount, quote.policy.premiumFrequency);
+                            const diff = annual - currentAnnual;
+                            return diff < 0 ? (
+                              <Badge className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Save {formatCurrency(Math.abs(diff))}/yr</Badge>
+                            ) : diff > 0 ? (
+                              <Badge variant="destructive" className="ml-1">+{formatCurrency(diff)}/yr</Badge>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+
+                      {quote.notes && (
+                        <div className="text-xs text-muted-foreground pt-1 border-t">{quote.notes}</div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Summary comparison for same type */}
+          {(() => {
+            const typeQuotes = quoteFilterType !== 'all'
+              ? savedQuotes.filter((q: any) => q.type === quoteFilterType)
+              : savedQuotes;
+            if (typeQuotes.length < 2) return null;
+
+            const sorted = [...typeQuotes].sort((a: any, b: any) =>
+              getAnnualFromQuote(a.premiumAmount, a.premiumFrequency) - getAnnualFromQuote(b.premiumAmount, b.premiumFrequency)
+            );
+            const cheapest = sorted[0];
+            const mostExpensive = sorted[sorted.length - 1];
+            const cheapestAnnual = getAnnualFromQuote(cheapest.premiumAmount, cheapest.premiumFrequency);
+            const expensiveAnnual = getAnnualFromQuote(mostExpensive.premiumAmount, mostExpensive.premiumFrequency);
+            const savings = expensiveAnnual - cheapestAnnual;
+
+            return (
+              <Card className="bg-green-50/50 dark:bg-green-950/10 border-green-200/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Trophy className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Best deal: {cheapest.providerName} — {formatCurrency(cheapest.premiumAmount)}/{cheapest.premiumFrequency === 'monthly' ? 'mo' : cheapest.premiumFrequency === 'quarterly' ? 'qtr' : 'yr'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Saves you up to <strong className="text-green-600">{formatCurrency(savings)}/year</strong> compared to {mostExpensive.providerName}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={(open) => { if (!open) { setShowDialog(false); setEditId(null); } }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -843,7 +1427,7 @@ export function InsuranceClient() {
             <Button variant="outline" onClick={() => { setShowDialog(false); setEditId(null); }}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editId ? 'Update' : 'Add Policy'}
+              {editId ? (isPt ? 'Atualizar' : 'Update') : (isPt ? 'Adicionar Apólice' : 'Add Policy')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -82,7 +82,7 @@ export async function POST(
     }
 
     // Create new Yoti session
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://clarityco.co.uk';
     const session = await createIdvSession({
       callbackUrl: `${baseUrl}/verify/${token}?status=callback`,
     });

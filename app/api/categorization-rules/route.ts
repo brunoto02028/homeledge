@@ -2,23 +2,37 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserId } from '@/lib/auth';
 
-// GET: List all rules (system + user's own)
+// GET: List all rules (system + user's own), optionally filtered by entity
 export async function GET(request: Request) {
   try {
     const userId = await requireUserId();
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source'); // 'system' | 'manual' | 'auto_learned' | null
+    const entityId = searchParams.get('entityId'); // filter by entity
+    const includeInactive = searchParams.get('includeInactive') === 'true';
 
     const where: any = {
-      isActive: true,
-      OR: [{ userId: null }, { userId }],
+      OR: [
+        { userId: null, entityId: null },   // system/global
+        { userId, entityId: null },          // user-global
+      ],
     };
+    // Include entity-specific rules if entityId provided
+    if (entityId) {
+      where.OR.push({ entityId });
+    } else {
+      // No entity filter: show all user's entity-scoped rules too
+      where.OR.push({ userId });
+    }
+    if (!includeInactive) where.isActive = true;
     if (source) where.source = source;
 
     const rules = await (prisma as any).categorizationRule.findMany({
       where,
       orderBy: [{ priority: 'desc' }, { usageCount: 'desc' }],
-      include: { category: { select: { id: true, name: true, type: true, color: true, icon: true } } },
+      include: {
+        category: { select: { id: true, name: true, type: true, color: true, icon: true } },
+      },
     });
 
     return NextResponse.json(rules);

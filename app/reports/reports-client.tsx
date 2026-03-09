@@ -25,6 +25,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Slider } from '@/components/ui/slider';
 import { useEntityContext } from '@/components/entity-context';
+import DateRangePicker, { DateRange } from '@/components/date-range-picker';
 
 // HMRC Box Mapping for Self Assessment SA103 (2024/25 & 2025/26)
 const HMRC_BOX_MAPPING: Record<string, { box: string; label: string; categories: string[] }> = {
@@ -46,10 +47,10 @@ const HMRC_BOX_MAPPING: Record<string, { box: string; label: string; categories:
 };
 
 // UK Tax Year Helper Functions
-function getTaxYears(): { value: string; label: string; start: Date; end: Date }[] {
+function getTaxYears(): { value: string; label: string; start: string; end: string }[] {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
-  const years: { value: string; label: string; start: Date; end: Date }[] = [];
+  const years: { value: string; label: string; start: string; end: string }[] = [];
   
   // Determine if we're past April 5th
   const isAfterApril5 = currentMonth > 3 || (currentMonth === 3 && new Date().getDate() > 5);
@@ -62,8 +63,8 @@ function getTaxYears(): { value: string; label: string; start: Date; end: Date }
     years.push({
       value: `${yearStart}-${yearEnd}`,
       label: `${yearStart}/${yearEnd}${isCurrent ? ' (Current)' : ''}`,
-      start: new Date(yearStart, 3, 6), // April 6th
-      end: new Date(yearEnd, 3, 5, 23, 59, 59), // April 5th
+      start: `${yearStart}-04-06`,
+      end: `${yearEnd}-04-05`,
     });
   }
   return years;
@@ -369,7 +370,8 @@ const emptyProfile: TaxpayerProfile = {
 };
 
 export default function ReportsClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { entities, selectedEntityId, setSelectedEntityId, selectedEntity, loading: entityLoading } = useEntityContext();
   const [entityRegime, setEntityRegime] = useState<string>('hmrc');
   const [reportSummary, setReportSummary] = useState<ReportSummary | null>(null);
@@ -383,13 +385,13 @@ export default function ReportsClient() {
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [newBudget, setNewBudget] = useState({ categoryId: '', amount: '', alertAt: '80' });
   const [allTransactions, setAllTransactions] = useState<BankTransaction[]>([]);
   const [selectedTaxYear, setSelectedTaxYear] = useState<string>('');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [dateRange, setDateRangeState] = useState<DateRange>({ startDate: '', endDate: '', label: '' });
   const { toast } = useToast();
 
   // New states for modals and tax reality
@@ -411,7 +413,11 @@ export default function ReportsClient() {
   useEffect(() => {
     // Set default tax year
     if (taxYears.length > 0 && !selectedTaxYear) {
-      setSelectedTaxYear(taxYears[0].value);
+      const current = taxYears[0];
+      setSelectedTaxYear(current.value);
+      setDateRangeState({ startDate: current.start, endDate: current.end, label: current.label });
+      setCustomStart(current.start);
+      setCustomEnd(current.end);
     }
   }, [taxYears, selectedTaxYear]);
 
@@ -536,11 +542,11 @@ export default function ReportsClient() {
       });
       if (res.ok) {
         setAllTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, isApproved: true } : tx));
-        toast({ title: 'Transaction Approved', description: 'Transaction marked as verified' });
+        toast({ title: isPt ? 'Transação Aprovada' : 'Transaction Approved', description: isPt ? 'Transação marcada como verificada' : 'Transaction marked as verified' });
       }
     } catch (error) {
       console.error('Error approving transaction:', error);
-      toast({ title: 'Error', description: 'Failed to approve transaction', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao aprovar transação' : 'Failed to approve transaction', variant: 'destructive' });
     } finally {
       setSavingTransaction(false);
     }
@@ -552,11 +558,11 @@ export default function ReportsClient() {
       const res = await fetch(`/api/statements/transactions/${txId}`, { method: 'DELETE' });
       if (res.ok) {
         setAllTransactions(prev => prev.filter(tx => tx.id !== txId));
-        toast({ title: 'Transaction Deleted' });
+        toast({ title: isPt ? 'Transação Excluída' : 'Transaction Deleted' });
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
-      toast({ title: 'Error', description: 'Failed to delete transaction', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir transação' : 'Failed to delete transaction', variant: 'destructive' });
     }
   };
 
@@ -570,7 +576,7 @@ export default function ReportsClient() {
       });
       if (res.ok) {
         setAllTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, appliedDeductibilityPercent: percent } : tx));
-        toast({ title: 'Deductibility Updated' });
+        toast({ title: isPt ? 'Dedutibilidade Atualizada' : 'Deductibility Updated' });
       }
     } catch (error) {
       console.error('Error updating deductibility:', error);
@@ -589,7 +595,7 @@ export default function ReportsClient() {
       });
       if (res.ok) {
         setCategories(prev => prev.map(cat => cat.id === categoryId ? { ...cat, defaultDeductibilityPercent: percent } : cat));
-        toast({ title: 'Category Deductibility Updated', description: `Default set to ${percent}%` });
+        toast({ title: isPt ? 'Dedutibilidade da Categoria Atualizada' : 'Category Deductibility Updated', description: isPt ? `Padrão definido como ${percent}%` : `Default set to ${percent}%` });
         fetchData(); // Refresh tax reality data
       }
     } catch (error) {
@@ -614,25 +620,18 @@ export default function ReportsClient() {
     setShowDeductibilityModal(true);
   };
 
-  // Filter transactions by selected tax year or custom range
+  // Filter transactions by date range
   const filteredTransactions = useMemo(() => {
-    if (selectedTaxYear === 'custom') {
-      if (!customStart && !customEnd) return allTransactions;
-      return allTransactions.filter(tx => {
-        const txDate = new Date(tx.date);
-        if (customStart && txDate < new Date(customStart)) return false;
-        if (customEnd && txDate > new Date(customEnd + 'T23:59:59')) return false;
-        return true;
-      });
-    }
-    const taxYear = taxYears.find(ty => ty.value === selectedTaxYear);
-    if (!taxYear) return allTransactions;
-    
+    const start = dateRange.startDate || customStart;
+    const end = dateRange.endDate || customEnd;
+    if (!start && !end) return allTransactions;
     return allTransactions.filter(tx => {
       const txDate = new Date(tx.date);
-      return txDate >= taxYear.start && txDate <= taxYear.end;
+      if (start && txDate < new Date(start + 'T00:00:00')) return false;
+      if (end && txDate > new Date(end + 'T23:59:59')) return false;
+      return true;
     });
-  }, [allTransactions, selectedTaxYear, taxYears, customStart, customEnd]);
+  }, [allTransactions, dateRange, customStart, customEnd]);
 
   // Get transactions for selected category (excluding moved ones)
   const categoryTransactions = useMemo(() => {
@@ -924,13 +923,13 @@ export default function ReportsClient() {
         body: JSON.stringify(taxpayerProfile),
       });
       if (res.ok) {
-        toast({ title: 'Profile Saved', description: 'Taxpayer profile updated successfully' });
+        toast({ title: isPt ? 'Perfil Salvo' : 'Profile Saved', description: isPt ? 'Perfil do contribuinte atualizado com sucesso' : 'Taxpayer profile updated successfully' });
       } else {
         throw new Error('Failed to save');
       }
     } catch (error) {
       console.error('Save error:', error);
-      toast({ title: 'Error', description: 'Failed to save profile', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar perfil' : 'Failed to save profile', variant: 'destructive' });
     } finally {
       setSavingProfile(false);
     }
@@ -943,8 +942,8 @@ export default function ReportsClient() {
       const params = new URLSearchParams({
         type,
         format: format === 'pdf' || format === 'excel' ? 'json' : format,
-        ...(taxYear && { startDate: taxYear.start.toISOString().split('T')[0] }),
-        ...(taxYear && { endDate: taxYear.end.toISOString().split('T')[0] }),
+        ...(dateRange.startDate ? { startDate: dateRange.startDate } : taxYear ? { startDate: taxYear.start } : {}),
+        ...(dateRange.endDate ? { endDate: dateRange.endDate } : taxYear ? { endDate: taxYear.end } : {}),
       });
 
       const res = await fetch(`/api/reports?${params}`);
@@ -974,7 +973,7 @@ export default function ReportsClient() {
         window.URL.revokeObjectURL(url);
       }
 
-      toast({ title: 'Export Complete', description: `${type} report downloaded as ${format.toUpperCase()}` });
+      toast({ title: isPt ? 'Exportação Concluída' : 'Export Complete', description: isPt ? `Relatório ${type} baixado como ${format.toUpperCase()}` : `${type} report downloaded as ${format.toUpperCase()}` });
     } catch (error) {
       console.error('Export error:', error);
       toast({ title: 'Export Failed', variant: 'destructive' });
@@ -986,13 +985,13 @@ export default function ReportsClient() {
   const generateAccountantPack = async () => {
     setExporting(true);
     try {
-      toast({ title: 'Generating Accountant Pack...', description: 'This may take a moment' });
+      toast({ title: isPt ? 'Gerando Pacote do Contador...' : 'Generating Accountant Pack...', description: isPt ? 'Isso pode levar um momento' : 'This may take a moment' });
       
       // Generate main report PDF
       const taxYear = taxYears.find(ty => ty.value === selectedTaxYear);
       const reportData = {
         taxYear: selectedTaxYear,
-        period: taxYear ? `${taxYear.start.toLocaleDateString('en-GB')} - ${taxYear.end.toLocaleDateString('en-GB')}` : '',
+        period: dateRange.label || (taxYear ? `${taxYear.start} - ${taxYear.end}` : ''),
         summary: {
           totalIncome: taxYearTotals.businessIncome,
           totalExpenses: taxYearTotals.businessExpenses,
@@ -1040,7 +1039,7 @@ export default function ReportsClient() {
       jsonLink.download = `accountant-pack-summary-${selectedTaxYear}.json`;
       setTimeout(() => jsonLink.click(), 500);
 
-      toast({ title: 'Accountant Pack Downloaded', description: 'Transactions CSV and summary JSON exported' });
+      toast({ title: isPt ? 'Pacote do Contador Baixado' : 'Accountant Pack Downloaded', description: isPt ? 'CSV de transações e resumo JSON exportados' : 'Transactions CSV and summary JSON exported' });
     } catch (error) {
       console.error('Export error:', error);
       toast({ title: 'Export Failed', variant: 'destructive' });
@@ -1066,7 +1065,7 @@ export default function ReportsClient() {
     sheets.push(`
       <div id="Summary">
       <table border="1" cellpadding="4">
-        <tr><th colspan="2" style="${hdr}">${taxpayerProfile.companyName || taxpayerProfile.tradingName || 'HomeLedger'} — ${title}</th></tr>
+        <tr><th colspan="2" style="${hdr}">${taxpayerProfile.companyName || taxpayerProfile.tradingName || 'Clarity & Co'} — ${title}</th></tr>
         <tr><td>Report Date</td><td>${new Date().toLocaleDateString('en-GB')}</td></tr>
         <tr><td>Tax Year</td><td>${selectedTaxYear}</td></tr>
         <tr><td>Entity Regime</td><td>${entityRegime === 'companies_house' ? 'Companies House / CT600' : 'HMRC Self Assessment / SA103'}</td></tr>
@@ -1187,7 +1186,7 @@ export default function ReportsClient() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `homeledger-${type}-${selectedTaxYear}-${new Date().toISOString().split('T')[0]}.xls`;
+    a.download = `clarityco-${type}-${selectedTaxYear}-${new Date().toISOString().split('T')[0]}.xls`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -1228,7 +1227,7 @@ export default function ReportsClient() {
         <div class="logo-area">
           ${logoHtml}
           <div>
-            <h1>${taxpayerProfile.companyName || taxpayerProfile.tradingName || 'HomeLedger'}</h1>
+            <h1>${taxpayerProfile.companyName || taxpayerProfile.tradingName || 'Clarity & Co'}</h1>
             <p style="color:#6b7280;margin:0;font-size:14px;">${subtitle}</p>
           </div>
         </div>
@@ -1244,7 +1243,7 @@ export default function ReportsClient() {
   const getPremiumFooter = (extra?: string) => `
     <div class="footer">
       <div class="footer-left">
-        <p style="margin:0"><strong>Generated by HomeLedger</strong> — homeledger.co.uk</p>
+        <p style="margin:0"><strong>Generated by Clarity & Co</strong> — Clarity & Co.co.uk</p>
         <p style="margin:2px 0 0 0">This document is generated for management and tax preparation purposes. Professional review is recommended before any statutory submission.</p>
         ${extra ? `<p style="margin:2px 0 0 0">${extra}</p>` : ''}
       </div>
@@ -1265,8 +1264,9 @@ export default function ReportsClient() {
     const tp = taxpayerProfile;
     const taxYear = taxYears.find(ty => ty.value === selectedTaxYear);
     const today = new Date().toLocaleDateString('en-GB');
-    const periodStart = taxYear?.start.toLocaleDateString('en-GB') || 'Not set';
-    const periodEnd = taxYear?.end.toLocaleDateString('en-GB') || 'Not set';
+    const fmtIso = (iso?: string) => iso ? iso.split('-').reverse().join('/') : 'Not set';
+    const periodStart = dateRange.startDate ? fmtIso(dateRange.startDate) : fmtIso(taxYear?.start);
+    const periodEnd = dateRange.endDate ? fmtIso(dateRange.endDate) : fmtIso(taxYear?.end);
 
     const expenseCategories = categoryBreakdown.filter(c => c.type === 'expense');
     const incomeCategories = categoryBreakdown.filter(c => c.type === 'income');
@@ -1276,7 +1276,7 @@ export default function ReportsClient() {
       <html><head><title>HMRC Financial Report - Tax Year ${selectedTaxYear}</title>
       <style>${getPremiumPDFStyles()}</style>
       </head><body>
-        ${getPremiumHeader('HomeLedger', 'HMRC Self Assessment Report — SA103', [
+        ${getPremiumHeader('Clarity & Co', 'HMRC Self Assessment Report — SA103', [
           { label: 'Tax Year', value: selectedTaxYear },
           { label: 'Period', value: `${periodStart} to ${periodEnd}` },
           { label: 'Generated', value: today },
@@ -1421,8 +1421,9 @@ export default function ReportsClient() {
     const tp = taxpayerProfile;
     const taxYear = taxYears.find(ty => ty.value === selectedTaxYear);
     const today = new Date().toLocaleDateString('en-GB');
-    const periodStart = taxYear?.start.toLocaleDateString('en-GB') || 'Not set';
-    const periodEnd = taxYear?.end.toLocaleDateString('en-GB') || 'Not set';
+    const fmtIso2 = (iso?: string) => iso ? iso.split('-').reverse().join('/') : 'Not set';
+    const periodStart = dateRange.startDate ? fmtIso2(dateRange.startDate) : fmtIso2(taxYear?.start);
+    const periodEnd = dateRange.endDate ? fmtIso2(dateRange.endDate) : fmtIso2(taxYear?.end);
     const expenseCats = categoryBreakdown.filter(c => c.type === 'expense');
     const incomeCats = categoryBreakdown.filter(c => c.type === 'income');
     const ctRate = taxYearTotals.netProfit <= 50000 ? 0.19 : taxYearTotals.netProfit <= 250000 ? 0.265 : 0.25;
@@ -1437,7 +1438,7 @@ export default function ReportsClient() {
       <html><head><title>Companies House Statutory Accounts & CT600 - ${selectedTaxYear}</title>
       <style>${getPremiumPDFStyles('#1e3a8a', '#eff6ff', '#2563eb')}</style>
       </head><body>
-        ${getPremiumHeader(tp.companyName || tp.tradingName || 'HomeLedger', 'Statutory Accounts & CT600 Corporation Tax Return', [
+        ${getPremiumHeader(tp.companyName || tp.tradingName || 'Clarity & Co', 'Statutory Accounts & CT600 Corporation Tax Return', [
           { label: 'CRN', value: tp.companyRegistrationNumber || 'Not set' },
           { label: 'Accounting Period', value: selectedTaxYear },
           { label: 'Period', value: `${periodStart} to ${periodEnd}` },
@@ -1569,8 +1570,9 @@ export default function ReportsClient() {
     const tp = taxpayerProfile;
     const taxYear = taxYears.find(ty => ty.value === selectedTaxYear);
     const today = new Date().toLocaleDateString('en-GB');
-    const periodStart = taxYear?.start.toLocaleDateString('en-GB') || 'Not set';
-    const periodEnd = taxYear?.end.toLocaleDateString('en-GB') || 'Not set';
+    const fmtIso3 = (iso?: string) => iso ? iso.split('-').reverse().join('/') : 'Not set';
+    const periodStart = dateRange.startDate ? fmtIso3(dateRange.startDate) : fmtIso3(taxYear?.start);
+    const periodEnd = dateRange.endDate ? fmtIso3(dateRange.endDate) : fmtIso3(taxYear?.end);
     const outputVAT = taxYearTotals.credits * 0.20;
     const inputVAT = dualRealityTotals.allowableExpenses * 0.20;
     const netVAT = outputVAT - inputVAT;
@@ -1585,7 +1587,7 @@ export default function ReportsClient() {
         .net-row { background: #dbeafe !important; font-weight: bold; font-size: 15px; }
       </style>
       </head><body>
-        ${getPremiumHeader(tp.companyName || tp.tradingName || tp.fullName || 'HomeLedger', 'VAT Return (VAT100)', [
+        ${getPremiumHeader(tp.companyName || tp.tradingName || tp.fullName || 'Clarity & Co', 'VAT Return (VAT100)', [
           { label: 'VRN', value: tp.vatRegistrationNumber || 'Not set' },
           { label: 'Scheme', value: tp.vatScheme || 'Standard' },
           { label: 'Period', value: `${periodStart} to ${periodEnd}` },
@@ -1718,7 +1720,7 @@ export default function ReportsClient() {
 
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html><head><title>${title} - HomeLedger</title>
+      <html><head><title>${title} - Clarity & Co</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto; color: #333; line-height: 1.5; }
         h1 { color: #1e3a8a; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }
@@ -1735,7 +1737,7 @@ export default function ReportsClient() {
       </style>
       </head><body>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><h1>HomeLedger</h1><p style="color:#6b7280;margin-top:-10px;">${title}</p></div>
+          <div><h1>Clarity & Co</h1><p style="color:#6b7280;margin-top:-10px;">${title}</p></div>
           <div style="text-align:right;color:#6b7280;font-size:13px;">
             <p><strong>Tax Year:</strong> ${selectedTaxYear}</p>
             <p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
@@ -1743,7 +1745,7 @@ export default function ReportsClient() {
         </div>
         ${content}
         <div class="footer">
-          <p>Generated by HomeLedger | All amounts in GBP | Verify all figures before use</p>
+          <p>Generated by Clarity & Co | All amounts in GBP | Verify all figures before use</p>
         </div>
       </body></html>
     `);
@@ -1753,7 +1755,7 @@ export default function ReportsClient() {
 
   const handleCreateBudget = async () => {
     if (!newBudget.categoryId || !newBudget.amount) {
-      toast({ title: 'Required fields missing', variant: 'destructive' });
+      toast({ title: isPt ? 'Campos obrigatórios faltando' : 'Required fields missing', variant: 'destructive' });
       return;
     }
     try {
@@ -1767,7 +1769,7 @@ export default function ReportsClient() {
         }),
       });
       if (res.ok) {
-        toast({ title: 'Budget Created' });
+        toast({ title: isPt ? 'Orçamento Criado' : 'Budget Created' });
         setShowBudgetDialog(false);
         setNewBudget({ categoryId: '', amount: '', alertAt: '80' });
         fetchData();
@@ -1784,7 +1786,7 @@ export default function ReportsClient() {
   const handleDeleteBudget = async (id: string) => {
     try {
       await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
-      toast({ title: 'Budget Deleted' });
+      toast({ title: isPt ? 'Orçamento Excluído' : 'Budget Deleted' });
       fetchData();
     } catch (error) {
       console.error('Delete error:', error);
@@ -2023,7 +2025,7 @@ export default function ReportsClient() {
                         {tx.isApproved ? (
                           <Badge className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"><Check className="h-3 w-3 mr-1" /> Approved</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-amber-600">Pending</Badge>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -2227,25 +2229,16 @@ export default function ReportsClient() {
                 </SelectContent>
               </Select>
             )}
-            {/* Tax Year */}
-            <Select value={selectedTaxYear} onValueChange={setSelectedTaxYear}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select tax year" />
-              </SelectTrigger>
-              <SelectContent>
-                {taxYears.map(ty => (
-                  <SelectItem key={ty.value} value={ty.value}>{ty.label}</SelectItem>
-                ))}
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedTaxYear === 'custom' && (
-              <div className="flex items-center gap-2">
-                <Input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="w-[140px]" />
-                <span className="text-muted-foreground text-sm">to</span>
-                <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="w-[140px]" />
-              </div>
-            )}
+            {/* Date Range Picker */}
+            <DateRangePicker
+              value={dateRange}
+              onChange={range => {
+                setDateRangeState(range);
+                setCustomStart(range.startDate);
+                setCustomEnd(range.endDate);
+                setSelectedTaxYear('custom');
+              }}
+            />
           </div>
         </div>
 
@@ -2956,7 +2949,7 @@ export default function ReportsClient() {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = `vat-return-${selectedTaxYear}.json`; a.click();
                     URL.revokeObjectURL(url);
-                    toast({ title: 'MTD JSON Exported', description: 'VAT Return data in HMRC MTD format' });
+                    toast({ title: isPt ? 'MTD JSON Exportado' : 'MTD JSON Exported', description: isPt ? 'Dados de retorno IVA em formato HMRC MTD' : 'VAT Return data in HMRC MTD format' });
                   }}><Download className="h-4 w-4 mr-1" /> MTD JSON</Button>
                 </div>
               </div>
@@ -3459,7 +3452,7 @@ export default function ReportsClient() {
                       <FileArchive className="h-4 w-4 mr-2" /> Share with Accountant
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><Info className="h-3 w-3" /> Filing buttons will connect to Companies House &amp; HMRC APIs once HomeLedger is registered as authorised filing software.</p>
+                  <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><Info className="h-3 w-3" /> Filing buttons will connect to Companies House &amp; HMRC APIs once Clarity & Co is registered as authorised filing software.</p>
                 </div>
               </CardContent>
             </Card>
@@ -3549,7 +3542,7 @@ export default function ReportsClient() {
                     <FileArchive className="h-4 w-4 mr-2" /> Share with Accountant
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><Info className="h-3 w-3" /> Filing buttons will connect to HMRC MTD APIs once HomeLedger is registered as authorised filing software.</p>
+                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><Info className="h-3 w-3" /> Filing buttons will connect to HMRC MTD APIs once Clarity & Co is registered as authorised filing software.</p>
               </div>
             </CardContent>
           </Card>

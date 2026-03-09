@@ -15,13 +15,14 @@ import {
   Languages, School, FileText, Clock, Target, Sparkles,
   RefreshCw, ChevronDown, ChevronUp, RotateCcw, Play, Award,
   BookMarked, Landmark, Library, PoundSterling, ScrollText, Zap,
-  Lightbulb, Eye, EyeOff, Speech,
+  Lightbulb, Eye, EyeOff, Speech, ClipboardCheck,
 } from 'lucide-react';
 
 import { CEFR_LEVELS, QUICK_TOPICS, UK_EXAMS, ESOL_INFO, VOCABULARY_SETS, LIFE_IN_UK_FACTS, CONVERSATION_SCENARIOS, IELTS_WRITING_TEMPLATES, PHRASAL_VERBS, PRONUNCIATION_GUIDE, DAILY_CHALLENGES, type ChatMessage, type CEFRLevel } from './data/constants';
 import { LIFE_IN_UK_QUESTIONS, LIFE_IN_UK_CHAPTERS, type LifeInUKQuestion } from './data/life-in-uk-questions';
 import { GRAMMAR_LESSONS, type GrammarLesson } from './data/grammar-lessons';
 import { ModuleGuide } from '@/components/module-guide';
+import { useTranslation } from '@/lib/i18n';
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -45,6 +46,8 @@ function shuffleArray<T>(arr: T[]): T[] {
 // ─── Component ──────────────────────────────────────────────────────────
 
 export default function EnglishHubClient() {
+  const { locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
 
   // AI Chat
@@ -86,6 +89,10 @@ export default function EnglishHubClient() {
 
   // Exam Prep
   const [examExpanded, setExamExpanded] = useState<number | null>(null);
+
+  // SELT Prep
+  const [seltExpanded, setSeltExpanded] = useState<string | null>(null);
+  const toggleSelt = (id: string) => setSeltExpanded(prev => prev === id ? null : id);
 
   // Phrasal Verbs
   const [pvRevealed, setPvRevealed] = useState<Set<number>>(new Set());
@@ -140,8 +147,13 @@ export default function EnglishHubClient() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to get response');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error('[English Hub] API error:', res.status, errData);
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
+      if (!data.answer) throw new Error('Empty response from AI');
       const assistantMsg: ChatMessage = { role: 'assistant', content: data.answer };
       const updatedMessages = [...newMessages, assistantMsg];
       setMessages(updatedMessages);
@@ -151,8 +163,19 @@ export default function EnglishHubClient() {
         setSpeakingIdx(updatedMessages.length - 1);
         speakText(data.answer);
       }
-    } catch {
-      toast({ title: 'Error', description: 'Could not get response from AI tutor', variant: 'destructive' });
+    } catch (err: any) {
+      console.error('[English Hub] sendMessage error:', err);
+      const errorMsg = err?.message || 'Unknown error';
+      const isAuthError = errorMsg.includes('401') || errorMsg.includes('Unauthorized');
+      toast({
+        title: isPt ? 'Erro do Tutor IA' : 'AI Tutor Error',
+        description: isAuthError
+          ? (isPt ? 'Sessão expirada — faça login novamente' : 'Session expired — please log in again')
+          : (isPt ? `Não foi possível obter resposta: ${errorMsg}` : `Could not get response: ${errorMsg}`),
+        variant: 'destructive',
+      });
+      // Remove the user message if AI failed so they can try again
+      setMessages(prev => prev.filter(m => m !== userMsg));
     } finally {
       setSending(false);
     }
@@ -169,8 +192,11 @@ export default function EnglishHubClient() {
     recognition.interimResults = false;
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
-      setInputMessage(transcript);
       setIsListening(false);
+      // Auto-send the spoken message with a mic indicator
+      if (transcript.trim()) {
+        sendMessage(`🎙️ ${transcript.trim()}`);
+      }
     };
     recognition.onerror = (e: any) => {
       console.error('Speech Recognition Error:', e);
@@ -322,6 +348,7 @@ export default function EnglishHubClient() {
           <TabsTrigger value="phrasal" className="gap-1.5 text-xs sm:text-sm"><ScrollText className="h-3.5 w-3.5" />Phrasal Verbs</TabsTrigger>
           <TabsTrigger value="pronunciation" className="gap-1.5 text-xs sm:text-sm"><Headphones className="h-3.5 w-3.5" />Pronunciation</TabsTrigger>
           <TabsTrigger value="exams" className="gap-1.5 text-xs sm:text-sm"><Award className="h-3.5 w-3.5" />Exam Prep</TabsTrigger>
+          <TabsTrigger value="selt" className="gap-1.5 text-xs sm:text-sm"><FileText className="h-3.5 w-3.5" />SELT for Citizenship</TabsTrigger>
           <TabsTrigger value="cefr" className="gap-1.5 text-xs sm:text-sm"><Target className="h-3.5 w-3.5" />CEFR Levels</TabsTrigger>
           <TabsTrigger value="challenge" className="gap-1.5 text-xs sm:text-sm"><Zap className="h-3.5 w-3.5" />Daily Challenge</TabsTrigger>
           <TabsTrigger value="resources" className="gap-1.5 text-xs sm:text-sm"><BookOpen className="h-3.5 w-3.5" />Resources</TabsTrigger>
@@ -337,8 +364,8 @@ export default function EnglishHubClient() {
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <CardTitle className="text-lg flex items-center gap-2"><Brain className="h-5 w-5 text-indigo-500" />AI English Tutor</CardTitle>
-                    <CardDescription>Practice speaking, grammar, writing — your personal UK English teacher</CardDescription>
+                    <CardTitle className="text-lg flex items-center gap-2"><Brain className="h-5 w-5 text-indigo-500" />{isPt ? 'Mr. Clarke — Seu Professor de Inglês' : 'Mr. Clarke — Your English Teacher'}</CardTitle>
+                    <CardDescription>{isPt ? 'Pratique conversação, gramática, pronúncia — seu professor britânico pessoal com IA' : 'Practice conversation, grammar, pronunciation — your personal British AI teacher'}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={selectedLevel} onValueChange={(v) => setSelectedLevel(v as CEFRLevel)}>
@@ -357,8 +384,22 @@ export default function EnglishHubClient() {
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
                     <Brain className="h-12 w-12 mb-3 opacity-30" />
-                    <p className="text-lg font-medium">Start a conversation</p>
-                    <p className="text-sm mt-1">Choose a topic below or type your own question</p>
+                    <p className="text-lg font-medium">{isPt ? 'Olá! Eu sou o Mr. Clarke 🇬🇧' : 'Hello! I\'m Mr. Clarke 🇬🇧'}</p>
+                    <p className="text-sm mt-1 max-w-md">{isPt ? 'Seu professor de inglês britânico. Posso te ensinar gramática, corrigir sua pronúncia, simular conversas reais e preparar você para exames SELT.' : 'Your British English teacher. I can teach you grammar, correct your pronunciation, simulate real conversations and prepare you for SELT exams.'}</p>
+                    <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                      {[
+                        { label: isPt ? '📖 Aula de Gramática' : '📖 Grammar Lesson', prompt: isPt ? 'Quero uma aula de gramática. Me ensine algo útil para o dia a dia no UK no meu nível.' : 'I want a grammar lesson. Teach me something useful for daily life in the UK at my level.' },
+                        { label: isPt ? '🗣️ Conversação' : '🗣️ Conversation', prompt: isPt ? 'Quero praticar conversação. Escolha um cenário real do UK e faça um role-play comigo.' : 'I want to practice conversation. Choose a real UK scenario and do a role-play with me.' },
+                        { label: isPt ? '🔊 Pronúncia' : '🔊 Pronunciation', prompt: isPt ? 'Quero melhorar minha pronúncia. Me ensine os sons mais difíceis do inglês britânico com exercícios.' : 'I want to improve my pronunciation. Teach me the hardest British English sounds with exercises.' },
+                        { label: isPt ? '🎯 Preparar SELT B1' : '🎯 Prepare SELT B1', prompt: isPt ? 'Preciso me preparar para o exame SELT B1 para cidadania/ILR. Simule um exame comigo e me avalie.' : 'I need to prepare for the SELT B1 exam for citizenship/ILR. Simulate an exam with me and assess me.' },
+                        { label: isPt ? '✏️ Corrija Meu Inglês' : '✏️ Correct My English', prompt: isPt ? 'Vou escrever frases em inglês e quero que você corrija cada uma, explicando os erros e como melhorar.' : 'I will write sentences in English and I want you to correct each one, explaining the errors and how to improve.' },
+                      ].map((btn, i) => (
+                        <Button key={i} variant="outline" size="sm" className="text-xs h-auto py-1.5 px-3"
+                          onClick={() => sendMessage(btn.prompt)}>
+                          {btn.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   messages.map((msg, i) => (
@@ -1070,6 +1111,401 @@ export default function EnglishHubClient() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TAB: SELT for Citizenship                                       */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="selt" className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+              <FileText className="h-6 w-6 text-sky-500" />
+              {isPt ? 'Preparação SELT para Cidadania & ILR' : 'SELT Preparation for Citizenship & ILR'}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-2">
+              {isPt
+                ? 'Tudo que você precisa saber sobre os 4 testes aprovados de inglês para cidadania britânica e residência permanente (ILR). Prepare-se, agende e passe.'
+                : 'Everything you need to know about the 4 approved English tests for British citizenship and Indefinite Leave to Remain (ILR). Prepare, book, and pass.'}
+            </p>
+          </div>
+
+          {/* Key info banner */}
+          <Card className="border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20">
+            <CardContent className="pt-4 pb-4">
+              <div className="space-y-1.5 text-xs text-muted-foreground">
+                {(isPt ? [
+                  '📋 Para cidadania e ILR: você só precisa de FALA e COMPREENSÃO ORAL no nível B1 — sem leitura nem escrita',
+                  '🗣️ É um exame com examinador ou em dupla — NÃO é entrevista no Home Office',
+                  '⏱️ Dura entre 10 e 22 minutos dependendo do provedor',
+                  '💰 Todos custam £150',
+                  '📄 O certificado vale 2 anos — mas se foi aceito para ILR, pode reutilizar para cidadania mesmo expirado',
+                  '✅ Resultado: Pass ou Fail (binário) — não dá nota',
+                ] : [
+                  '📋 For citizenship and ILR: you only need SPEAKING & LISTENING at B1 level — no reading or writing',
+                  '🗣️ It is an exam with an examiner or in a pair — NOT an interview at the Home Office',
+                  '⏱️ Lasts between 10 and 22 minutes depending on the provider',
+                  '💰 All cost £150',
+                  '📄 Certificate is valid for 2 years — but if accepted for ILR, you can reuse it for citizenship even after expiry',
+                  '✅ Result: Pass or Fail (binary) — no score given',
+                ]).map((item, i) => <p key={i}>{item}</p>)}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4 SELT Tests */}
+          <div className="space-y-3">
+            {([
+              { id: 'ielts', color: 'border-red-500/30 bg-red-500/5', badgeColor: 'bg-red-500',
+                title: 'IELTS Life Skills B1', provider: isPt ? 'por IELTS SELT Consortium (British Council / IDP)' : 'by IELTS SELT Consortium (British Council / IDP)',
+                cost: '£150', duration: isPt ? '~22 minutos' : '~22 minutes',
+                bookUrl: 'https://ielts.org/take-a-test/test-types/ielts-tests-for-uk-visas-and-immigration',
+                prepUrl: 'https://takeielts.britishcouncil.org/take-ielts/prepare/free-ielts-english-practice-tests/life-skills',
+                format: isPt ? [
+                  '📋 Exame presencial em centro de testes aprovado (British Council ou IDP)',
+                  '👥 Você faz o teste EM PAR com outro candidato — não sozinho',
+                  '🗣️ Um examinador certificado avalia vocês dois',
+                  '⏱️ Dura aproximadamente 16-22 minutos',
+                  '📝 Parte 1: Perguntar e responder perguntas sobre temas do dia a dia (com o outro candidato)',
+                  '📝 Parte 2: Ouvir um áudio curto e discutir o que ouviu com o outro candidato',
+                  '🎯 Temas incluem: descrever, dar opiniões, informações pessoais, preferências, concordar/discordar, explicar, sugerir, narrar eventos, futuro',
+                  '📊 Resultado: Pass ou Fail — enviado em 7 dias úteis',
+                  '🏢 Disponível em centros por todo o UK — agende com antecedência',
+                ] : [
+                  '📋 In-person exam at an approved test centre (British Council or IDP)',
+                  '👥 You take the test IN A PAIR with another candidate — not alone',
+                  '🗣️ A certified examiner assesses both of you',
+                  '⏱️ Lasts approximately 16-22 minutes',
+                  '📝 Part 1: Ask and answer questions about everyday topics (with the other candidate)',
+                  '📝 Part 2: Listen to a short audio recording and discuss what you heard with the other candidate',
+                  '🎯 Topics include: describing, giving opinions, personal info, preferences, agreeing/disagreeing, explaining, suggesting, narrating events, future',
+                  '📊 Result: Pass or Fail — sent within 7 working days',
+                  '🏢 Available at centres across the UK — book well in advance',
+                ],
+                tips: isPt ? [
+                  '💡 Pratique conversar em inglês sobre temas do cotidiano — trabalho, família, hobbies, planos futuros',
+                  '💡 Pratique fazer perguntas (não apenas responder) — é avaliado como você interage',
+                  '💡 Ouça podcasts ou rádio em inglês para melhorar compreensão oral',
+                  '💡 NÃO é o IELTS Academic/General — é IELTS Life Skills. Certifique-se de agendar o correto!',
+                  '💡 Materiais gratuitos disponíveis no site do British Council',
+                ] : [
+                  '💡 Practice having conversations in English about everyday topics — work, family, hobbies, future plans',
+                  '💡 Practice asking questions (not just answering) — interaction is assessed',
+                  '💡 Listen to English podcasts or radio to improve listening comprehension',
+                  '💡 This is NOT IELTS Academic/General — it is IELTS Life Skills. Make sure you book the right one!',
+                  '💡 Free preparation materials available on the British Council website',
+                ],
+              },
+              { id: 'trinity', color: 'border-blue-500/30 bg-blue-500/5', badgeColor: 'bg-blue-500',
+                title: 'Trinity GESE Grade 5 (B1)', provider: isPt ? 'por Trinity College London' : 'by Trinity College London',
+                cost: '£150', duration: isPt ? '10 minutos' : '10 minutes',
+                bookUrl: 'https://seltbooking.trinitycollege.co.uk/',
+                prepUrl: 'https://www.trinitycollege.com/qualifications/SELT/prepare-test-GESE-B1',
+                format: isPt ? [
+                  '📋 Exame ORAL individual — 1 a 1 com examinador via videoconferência',
+                  '⏱️ Dura apenas 10 MINUTOS — o mais curto dos 4 testes',
+                  '📝 Parte 1 — Tópico (5 min): VOCÊ escolhe um tópico antecipadamente e prepara um Topic Form',
+                  '   → Você discute seu tópico com o examinador (ex: sua cidade, seu hobby, uma viagem)',
+                  '   → O examinador faz perguntas sobre seu tópico',
+                  '📝 Parte 2 — Conversa (5 min): O examinador escolhe 2 assuntos de uma lista para discutir',
+                  '   → Assuntos possíveis: festivais, meios de transporte, entretenimento, comida, dinheiro, regras, saúde, clima, aprendizado, etc.',
+                  '📊 Resultado provisório: por email no dia seguinte. Certificado digital em 4-7 dias',
+                  '🏢 Feito em centros Trinity SELT ou remotamente via tablet — com steward presencial',
+                ] : [
+                  '📋 ORAL exam one-to-one — face-to-face with examiner via video conference',
+                  '⏱️ Lasts only 10 MINUTES — the shortest of all 4 tests',
+                  '📝 Part 1 — Topic (5 min): YOU choose a topic in advance and prepare a Topic Form',
+                  '   → You discuss your chosen topic with the examiner (e.g. your city, hobby, a trip)',
+                  '   → The examiner asks follow-up questions about your topic',
+                  '📝 Part 2 — Conversation (5 min): The examiner picks 2 subject areas to discuss',
+                  '   → Possible subjects: festivals, transport, entertainment, food, money, rules, health, weather, learning, etc.',
+                  '📊 Provisional result: by email the next day. Digital certificate in 4-7 days',
+                  '🏢 Done at Trinity SELT centres or remotely via tablet — with personal steward on site',
+                ],
+                tips: isPt ? [
+                  '💡 PREPARE seu tópico muito bem — você escolhe! Escolha algo que conhece e gosta de falar',
+                  '💡 Preencha o Topic Form antes do exame e leve no dia',
+                  '💡 Pratique falar sobre seu tópico por 5 minutos, incluindo detalhes e opiniões',
+                  '💡 Para a conversa: pratique os assuntos da lista (festivais, transporte, entretenimento, etc.)',
+                  '💡 É o teste mais rápido e muita gente prefere pela informalidade — como uma conversa amigável',
+                ] : [
+                  '💡 PREPARE your topic very well — you choose it! Pick something you know and enjoy talking about',
+                  '💡 Fill in the Topic Form before the exam and bring it on the day',
+                  '💡 Practice talking about your topic for 5 minutes, including details and opinions',
+                  '💡 For the conversation: practice the listed subject areas (festivals, transport, entertainment, etc.)',
+                  '💡 It is the quickest test and many people prefer it for its informal feel — like a friendly chat',
+                ],
+              },
+              { id: 'languagecert', color: 'border-emerald-500/30 bg-emerald-500/5', badgeColor: 'bg-emerald-500',
+                title: 'LanguageCert International ESOL SELT', provider: isPt ? 'por LanguageCert' : 'by LanguageCert',
+                cost: '£150', duration: isPt ? '~15 minutos' : '~15 minutes',
+                bookUrl: 'https://selt.languagecert.org/',
+                prepUrl: 'https://www.languagecert.org/en/language-exams/english/languagecert-international-esol-selt/b1-achiever',
+                format: isPt ? [
+                  '📋 Exame de fala e compreensão oral — pode ser feito ONLINE ou presencial',
+                  '⏱️ Dura aproximadamente 15 minutos',
+                  '🖥️ Se online: feito em casa com supervisão remota via computador (precisa de webcam e microfone)',
+                  '🏢 Se presencial: feito em centro de testes LanguageCert aprovado',
+                  '📝 O examinador propõe situações e temas para discussão',
+                  '📝 Você responde perguntas, descreve situações, dá opiniões e interage',
+                  '📊 Resultado disponível em poucos dias',
+                  '⚠️ A partir de Jan 2025, houve mudanças no formato — verifique o site para a versão mais atual',
+                ] : [
+                  '📋 Speaking and listening exam — can be done ONLINE or at a test centre',
+                  '⏱️ Lasts approximately 15 minutes',
+                  '🖥️ If online: done from home with remote proctoring via computer (needs webcam and mic)',
+                  '🏢 If in-person: done at an approved LanguageCert test centre',
+                  '📝 The examiner proposes situations and topics for discussion',
+                  '📝 You answer questions, describe situations, give opinions and interact',
+                  '📊 Results available within a few days',
+                  '⚠️ From Jan 2025, there were format changes — check the website for the latest version',
+                ],
+                tips: isPt ? [
+                  '💡 Grande vantagem: pode fazer DE CASA se escolher a opção online',
+                  '💡 Certifique-se de ter boa conexão de internet, webcam e microfone',
+                  '💡 Pratique falar sozinho sobre temas comuns — descrever rotina, planos, opiniões',
+                  '💡 Ambiente silencioso e bem iluminado é essencial para o teste online',
+                ] : [
+                  '💡 Big advantage: you can take it FROM HOME if you choose the online option',
+                  '💡 Make sure you have good internet, webcam and microphone',
+                  '💡 Practice speaking alone about common topics — describe routines, plans, opinions',
+                  '💡 A quiet and well-lit environment is essential for the online test',
+                ],
+              },
+              { id: 'pte', color: 'border-amber-500/30 bg-amber-500/5', badgeColor: 'bg-amber-500',
+                title: 'PTE Home (B1)', provider: isPt ? 'por Pearson' : 'by Pearson',
+                cost: '£150', duration: isPt ? '~15-20 minutos' : '~15-20 minutes',
+                bookUrl: 'https://www.pearsonpte.com/selt-tests',
+                prepUrl: 'https://www.pearsonpte.com/preparation',
+                format: isPt ? [
+                  '📋 Exame por COMPUTADOR em centro de testes Pearson aprovado',
+                  '⏱️ Dura aproximadamente 15-20 minutos',
+                  '🖥️ Você faz o teste em um computador com headset (fones com microfone)',
+                  '📝 O computador grava suas respostas — avaliação é mista (AI + humano)',
+                  '📝 Tarefas incluem: responder perguntas, repetir frases, descrever imagens, recontar textos ouvidos',
+                  '📊 Resultado disponível em 2-5 dias úteis — um dos mais rápidos',
+                  '🏢 Centros de teste em grandes cidades do UK',
+                  '⚠️ NÃO é PTE Academic — é PTE Home. Certifique-se de agendar o correto!',
+                ] : [
+                  '📋 COMPUTER-BASED exam at an approved Pearson test centre',
+                  '⏱️ Lasts approximately 15-20 minutes',
+                  '🖥️ You take the test on a computer with a headset (headphones with microphone)',
+                  '📝 The computer records your responses — assessment is mixed (AI + human)',
+                  '📝 Tasks include: answering questions, repeating sentences, describing images, retelling heard texts',
+                  '📊 Results available in 2-5 working days — one of the fastest',
+                  '🏢 Test centres in major UK cities',
+                  '⚠️ This is NOT PTE Academic — it is PTE Home. Make sure you book the right one!',
+                ],
+                tips: isPt ? [
+                  '💡 Se prefere fazer em computador sem interação humana direta, este é ideal',
+                  '💡 Pratique falar claramente com boa pronúncia — o microfone grava tudo',
+                  '💡 Familiarize-se com o formato no site do Pearson — tem simulados',
+                  '💡 Resultado rápido (2-5 dias) — bom se tiver pressa',
+                ] : [
+                  '💡 If you prefer computer-based testing without direct human interaction, this is ideal',
+                  '💡 Practice speaking clearly with good pronunciation — the microphone records everything',
+                  '💡 Familiarize yourself with the format on Pearson\'s website — they have mock tests',
+                  '💡 Fast results (2-5 days) — good if you\'re in a hurry',
+                ],
+              },
+            ] as const).map((test) => {
+              const isOpen = seltExpanded === test.id;
+              return (
+                <button key={test.id} onClick={() => toggleSelt(test.id)} className={`w-full text-left rounded-xl border p-4 transition-all ${test.color} ${isOpen ? 'ring-2 ring-primary/40' : 'hover:ring-1 hover:ring-primary/20'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge className={`text-white text-[10px] ${test.badgeColor}`}>{test.cost}</Badge>
+                      <div>
+                        <span className="font-semibold text-sm">{test.title}</span>
+                        <p className="text-xs text-muted-foreground">{test.provider} — {test.duration}</p>
+                      </div>
+                    </div>
+                    {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                  </div>
+                  {isOpen && (
+                    <div className="mt-4 space-y-4" onClick={e => e.stopPropagation()}>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">{isPt ? 'Formato do Exame' : 'Exam Format'}</h4>
+                        <div className="space-y-1 bg-background/60 rounded-lg p-3 border border-border/30">
+                          {test.format.map((item, i) => <p key={i} className="text-xs text-muted-foreground">{item}</p>)}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">{isPt ? 'Dicas de Preparação' : 'Preparation Tips'}</h4>
+                        <div className="space-y-1 bg-background/60 rounded-lg p-3 border border-border/30">
+                          {test.tips.map((item, i) => <p key={i} className="text-xs text-muted-foreground">{item}</p>)}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        <a href={test.bookUrl} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <ExternalLink className="h-3 w-3" />{isPt ? 'Agendar Exame' : 'Book Exam'}
+                          </Button>
+                        </a>
+                        <a href={test.prepUrl} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <ExternalLink className="h-3 w-3" />{isPt ? 'Materiais de Preparação' : 'Prep Materials'}
+                          </Button>
+                        </a>
+                        <Button size="sm" variant="outline" className="gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            sendMessage(isPt
+                              ? `Quero me preparar para o ${test.title} para cidadania/ILR britânica. Me dê um plano de estudo detalhado, exercícios práticos de fala e compreensão oral no nível B1, e simule as perguntas que eu vou encontrar no exame. Comece agora.`
+                              : `I want to prepare for the ${test.title} test for British citizenship/ILR. Give me a detailed study plan, practical speaking and listening exercises at B1 level, and simulate the questions I will encounter in the exam. Start now.`
+                            );
+                            const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                            tabEl?.click();
+                          }}>
+                          <Brain className="h-3 w-3" />{isPt ? 'Praticar com IA' : 'Practice with AI'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* What to bring on test day */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4 text-primary" />
+                {isPt ? 'O Que Levar no Dia do Exame' : 'What to Bring on Test Day'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 sm:grid-cols-2 text-xs text-muted-foreground">
+                {(isPt ? [
+                  '🛂 Passaporte válido ou BRP (Biometric Residence Permit) — ORIGINAL',
+                  '📝 O mesmo documento usado para agendar o teste (nome deve coincidir)',
+                  '📋 Número de confirmação de agendamento',
+                  '📄 Topic Form preenchido (apenas para Trinity GESE)',
+                  '🚫 NÃO leve celular para a sala de teste — ficará guardado',
+                  '🚫 NÃO leve relógio inteligente, fones de ouvido ou dispositivos eletrônicos',
+                  '⏰ Chegue 15-30 minutos antes do horário marcado',
+                  '📸 Verificação de identidade biométrica será feita no local',
+                ] : [
+                  '🛂 Valid passport or BRP (Biometric Residence Permit) — ORIGINAL',
+                  '📝 The same document used to book the test (name must match)',
+                  '📋 Booking confirmation number',
+                  '📄 Completed Topic Form (Trinity GESE only)',
+                  '🚫 Do NOT bring mobile phone into the test room — it will be stored',
+                  '🚫 Do NOT bring smart watch, earphones or electronic devices',
+                  '⏰ Arrive 15-30 minutes before your scheduled time',
+                  '📸 Biometric identity verification will be done on site',
+                ]).map((item, i) => <p key={i}>{item}</p>)}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Comparison table */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{isPt ? 'Comparação Rápida' : 'Quick Comparison'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 font-semibold">{isPt ? 'Teste' : 'Test'}</th>
+                      <th className="text-center p-2 font-semibold">{isPt ? 'Duração' : 'Duration'}</th>
+                      <th className="text-center p-2 font-semibold">{isPt ? 'Formato' : 'Format'}</th>
+                      <th className="text-center p-2 font-semibold">{isPt ? 'Resultado' : 'Results'}</th>
+                      <th className="text-center p-2 font-semibold">{isPt ? 'Online?' : 'Online?'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { test: 'IELTS Life Skills B1', dur: isPt ? '~22 min' : '~22 min', fmt: isPt ? 'Em par + examinador' : 'In pair + examiner', res: isPt ? '7 dias' : '7 days', online: '❌' },
+                      { test: 'Trinity GESE Grade 5', dur: isPt ? '10 min' : '10 min', fmt: isPt ? '1-a-1 vídeo' : '1-on-1 video', res: isPt ? '1 dia (provisório)' : '1 day (provisional)', online: '⚠️ Remote via tablet' },
+                      { test: 'LanguageCert ESOL', dur: isPt ? '~15 min' : '~15 min', fmt: isPt ? 'Examinador' : 'Examiner-led', res: isPt ? 'Poucos dias' : 'Few days', online: '✅' },
+                      { test: 'PTE Home B1', dur: isPt ? '~15-20 min' : '~15-20 min', fmt: isPt ? 'Computador + headset' : 'Computer + headset', res: isPt ? '2-5 dias' : '2-5 days', online: '❌' },
+                    ].map(row => (
+                      <tr key={row.test} className="border-b border-border/20 hover:bg-muted/30">
+                        <td className="p-2 font-medium">{row.test}</td>
+                        <td className="p-2 text-center">{row.dur}</td>
+                        <td className="p-2 text-center">{row.fmt}</td>
+                        <td className="p-2 text-center">{row.res}</td>
+                        <td className="p-2 text-center">{row.online}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Practice with AI */}
+          <Card className="border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h3 className="font-bold flex items-center gap-2"><Brain className="h-5 w-5 text-indigo-500" />{isPt ? 'Simule um Exame com a IA' : 'Simulate an Exam with AI'}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {isPt
+                      ? 'Nosso AI Tutor pode simular um exame SELT B1 completo — fazer perguntas, ouvir suas respostas, e avaliar seu nível.'
+                      : 'Our AI Tutor can simulate a full SELT B1 exam — ask questions, listen to your answers, and assess your level.'}
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" size="sm"
+                    onClick={() => {
+                      sendMessage(isPt
+                        ? 'Simule um exame IELTS Life Skills B1 completo comigo. Faça as perguntas que seriam feitas no exame real, avalie minhas respostas, e no final me diga se eu passaria ou não. Comece agora.'
+                        : 'Simulate a complete IELTS Life Skills B1 exam with me. Ask the questions that would be asked in the real exam, assess my answers, and at the end tell me if I would pass or fail. Start now.'
+                      );
+                      const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                      tabEl?.click();
+                    }}>
+                    <Play className="h-3 w-3 mr-1" />{isPt ? 'Simular IELTS' : 'Simulate IELTS'}
+                  </Button>
+                  <Button variant="outline" size="sm"
+                    onClick={() => {
+                      sendMessage(isPt
+                        ? 'Simule um exame Trinity GESE Grade 5 (B1) comigo. Primeiro me pergunte sobre um tópico que eu escolher, depois conduza a fase de conversa com 2 assuntos diferentes. No final, avalie se eu passaria. Comece agora pedindo meu tópico.'
+                        : 'Simulate a Trinity GESE Grade 5 (B1) exam with me. First ask me about a topic of my choice, then lead the conversation phase with 2 different subject areas. At the end, assess if I would pass. Start now by asking for my topic.'
+                      );
+                      const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                      tabEl?.click();
+                    }}>
+                    <Play className="h-3 w-3 mr-1" />{isPt ? 'Simular Trinity' : 'Simulate Trinity'}
+                  </Button>
+                  <Button variant="outline" size="sm"
+                    onClick={() => {
+                      sendMessage(isPt
+                        ? 'Me dê 20 perguntas típicas de conversação B1 que podem aparecer em qualquer exame SELT (IELTS Life Skills, Trinity, LanguageCert ou PTE Home). Faça uma pergunta de cada vez, avalie minha resposta, e no final me dê uma nota geral. Comece agora.'
+                        : 'Give me 20 typical B1 conversation questions that could appear in any SELT exam (IELTS Life Skills, Trinity, LanguageCert or PTE Home). Ask one question at a time, assess my answer, and at the end give me an overall score. Start now.'
+                      );
+                      const tabEl = document.querySelector('[data-value="tutor"]') as HTMLElement;
+                      tabEl?.click();
+                    }}>
+                    <MessageCircle className="h-3 w-3 mr-1" />{isPt ? '20 Perguntas B1' : '20 B1 Questions'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Link to Citizenship page */}
+          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+            <CardContent className="pt-4 pb-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-bold text-sm flex items-center gap-2"><Landmark className="h-4 w-4 text-amber-600" />{isPt ? 'Guia Completo de Cidadania' : 'Full Citizenship Guide'}</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isPt
+                    ? 'Veja o guia completo com todas as rotas, idades, isenções e o passo a passo da aplicação.'
+                    : 'See the full guide with all routes, age groups, exemptions and step-by-step application process.'}
+                </p>
+              </div>
+              <a href="/citizenship">
+                <Button size="sm" variant="outline" className="gap-1">
+                  <ArrowRight className="h-3 w-3" />{isPt ? 'Ir para Cidadania' : 'Go to Citizenship'}
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ═══════════════════════════════════════════════════════════════ */}

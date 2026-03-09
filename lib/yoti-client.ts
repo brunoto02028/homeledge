@@ -8,7 +8,7 @@ import crypto from 'crypto';
 const YOTI_SDK_ID = process.env.YOTI_CLIENT_SDK_ID || '';
 const YOTI_PEM_PATH = process.env.YOTI_PEM_KEY_PATH || '';
 const YOTI_SANDBOX = process.env.YOTI_SANDBOX === 'true';
-const BASE_URL = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+const BASE_URL = process.env.NEXTAUTH_URL || 'https://Clarity & Co.co.uk';
 
 const MOCK_MODE = !YOTI_SDK_ID || YOTI_SDK_ID === 'mock';
 

@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
                   <Mail className="h-7 w-7 text-slate-900" />
                 </div>
               ) : (
-                <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+                <img src="/site-logo.png" alt="Clarity & Co" className="h-full w-full object-contain" />
               )}
             </div>
           </div>

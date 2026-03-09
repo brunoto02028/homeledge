@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to HomeLedger are documented here.  
+All notable changes to Clarity & Co are documented here.  
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
@@ -82,7 +82,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Added — Yoti IDV v2
 - Official Yoti SDK integration with sandbox mode
 - QR code for desktop → mobile handoff
-- Public verification links (no HomeLedger account required)
+- Public verification links (no Clarity & Co account required)
 - Admin verification link management in compliance dashboard
 
 ---

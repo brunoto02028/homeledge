@@ -19,7 +19,8 @@ import { Badge } from "@/components/ui/badge"
 import { ModuleGuide } from '@/components/module-guide'
 
 export function BillsClient() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const isPt = locale === 'pt-BR'
   const { selectedEntityId, selectedEntity } = useEntityContext()
   const searchParams = useSearchParams()
   const [bills, setBills] = useState<Bill[]>([])
@@ -178,7 +179,7 @@ export function BillsClient() {
             entityId={selectedEntityId || undefined}
             onUploadComplete={() => fetchBills()}
             showUploadButton={false}
-            label="Scan Bill"
+            label={isPt ? 'Escanear Conta' : 'Scan Bill'}
           />
           <Button onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
@@ -193,7 +194,7 @@ export function BillsClient() {
           {selectedEntity.type === 'individual' || selectedEntity.type === 'sole_trader'
             ? <User className="h-4 w-4 text-amber-500" />
             : <Building2 className="h-4 w-4 text-blue-500" />}
-          <span>Showing bills for <strong>{selectedEntity.name}</strong></span>
+          <span>{isPt ? 'Mostrando contas de' : 'Showing bills for'} <strong>{selectedEntity.name}</strong></span>
           <Badge variant="outline" className="ml-1 text-xs">{selectedEntity.taxRegime === 'corporation_tax' ? 'Corporation Tax' : 'Self Assessment'}</Badge>
         </div>
       )}

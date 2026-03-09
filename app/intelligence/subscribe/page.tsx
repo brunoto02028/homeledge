@@ -36,9 +36,9 @@ export default function IntelligenceSubscribePage() {
     };
     if ((window as any).L) { load(); return; }
     if (!document.querySelector('link[href*="leaflet"]')) {
-      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/lib/leaflet/leaflet.css'; document.head.appendChild(css);
     }
-    const s = document.createElement('script'); s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload = load; document.head.appendChild(s);
+    const s = document.createElement('script'); s.src = '/lib/leaflet/leaflet.js'; s.onload = load; document.head.appendChild(s);
   }, []);
 
   const handleSubscribe = async () => {
@@ -124,8 +124,8 @@ export default function IntelligenceSubscribePage() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4">
           <a href="/" className="flex items-center gap-2">
-            <img src="/site-logo.png" alt="HomeLedger" className="h-8 w-8 rounded-lg" />
-            <span className="font-bold text-lg">HomeLedger</span>
+            <img src="/site-logo.png" alt="Clarity & Co" className="h-8 w-8 rounded-lg" />
+            <span className="font-bold text-lg">Clarity & Co</span>
           </a>
           <div className="flex items-center gap-4">
             {!session && (
@@ -313,7 +313,7 @@ export default function IntelligenceSubscribePage() {
                 Want More? <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Unlock Everything</span>
               </h2>
               <p className="text-slate-400 max-w-2xl mx-auto">
-                Intelligence is just the beginning. HomeLedger is a complete household finance platform
+                Intelligence is just the beginning. Clarity & Co is a complete household finance platform
                 with bank statements, invoices, bills, tax tools, secure vault, and much more.
               </p>
             </div>
@@ -362,7 +362,7 @@ export default function IntelligenceSubscribePage() {
 
         {/* Footer */}
         <div className="border-t border-white/5 py-6 text-center text-xs text-slate-600">
-          © {new Date().getFullYear()} HomeLedger · <a href="/privacy" className="hover:text-slate-400">Privacy</a> · <a href="/terms" className="hover:text-slate-400">Terms</a>
+          © {new Date().getFullYear()} Clarity & Co · <a href="/privacy" className="hover:text-slate-400">Privacy</a> · <a href="/terms" className="hover:text-slate-400">Terms</a>
         </div>
       </div>
     </div>

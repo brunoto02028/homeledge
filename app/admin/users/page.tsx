@@ -24,6 +24,7 @@ interface UserItem {
   permissions: string[];
   hiddenModules: string[];
   mustChangePassword: boolean;
+  isTestUser: boolean;
   createdAt: string;
   lastLoginAt: string | null;
   _count: { invoices: number; bills: number; bankStatements: number; events: number };
@@ -58,6 +59,7 @@ export default function AdminUsersPage() {
   const [editPlan, setEditPlan] = useState('');
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [editHiddenModules, setEditHiddenModules] = useState<string[]>([]);
+  const [editIsTestUser, setEditIsTestUser] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -131,6 +133,7 @@ export default function AdminUsersPage() {
       if (editPlan) body.plan = editPlan;
       body.permissions = editPermissions;
       body.hiddenModules = editHiddenModules;
+      body.isTestUser = editIsTestUser;
 
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
@@ -221,7 +224,19 @@ export default function AdminUsersPage() {
           </h1>
           <p className="text-muted-foreground mt-1">{users.length} total users</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="gap-2">
+        <Button onClick={() => {
+          if (!showCreateForm) {
+            setNewEmail('');
+            setNewFullName('');
+            setNewPassword('');
+            setNewRole('user');
+            setNewPlan('none');
+            setNewPermissions([]);
+            setShowNewPerms(false);
+            setCreateError('');
+          }
+          setShowCreateForm(!showCreateForm);
+        }} className="gap-2">
           <Plus className="h-4 w-4" />
           New User
         </Button>
@@ -411,6 +426,12 @@ export default function AdminUsersPage() {
                           Must change pw
                         </span>
                       )}
+                      {user.isTestUser && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                          <Eye className="h-3 w-3 mr-0.5" />
+                          Test User
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
                     <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
@@ -437,6 +458,7 @@ export default function AdminUsersPage() {
                             setEditPlan(user.plan || 'free');
                             setEditPermissions(user.permissions || []);
                             setEditHiddenModules(user.hiddenModules || []);
+                            setEditIsTestUser(user.isTestUser || false);
                           }}
                         >
                           <Pencil className="h-4 w-4" />
@@ -511,6 +533,21 @@ export default function AdminUsersPage() {
                         placeholder="New password (optional)"
                         className="h-9"
                       />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={editIsTestUser}
+                          onChange={(e) => setEditIsTestUser(e.target.checked)}
+                          className="rounded border-input"
+                        />
+                        <Eye className="h-3.5 w-3.5 text-amber-600" />
+                        Test User (Full Monitoring)
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground ml-5">
+                        Enables session recording, heatmap, screenshot &amp; screen recording detection
+                      </p>
                     </div>
                   </div>
 

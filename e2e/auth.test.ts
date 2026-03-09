@@ -1,14 +1,14 @@
 /**
- * HomeLedger E2E Tests - Authentication Flows
+ * Clarity & Co E2E Tests - Authentication Flows
  * Tests: Login (with OTP), Register, Forgot Password, Admin Panel
  * 
  * Run: npx ts-node e2e/auth.test.ts
- * Requires: PUPPETEER_BASE_URL env var (defaults to https://homeledger.co.uk)
+ * Requires: PUPPETEER_BASE_URL env var (defaults to https://Clarity & Co.co.uk)
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
 
-const BASE_URL = process.env.PUPPETEER_BASE_URL || 'https://homeledger.co.uk';
+const BASE_URL = process.env.PUPPETEER_BASE_URL || 'https://Clarity & Co.co.uk';
 const TIMEOUT = 15000;
 
 let browser: Browser;
@@ -42,7 +42,7 @@ async function test(name: string, fn: () => Promise<void>) {
 }
 
 async function runTests() {
-  console.log('\n🧪 HomeLedger E2E Tests');
+  console.log('\n🧪 Clarity & Co E2E Tests');
   console.log(`   Base URL: ${BASE_URL}\n`);
 
   await setup();

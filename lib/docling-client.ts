@@ -1,5 +1,5 @@
 /**
- * HomeLedger Docling Client
+ * Clarity & Co Docling Client
  * Communicates with the Docling Python microservice for document processing.
  */
 

@@ -35,6 +35,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://homeledger.co.uk/sitemap.xml',
+    sitemap: 'https://clarityco.co.uk/sitemap.xml',
   };
 }

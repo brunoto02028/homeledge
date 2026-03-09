@@ -156,7 +156,7 @@ export default function MobileUploadPage() {
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 mb-3">
             <span className="text-2xl font-bold text-slate-900">£</span>
           </div>
-          <h1 className="text-xl font-bold">HomeLedger</h1>
+          <h1 className="text-xl font-bold">Clarity & Co</h1>
           <p className="text-sm text-slate-400">Mobile {uploadType === 'document' ? 'Document' : uploadType === 'invoice' ? 'Invoice' : uploadType === 'bill' ? 'Bill' : 'Statement'} Upload</p>
         </div>
 
@@ -211,7 +211,7 @@ export default function MobileUploadPage() {
             </div>
 
             <p className="text-xs text-slate-500 text-center">
-              This link expires in 10 minutes. Your photo will appear in HomeLedger automatically.
+              This link expires in 10 minutes. Your photo will appear in Clarity & Co automatically.
             </p>
           </div>
         )}
@@ -245,7 +245,7 @@ export default function MobileUploadPage() {
             <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-400" />
             <h2 className="text-lg font-bold mb-2">Link Expired</h2>
             <p className="text-slate-400">
-              This upload link has expired. Please generate a new QR code from HomeLedger on your desktop.
+              This upload link has expired. Please generate a new QR code from Clarity & Co on your desktop.
             </p>
           </div>
         )}

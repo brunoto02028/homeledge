@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { analyzeArticle } from '@/app/lib/prophecy-engine';
 
 // ─── Country → Coordinates mapping ───────────────────────────────────────────
 const COUNTRY_COORDS: Record<string, [number, number]> = {
@@ -113,67 +114,35 @@ function isUkImpact(title: string, description: string): boolean {
   return UK_IMPACT_KEYWORDS.some(k => text.includes(k));
 }
 
-// ─── Biblical Prophecy Cross-Reference ───────────────────────────────────
-const PROPHECY_KEYWORDS = [
-  'war', 'wars', 'rumor', 'rumours', 'famine', 'earthquake', 'pestilence', 'plague',
-  'nation against nation', 'kingdom against', 'persecution', 'false prophet',
-  'peace treaty', 'middle east', 'israel', 'jerusalem', 'temple mount',
-  'iran', 'russia', 'china', 'turkey', 'syria', 'egypt', 'libya',
-  'one world', 'global currency', 'digital currency', 'cbdc', 'mark',
-  'surveillance', 'chip', 'biometric', 'ai takeover', 'artificial intelligence',
-  'climate disaster', 'flood', 'wildfire', 'tsunami', 'volcano',
-  'solar flare', 'asteroid', 'cosmic', 'blood moon', 'eclipse',
-  'apostasy', 'persecution of christians', 'church', 'faith',
-  'nuclear', 'biological weapon', 'chemical attack',
-  'economic collapse', 'hyperinflation', 'food shortage', 'water crisis',
-  'gog', 'magog', 'armageddon', 'euphrates', 'babylon',
-];
+// ─── Biblical Prophecy Cross-Reference (powered by prophecy-engine) ──────
 
-const PROPHECY_REFS: Record<string, string> = {
-  'war': 'Matthew 24:6 — "You will hear of wars and rumors of wars"',
-  'wars': 'Matthew 24:6 — "You will hear of wars and rumors of wars"',
-  'famine': 'Revelation 6:5-6 — Third seal: Black horse of famine',
-  'earthquake': 'Matthew 24:7 — "There will be earthquakes in various places"',
-  'pestilence': 'Luke 21:11 — "There will be great earthquakes, famines and pestilences"',
-  'plague': 'Revelation 16 — The seven bowls of God\'s wrath',
-  'nation against nation': 'Matthew 24:7 — "Nation will rise against nation"',
-  'israel': 'Ezekiel 37 — The valley of dry bones; Israel restored',
-  'jerusalem': 'Zechariah 12:3 — "Jerusalem will be an immovable rock for all nations"',
-  'iran': 'Ezekiel 38:5 — Persia in the Gog-Magog coalition',
-  'russia': 'Ezekiel 38:2 — "Gog, of the land of Magog" (northern kingdom)',
-  'turkey': 'Ezekiel 38:6 — "Gomer and Beth Togarmah" (Anatolia)',
-  'syria': 'Isaiah 17:1 — "Damascus will cease to be a city"',
-  'egypt': 'Isaiah 19 — Prophecy against Egypt',
-  'peace treaty': 'Daniel 9:27 — "He will confirm a covenant with many for one seven"',
-  'temple mount': 'Daniel 9:27 — The abomination of desolation',
-  'digital currency': 'Revelation 13:17 — "No one could buy or sell unless they had the mark"',
-  'cbdc': 'Revelation 13:16-17 — Mark of the beast economic system',
-  'one world': 'Revelation 13:7 — "Authority over every tribe, people, language and nation"',
-  'nuclear': 'Zechariah 14:12 — "Their flesh will rot while they stand on their feet"',
-  'economic collapse': 'Revelation 18 — The fall of Babylon the Great',
-  'flood': 'Genesis 6-9 — "As in the days of Noah" (Matthew 24:37)',
-  'persecution': 'Matthew 24:9 — "You will be handed over to be persecuted and put to death"',
-  'false prophet': 'Matthew 24:11 — "Many false prophets will appear and deceive many"',
-  'blood moon': 'Joel 2:31 — "The sun will be turned to darkness and the moon to blood"',
-  'eclipse': 'Joel 2:31 — "Before the great and dreadful day of the Lord"',
-  'euphrates': 'Revelation 16:12 — "The sixth angel poured out his bowl on the river Euphrates"',
-  'armageddon': 'Revelation 16:16 — "They gathered the kings together to the place called Armageddon"',
-  'china': 'Revelation 9:16 — "The number of the mounted troops was 200 million" (Kings of the East)',
-  'surveillance': 'Revelation 13:16-17 — Total control of buying and selling',
-  'ai takeover': 'Revelation 13:15 — "The image of the beast could speak"',
-};
-
-function getProphecyRef(title: string, description: string): string | null {
-  const text = `${title} ${description}`.toLowerCase();
-  for (const [keyword, ref] of Object.entries(PROPHECY_REFS)) {
-    if (text.includes(keyword)) return ref;
+function getProphecyData(title: string, description: string): {
+  prophecyRelated: boolean;
+  prophecyRef: string | null;
+  prophecyThemes: string[];
+  prophecyScore: number;
+  prophecyAnalysis: string | null;
+  prophecyScriptures: Array<{ book: string; ref: string; text: string }>;
+} {
+  const matches = analyzeArticle(title, description);
+  if (matches.length === 0) {
+    return { prophecyRelated: false, prophecyRef: null, prophecyThemes: [], prophecyScore: 0, prophecyAnalysis: null, prophecyScriptures: [] };
   }
-  return null;
-}
-
-function isProphecyRelated(title: string, description: string): boolean {
-  const text = `${title} ${description}`.toLowerCase();
-  return PROPHECY_KEYWORDS.some(k => text.includes(k));
+  const top = matches[0];
+  const allScriptures = matches.flatMap(m => m.scriptures).slice(0, 4);
+  // Build a rich prophecy reference string with theme + scripture
+  const refParts = matches.slice(0, 2).map(m => {
+    const s = m.scriptures[0];
+    return `${m.theme}: ${s.book} ${s.ref} — "${s.text.slice(0, 80)}${s.text.length > 80 ? '...' : ''}"`;
+  });
+  return {
+    prophecyRelated: true,
+    prophecyRef: refParts.join(' | '),
+    prophecyThemes: matches.map(m => m.themeId),
+    prophecyScore: top.relevanceScore,
+    prophecyAnalysis: top.analysis,
+    prophecyScriptures: allScriptures,
+  };
 }
 
 // Extract country from article text when source mapping is unknown
@@ -484,8 +453,7 @@ export async function GET(req: NextRequest) {
       const continent = CONTINENT_MAP[countryCode] || (countryCode ? 'Europe' : '');
 
       const jitter = () => (Math.random() - 0.5) * 4;
-      const prophecyRelated = isProphecyRelated(article.title || '', article.description || '');
-      const prophecyRef = getProphecyRef(article.title || '', article.description || '');
+      const pData = getProphecyData(article.title || '', article.description || '');
 
       return {
         id: `${article._src || 'news'}-${i}-${Date.now()}`,
@@ -502,8 +470,12 @@ export async function GET(req: NextRequest) {
         coordinates: coords ? [coords[0] + jitter(), coords[1] + jitter()] : null,
         sentiment,
         ukImpact,
-        prophecyRelated,
-        prophecyRef,
+        prophecyRelated: pData.prophecyRelated,
+        prophecyRef: pData.prophecyRef,
+        prophecyThemes: pData.prophecyThemes,
+        prophecyScore: pData.prophecyScore,
+        prophecyAnalysis: pData.prophecyAnalysis,
+        prophecyScriptures: pData.prophecyScriptures,
       };
     });
 

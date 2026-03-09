@@ -1,7 +1,7 @@
 import { OverviewClient } from "../overview-client"
 
 export const metadata = {
-  title: 'Dashboard — HomeLedger',
+  title: 'Dashboard — Clarity & Co',
   description: 'Your financial dashboard overview',
 }
 

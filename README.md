@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/icon-192x192.png" alt="HomeLedger" width="80" height="80" />
+  <img src="public/icon-192x192.png" alt="Clarity & Co" width="80" height="80" />
 </p>
 
-<h1 align="center">HomeLedger</h1>
+<h1 align="center">Clarity & Co</h1>
 
 <p align="center">
   <strong>UK Household Finance SaaS Platform</strong><br/>
@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <a href="https://homeledger.co.uk"><strong>homeledger.co.uk</strong></a>
+  <a href="https://clarityco.co.uk"><strong>clarityco.co.uk</strong></a>
 </p>
 
 <p align="center">
-  <a href="https://homeledger.co.uk">
-    <img src="https://img.shields.io/badge/Live-homeledger.co.uk-brightgreen?style=for-the-badge" alt="Live" />
+  <a href="https://clarityco.co.uk">
+    <img src="https://img.shields.io/badge/Live-clarityco.co.uk-brightgreen?style=for-the-badge" alt="Live" />
   </a>
   <img src="https://img.shields.io/badge/Version-2.1.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-BSL_1.1-orange?style=for-the-badge" alt="License" />
@@ -33,8 +33,8 @@
 </p>
 
 <p align="center">
-  <a href="https://homeledger.co.uk">Live Platform</a> &bull;
-  <a href="https://homeledger.co.uk/#pricing">Pricing</a> &bull;
+  <a href="https://clarityco.co.uk">Live Platform</a> &bull;
+  <a href="https://clarityco.co.uk/#pricing">Pricing</a> &bull;
   <a href="docs/architecture.md">Architecture</a> &bull;
   <a href="docs/api-reference.md">API Reference</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a> &bull;
@@ -43,9 +43,9 @@
 
 ---
 
-## What is HomeLedger?
+## What is Clarity & Co?
 
-HomeLedger is a **commercial SaaS platform** for UK household finance management. It serves individuals, households, sole traders, and limited companies with bank syncing, AI-powered transaction categorisation, HMRC-compliant tax reporting, certified identity verification, and professional accounting education.
+Clarity & Co is a **commercial SaaS platform** for UK household finance management. It serves individuals, households, sole traders, and limited companies with bank syncing, AI-powered transaction categorisation, HMRC-compliant tax reporting, certified identity verification, and professional accounting education.
 
 ### Business Model
 
@@ -55,7 +55,7 @@ HomeLedger is a **commercial SaaS platform** for UK household finance management
 | **Revenue** | Subscription plans (Free / Pro / Business) + Service commerce + IDV pay-per-use |
 | **Target Market** | UK households, sole traders, small businesses, accountants |
 | **Compliance** | UK GDPR, PECR, HMRC MTD, Companies House, OISC |
-| **Live URL** | [homeledger.co.uk](https://homeledger.co.uk) |
+| **Live URL** | [clarityco.co.uk](https://clarityco.co.uk) |
 
 ### Pricing Tiers
 
@@ -110,7 +110,7 @@ HomeLedger is a **commercial SaaS platform** for UK household finance management
 ### Identity Verification (IDV-as-a-Service)
 - **Yoti-Certified** — DIATF-compliant digital identity verification
 - **Right to Work / Right to Rent** — Employer and landlord compliance checks
-- **Public Verification Links** — Send verification requests without requiring a HomeLedger account
+- **Public Verification Links** — Send verification requests without requiring a Clarity & Co account
 - **QR Code Handoff** — Desktop-to-mobile seamless flow
 - **Pay-Per-Use** — IDV packages from £1.50/check, no subscription required
 
@@ -149,7 +149,7 @@ HomeLedger is a **commercial SaaS platform** for UK household finance management
 ## Project Structure
 
 ```
-homeledger/
+Clarity & Co/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml              # PR quality checks + build
@@ -250,7 +250,7 @@ Create a `.env` file with the following (see `.env.example` for full list):
 
 ```env
 # Database
-DATABASE_URL="postgresql://user:password@localhost:5432/homeledger"
+DATABASE_URL="postgresql://user:password@localhost:5432/Clarity & Co"
 
 # Auth
 NEXTAUTH_SECRET="your-secret-key"
@@ -301,7 +301,7 @@ npm run audit      # Security audit
 
 ## Deployment
 
-HomeLedger runs on a VPS with the following stack:
+Clarity & Co runs on a VPS with the following stack:
 
 ```
 Ubuntu 22.04 → Nginx (reverse proxy + SSL) → PM2 → Next.js (port 3100)
@@ -396,7 +396,7 @@ This project is licensed under the **Business Source License 1.1** (BSL) — see
 
 The BSL allows non-commercial and educational use. Commercial use requires a separate licence. The code converts to MIT after the Change Date (2030-02-26).
 
-For commercial licensing enquiries: **hello@homeledger.co.uk**
+For commercial licensing enquiries: **hello@clarityco.co.uk**
 
 ---
 
@@ -416,5 +416,5 @@ For commercial licensing enquiries: **hello@homeledger.co.uk**
 
 <p align="center">
   Built with care in the UK by <strong>Bruno Martins</strong><br/>
-  <a href="https://homeledger.co.uk">homeledger.co.uk</a>
+  <a href="https://clarityco.co.uk">clarityco.co.uk</a>
 </p>

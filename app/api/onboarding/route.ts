@@ -25,7 +25,14 @@ export async function GET() {
     });
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    return NextResponse.json(user);
+
+    // Fetch onboarding profile separately (uses new model)
+    let onboardingProfile = null;
+    try {
+      onboardingProfile = await (prisma as any).onboardingProfile.findUnique({ where: { userId } });
+    } catch { /* table may not exist yet */ }
+
+    return NextResponse.json({ ...user, onboardingProfile });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
@@ -80,31 +87,57 @@ export async function PUT(request: Request) {
       },
     });
 
+    // Save OnboardingProfile if wizard data provided
+    const { entityType, selectedFeatures, experienceLevel } = body;
+    if (entityType && selectedFeatures) {
+      try {
+        await (prisma as any).onboardingProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            entityType,
+            businessName: businessName || updated.businessName || null,
+            selectedFeatures: selectedFeatures || [],
+            experienceLevel: experienceLevel || 'beginner',
+          },
+          update: {
+            entityType,
+            businessName: businessName || updated.businessName || null,
+            selectedFeatures: selectedFeatures || [],
+            experienceLevel: experienceLevel || 'beginner',
+            completedAt: new Date(),
+          },
+        });
+      } catch (profileErr) {
+        console.error('[Onboarding] Profile save failed (non-fatal):', profileErr);
+      }
+    }
+
     // Auto-create Entity when onboarding completes
     if (onboardingCompleted === true) {
       try {
         const existingEntities = await (prisma as any).entity.count({ where: { userId } });
         if (existingEntities === 0) {
-          const empStatus = employmentStatus || updated.employmentStatus;
-          const isBusiness = ['self_employed', 'company_director', 'employed_and_self_employed'].includes(empStatus);
+          const resolvedEntityType = entityType || 'individual';
+          const resolvedName = businessName || updated.businessName || fullName || updated.fullName || 'Personal';
 
-          // Create personal entity
+          // Create entity based on wizard selection
           await (prisma as any).entity.create({
             data: {
               userId,
-              name: fullName || updated.fullName || 'Personal',
-              type: isBusiness ? 'sole_trader' : 'individual',
+              name: resolvedEntityType === 'individual' ? (fullName || updated.fullName || 'Personal') : resolvedName,
+              type: resolvedEntityType,
               isDefault: true,
             },
           });
 
-          // If company director, also create a business entity
-          if (empStatus === 'company_director' && (businessName || updated.businessName)) {
+          // If limited company, also create a personal entity
+          if (['limited_company', 'cic_charity'].includes(resolvedEntityType)) {
             await (prisma as any).entity.create({
               data: {
                 userId,
-                name: businessName || updated.businessName,
-                type: 'limited_company',
+                name: fullName || updated.fullName || 'Personal',
+                type: 'individual',
                 isDefault: false,
               },
             });

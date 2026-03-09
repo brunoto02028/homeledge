@@ -453,3 +453,192 @@ main {
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Blog Article Rich Content ─────────────────────────────────────── */
+
+/* General prose spacing overrides for blog articles */
+.prose h2 {
+  margin-top: 2.5rem !important;
+  margin-bottom: 1rem !important;
+  padding-top: 0.5rem;
+}
+.prose h3 {
+  margin-top: 2rem !important;
+  margin-bottom: 0.75rem !important;
+}
+.prose h4 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.prose p {
+  margin-bottom: 1.25rem !important;
+  line-height: 1.8 !important;
+}
+.prose ul,
+.prose ol {
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.5rem !important;
+}
+.prose li {
+  margin-bottom: 0.5rem !important;
+  line-height: 1.75 !important;
+}
+/* Section divider: add visual separator before each numbered H2/H3 section */
+.prose h2 + p,
+.prose h3 + p {
+  margin-top: 0.5rem !important;
+}
+/* Space between consecutive headings (e.g. h2 directly followed by h3) */
+.prose h2 + h3,
+.prose h2 + h2 {
+  margin-top: 1.5rem !important;
+}
+/* Add a subtle top border to major H2 sections for visual separation */
+.prose h2:not(:first-child) {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 2rem;
+}
+/* Numbered section headers (bold text starting with digit) */
+.prose strong:first-child {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* Callout info box — 💡 tips and key points */
+.callout-info {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 4px solid #F59E0B;
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  color: #e2c97e;
+  font-size: 0.925rem;
+  line-height: 1.65;
+}
+.callout-info strong {
+  color: #fbbf24;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* Callout warning box — ⚠️ important warnings */
+.callout-warning {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 4px solid #EF4444;
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  color: #fca5a5;
+  font-size: 0.925rem;
+  line-height: 1.65;
+}
+.callout-warning strong {
+  color: #f87171;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* Callout success box — ✅ good to know */
+.callout-success {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 4px solid #10B981;
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  color: #6ee7b7;
+  font-size: 0.925rem;
+  line-height: 1.65;
+}
+.callout-success strong {
+  color: #34d399;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* Official reference links inside prose */
+.prose a[href*="gov.uk"],
+.prose a[href*="hmrc"],
+.prose a[href*="companieshouse"] {
+  color: #fbbf24;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose a[href*="gov.uk"]:hover,
+.prose a[href*="hmrc"]:hover,
+.prose a[href*="companieshouse"]:hover {
+  color: #fcd34d;
+}
+
+/* Step-by-step numbered lists inside article */
+.prose ol {
+  counter-reset: step-counter;
+  list-style: none;
+  padding-left: 0;
+}
+.prose ol > li {
+  counter-increment: step-counter;
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.prose ol > li::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  background: #F59E0B;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Blockquote styling in articles */
+.prose blockquote {
+  border-left: 4px solid #F59E0B;
+  background: rgba(245, 158, 11, 0.05);
+  padding: 1rem 1.25rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #94a3b8;
+  margin: 1.5rem 0;
+}
+
+/* Useful Resources section at end of article */
+.prose h2#useful-resources,
+.prose h2:last-of-type {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* TipTap editor callout boxes (admin) */
+.tiptap .callout-info,
+.tiptap .callout-warning,
+.tiptap .callout-success {
+  margin: 1rem 0;
+  padding: 0.875rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-size: 0.9rem;
+}
+.tiptap .callout-info {
+  background: rgba(245, 158, 11, 0.12);
+  border-left: 3px solid #F59E0B;
+  color: hsl(var(--foreground));
+}
+.tiptap .callout-warning {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid #EF4444;
+  color: hsl(var(--foreground));
+}
+.tiptap .callout-success {
+  background: rgba(16, 185, 129, 0.1);
+  border-left: 3px solid #10B981;
+  color: hsl(var(--foreground));
+}

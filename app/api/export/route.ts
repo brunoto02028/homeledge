@@ -141,6 +141,48 @@ export async function GET(request: Request) {
       });
     }
 
+    // GDPR: Additional personal data sections
+    if (includeAll || sections.includes('vault')) {
+      data.vaultEntries = await prisma.vaultEntry.findMany({
+        where: { userId: { in: userIds } },
+        select: { title: true, category: true, username: true, referenceNumber: true, websiteUrl: true, phoneNumber: true, email: true, tags: true, createdAt: true },
+      });
+    }
+
+    if (includeAll || sections.includes('properties')) {
+      data.properties = await prisma.property.findMany({
+        where: { userId: { in: userIds } },
+      });
+    }
+
+    if (includeAll || sections.includes('insurance')) {
+      data.insurancePolicies = await (prisma as any).insurancePolicy.findMany({
+        where: { userId: { in: userIds } },
+        include: { claims: true, quotes: true },
+      });
+    }
+
+    if (includeAll || sections.includes('correspondence')) {
+      data.correspondence = await (prisma as any).correspondence.findMany({
+        where: { userId: { in: userIds } },
+      });
+    }
+
+    if (includeAll || sections.includes('documents')) {
+      data.scannedDocuments = await (prisma as any).scannedDocument.findMany({
+        where: { userId: { in: userIds } },
+        select: { fileName: true, senderName: true, senderCategory: true, documentType: true, summary: true, amountDue: true, dueDate: true, status: true, createdAt: true },
+      });
+    }
+
+    if (includeAll || sections.includes('debts')) {
+      data.debts = await prisma.debt.findMany({ where: { userId: { in: userIds } } });
+    }
+
+    if (includeAll || sections.includes('savings')) {
+      data.savingsGoals = await prisma.savingsGoal.findMany({ where: { userId: { in: userIds } } });
+    }
+
     if (format === 'csv') {
       // Flatten transactions to CSV
       const txs = (data.statements as any[])?.flatMap((s: any) =>
@@ -164,14 +206,14 @@ export async function GET(request: Request) {
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="homeledger-export-${new Date().toISOString().split('T')[0]}.csv"`,
+          'Content-Disposition': `attachment; filename="clarityco-export-${new Date().toISOString().split('T')[0]}.csv"`,
         },
       });
     }
 
     return NextResponse.json(data, {
       headers: {
-        'Content-Disposition': `attachment; filename="homeledger-export-${new Date().toISOString().split('T')[0]}.json"`,
+        'Content-Disposition': `attachment; filename="clarityco-export-${new Date().toISOString().split('T')[0]}.json"`,
       },
     });
   } catch (error: any) {

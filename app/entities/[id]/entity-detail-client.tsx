@@ -222,7 +222,7 @@ export default function EntityDetailClient() {
     } catch { /* ignore */ }
   };
 
-  // Fetch HomeLedger CH filings from entity history
+  // Fetch Clarity & Co CH filings from entity history
   const fetchChFilings = useCallback(async () => {
     try {
       const res = await fetch(`/api/entities/${entityId}/history?limit=20&type=address_change`);
@@ -375,7 +375,7 @@ export default function EntityDetailClient() {
     const lines = [
       '═══════════════════════════════════════════════════════',
       '         COMPANIES HOUSE FILING RECEIPT',
-      '               HomeLedger System',
+      '               Clarity & Co System',
       '═══════════════════════════════════════════════════════',
       '',
       `Company:        ${entity?.name || 'N/A'}`,
@@ -872,12 +872,12 @@ export default function EntityDetailClient() {
             <Card><CardContent className="py-12 text-center text-muted-foreground">No Companies House data available</CardContent></Card>
           ) : (
             <>
-            {/* Your Filings from HomeLedger */}
+            {/* Your Filings from Clarity & Co */}
             {chFilings.length > 0 && (
               <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <FileCheck className="h-4 w-4 text-emerald-600" /> Your Filings from HomeLedger
+                    <FileCheck className="h-4 w-4 text-emerald-600" /> Your Filings from Clarity & Co
                   </CardTitle>
                   <CardDescription>Filings submitted directly from this system</CardDescription>
                 </CardHeader>
@@ -1106,7 +1106,7 @@ export default function EntityDetailClient() {
           <div className="grid md:grid-cols-2 gap-6">
             {/* ── FILING ACTIONS (require OAuth) ── */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">File from HomeLedger</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">File from Clarity & Co</h3>
 
               {/* Change Registered Office */}
               <Card className="hover:shadow-md transition-shadow">

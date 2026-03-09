@@ -5,6 +5,30 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
+
+/** Generate site-wide icons from an image buffer using sharp */
+async function generateSiteIcons(buffer: Buffer) {
+  try {
+    const sharp = require('sharp');
+    const bg = { r: 21, g: 26, b: 45, alpha: 1 }; // #151A2D
+
+    await Promise.all([
+      sharp(buffer).resize(512, 512, { fit: 'contain', background: bg }).png().toFile(path.join(PUBLIC_DIR, 'site-logo.png')),
+      sharp(buffer).resize(512, 512, { fit: 'contain', background: bg }).png().toFile(path.join(PUBLIC_DIR, 'icon-512.png')),
+      sharp(buffer).resize(192, 192, { fit: 'contain', background: bg }).png().toFile(path.join(PUBLIC_DIR, 'icon-192.png')),
+      sharp(buffer).resize(180, 180, { fit: 'contain', background: bg }).png().toFile(path.join(PUBLIC_DIR, 'apple-touch-icon.png')),
+      sharp(buffer).resize(32, 32, { fit: 'contain', background: bg }).png().toFile(path.join(PUBLIC_DIR, 'favicon.png')),
+    ]);
+
+    console.log('[Logo] Generated site-wide icons (site-logo, icon-192, icon-512, apple-touch-icon, favicon)');
+    return true;
+  } catch (err: any) {
+    console.error('[Logo] Failed to generate site icons:', err.message);
+    return false;
+  }
+}
+
 export const dynamic = 'force-dynamic';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'logos');
@@ -29,7 +53,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const userId = await requireUserId();
-    const { dataUrl } = await request.json();
+    const { dataUrl, setAsSiteLogo } = await request.json();
 
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {
       return NextResponse.json({ error: 'Invalid image data' }, { status: 400 });
@@ -76,7 +100,16 @@ export async function POST(request: Request) {
       data: { logoUrl } as any,
     });
 
-    return NextResponse.json({ logoUrl });
+    // If admin requested, also generate site-wide icons (favicon, PWA, etc.)
+    let siteIconsGenerated = false;
+    if (setAsSiteLogo) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+      if (user?.role === 'admin') {
+        siteIconsGenerated = await generateSiteIcons(buffer);
+      }
+    }
+
+    return NextResponse.json({ logoUrl, siteIconsGenerated });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('[Logo Upload] Error:', error);

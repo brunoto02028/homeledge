@@ -14,39 +14,39 @@ import {
   ExternalLink, HelpCircle, Sparkles,
 } from 'lucide-react';
 
-// ---- GLOSSARY DATA ----
-const GLOSSARY: { term: string; definition: string; category: string }[] = [
-  { term: 'HMRC', definition: 'His Majesty\'s Revenue and Customs — the UK government department responsible for collecting taxes, paying state support, and administering regulatory regimes.', category: 'Tax' },
-  { term: 'Self Assessment', definition: 'The system HMRC uses to collect Income Tax from people who don\'t have it deducted automatically (e.g. self-employed, landlords). You file a tax return annually.', category: 'Tax' },
-  { term: 'PAYE', definition: 'Pay As You Earn — the system employers use to deduct Income Tax and National Insurance from employees\' wages before paying them.', category: 'Tax' },
-  { term: 'National Insurance (NI)', definition: 'Contributions you pay on earnings to qualify for certain state benefits including the State Pension. Different classes for employees, self-employed, and voluntary.', category: 'Tax' },
-  { term: 'UTR', definition: 'Unique Taxpayer Reference — a 10-digit number issued by HMRC used to identify you for Self Assessment.', category: 'Tax' },
-  { term: 'Tax Code', definition: 'A code used by employers to calculate how much tax to deduct from your pay. The standard code is 1257L (2024/25), giving you £12,570 tax-free.', category: 'Tax' },
-  { term: 'Personal Allowance', definition: 'The amount of income you can earn each year without paying tax. Currently £12,570 (2024/25).', category: 'Tax' },
-  { term: 'Corporation Tax', definition: 'Tax paid by UK limited companies on their profits. The main rate is 25% for profits over £250,000, with a small profits rate of 19% for profits up to £50,000.', category: 'Tax' },
-  { term: 'VAT', definition: 'Value Added Tax — a tax on goods and services. Registration is mandatory when turnover exceeds £90,000. Standard rate is 20%.', category: 'Tax' },
-  { term: 'Making Tax Digital (MTD)', definition: 'HMRC\'s programme to digitise the tax system. Businesses must keep digital records and submit returns using compatible software.', category: 'Tax' },
-  { term: 'Companies House', definition: 'The UK registrar of companies. All limited companies must file annual accounts and a confirmation statement here.', category: 'Business' },
-  { term: 'Confirmation Statement', definition: 'An annual filing to Companies House confirming your company details are up to date. Must be filed at least once every 12 months.', category: 'Business' },
-  { term: 'Limited Company', definition: 'A company whose owners\' liability is limited to the amount they invested. It\'s a separate legal entity from its directors/shareholders.', category: 'Business' },
-  { term: 'Sole Trader', definition: 'A self-employed person who owns and runs their business as an individual. Simpler setup but unlimited personal liability.', category: 'Business' },
-  { term: 'Dividend', definition: 'A payment made by a company to its shareholders from profits. Has its own tax rates and a £1,000 tax-free allowance (2024/25).', category: 'Business' },
-  { term: 'Stamp Duty (SDLT)', definition: 'Stamp Duty Land Tax — a tax paid when buying property in England/NI over £250,000. First-time buyers get relief up to £425,000.', category: 'Property' },
-  { term: 'Help to Buy ISA', definition: 'A savings account where the government adds 25% bonus (max £3,000) towards your first home deposit. Now closed to new applicants but existing accounts continue.', category: 'Property' },
-  { term: 'Lifetime ISA (LISA)', definition: 'Save up to £4,000/year with a 25% government bonus (max £1,000/year). Can be used for first home (under £450,000) or retirement.', category: 'Property' },
-  { term: 'ISA', definition: 'Individual Savings Account — a tax-free savings/investment wrapper. Annual allowance is £20,000 across all ISA types.', category: 'Savings' },
-  { term: 'Capital Gains Tax (CGT)', definition: 'Tax on profit when you sell assets that have increased in value. Annual allowance of £3,000 (2024/25). Different rates for basic/higher rate taxpayers.', category: 'Tax' },
-  { term: 'Allowable Expenses', definition: 'Business costs you can deduct from your income before calculating tax. Must be wholly and exclusively for business purposes.', category: 'Tax' },
-  { term: 'Payment on Account', definition: 'Advance payments towards your Self Assessment tax bill, due 31 January and 31 July. Each payment is half of last year\'s bill.', category: 'Tax' },
-  { term: 'P60', definition: 'An annual certificate from your employer showing your total pay and tax deducted for the tax year. Given to employees after 5 April.', category: 'Employment' },
-  { term: 'P45', definition: 'A form given when you leave a job, showing your pay and tax for the year so far. Give it to your next employer.', category: 'Employment' },
-  { term: 'P11D', definition: 'A form reporting benefits in kind (company car, health insurance, etc.) that employees receive from their employer.', category: 'Employment' },
-  { term: 'Student Loan Repayment', definition: 'Repaid through your salary once you earn above the threshold. Plan 1: £22,015/yr, Plan 2: £27,295/yr, Plan 5: £25,000/yr.', category: 'Employment' },
-  { term: 'Council Tax', definition: 'A local tax on domestic properties, set by your local council. Bands A-H based on property value. Some discounts available (single person 25% off).', category: 'Property' },
-  { term: 'Mortgage', definition: 'A loan specifically for buying property. Types include fixed rate, variable rate, tracker, and interest-only. Usually 25-35 year terms.', category: 'Property' },
-  { term: 'LTV', definition: 'Loan-to-Value ratio — your mortgage amount as a percentage of the property value. Lower LTV usually means better interest rates.', category: 'Property' },
-  { term: 'Credit Score', definition: 'A numerical rating of your creditworthiness. UK agencies: Experian, Equifax, TransUnion. Used by lenders to assess risk.', category: 'Finance' },
-  { term: 'Emergency Tax', definition: 'A temporary tax code applied when HMRC doesn\'t have your details. Usually results in overpayment — you can claim a refund.', category: 'Tax' },
+// ---- GLOSSARY DATA (bilingual) ----
+const GLOSSARY_DATA: { term: string; en: string; pt: string; category: string }[] = [
+  { term: 'HMRC', en: 'His Majesty\'s Revenue and Customs — the UK government department responsible for collecting taxes, paying state support, and administering regulatory regimes.', pt: 'His Majesty\'s Revenue and Customs — o departamento do governo britânico responsável por cobrar impostos, pagar benefícios e administrar regimes regulatórios.', category: 'Tax' },
+  { term: 'Self Assessment', en: 'The system HMRC uses to collect Income Tax from people who don\'t have it deducted automatically (e.g. self-employed, landlords). You file a tax return annually.', pt: 'O sistema que o HMRC usa para cobrar Imposto de Renda de pessoas que não têm desconto automático (ex: autônomos, proprietários). Você declara anualmente.', category: 'Tax' },
+  { term: 'PAYE', en: 'Pay As You Earn — the system employers use to deduct Income Tax and National Insurance from employees\' wages before paying them.', pt: 'Pay As You Earn — o sistema que empregadores usam para descontar Imposto de Renda e National Insurance dos salários antes de pagar os funcionários.', category: 'Tax' },
+  { term: 'National Insurance (NI)', en: 'Contributions you pay on earnings to qualify for certain state benefits including the State Pension. Different classes for employees, self-employed, and voluntary.', pt: 'Contribuições que você paga sobre seus ganhos para ter direito a benefícios do estado, incluindo aposentadoria. Classes diferentes para empregados, autônomos e voluntários.', category: 'Tax' },
+  { term: 'UTR', en: 'Unique Taxpayer Reference — a 10-digit number issued by HMRC used to identify you for Self Assessment.', pt: 'Unique Taxpayer Reference — número de 10 dígitos emitido pelo HMRC para identificá-lo no Self Assessment.', category: 'Tax' },
+  { term: 'Tax Code', en: 'A code used by employers to calculate how much tax to deduct from your pay. The standard code is 1257L (2024/25), giving you £12,570 tax-free.', pt: 'Um código usado por empregadores para calcular quanto imposto descontar do seu salário. O código padrão é 1257L (2024/25), dando £12.570 isentos.', category: 'Tax' },
+  { term: 'Personal Allowance', en: 'The amount of income you can earn each year without paying tax. Currently £12,570 (2024/25).', pt: 'O valor de renda que você pode ganhar por ano sem pagar imposto. Atualmente £12.570 (2024/25).', category: 'Tax' },
+  { term: 'Corporation Tax', en: 'Tax paid by UK limited companies on their profits. The main rate is 25% for profits over £250,000, with a small profits rate of 19% for profits up to £50,000.', pt: 'Imposto pago por empresas limitadas do UK sobre seus lucros. Taxa principal de 25% para lucros acima de £250.000, com taxa reduzida de 19% para lucros até £50.000.', category: 'Tax' },
+  { term: 'VAT', en: 'Value Added Tax — a tax on goods and services. Registration is mandatory when turnover exceeds £90,000. Standard rate is 20%.', pt: 'Value Added Tax (IVA) — imposto sobre bens e serviços. Registro obrigatório quando faturamento excede £90.000. Taxa padrão de 20%.', category: 'Tax' },
+  { term: 'Making Tax Digital (MTD)', en: 'HMRC\'s programme to digitise the tax system. Businesses must keep digital records and submit returns using compatible software.', pt: 'Programa do HMRC para digitalizar o sistema tributário. Empresas devem manter registros digitais e enviar declarações usando software compatível.', category: 'Tax' },
+  { term: 'Companies House', en: 'The UK registrar of companies. All limited companies must file annual accounts and a confirmation statement here.', pt: 'O registro de empresas do UK. Todas as empresas limitadas devem entregar contas anuais e uma declaração de confirmação aqui.', category: 'Business' },
+  { term: 'Confirmation Statement', en: 'An annual filing to Companies House confirming your company details are up to date. Must be filed at least once every 12 months.', pt: 'Declaração anual ao Companies House confirmando que os dados da empresa estão atualizados. Deve ser entregue pelo menos uma vez a cada 12 meses.', category: 'Business' },
+  { term: 'Limited Company', en: 'A company whose owners\' liability is limited to the amount they invested. It\'s a separate legal entity from its directors/shareholders.', pt: 'Uma empresa cuja responsabilidade dos proprietários é limitada ao valor investido. É uma entidade legal separada dos diretores/acionistas.', category: 'Business' },
+  { term: 'Sole Trader', en: 'A self-employed person who owns and runs their business as an individual. Simpler setup but unlimited personal liability.', pt: 'Pessoa autônoma que é dona e opera seu negócio individualmente. Configuração mais simples, mas responsabilidade pessoal ilimitada.', category: 'Business' },
+  { term: 'Dividend', en: 'A payment made by a company to its shareholders from profits. Has its own tax rates and a £1,000 tax-free allowance (2024/25).', pt: 'Pagamento feito por uma empresa aos seus acionistas a partir dos lucros. Tem suas próprias alíquotas e isenção de £1.000 (2024/25).', category: 'Business' },
+  { term: 'Stamp Duty (SDLT)', en: 'Stamp Duty Land Tax — a tax paid when buying property in England/NI over £250,000. First-time buyers get relief up to £425,000.', pt: 'Stamp Duty Land Tax — imposto pago na compra de imóvel na Inglaterra/NI acima de £250.000. Compradores de primeira viagem têm isenção até £425.000.', category: 'Property' },
+  { term: 'Help to Buy ISA', en: 'A savings account where the government adds 25% bonus (max £3,000) towards your first home deposit. Now closed to new applicants but existing accounts continue.', pt: 'Conta poupança onde o governo adiciona 25% de bônus (máx £3.000) para o depósito do seu primeiro imóvel. Fechada para novos candidatos, mas contas existentes continuam.', category: 'Property' },
+  { term: 'Lifetime ISA (LISA)', en: 'Save up to £4,000/year with a 25% government bonus (max £1,000/year). Can be used for first home (under £450,000) or retirement.', pt: 'Economize até £4.000/ano com bônus governamental de 25% (máx £1.000/ano). Pode ser usado para primeiro imóvel (até £450.000) ou aposentadoria.', category: 'Property' },
+  { term: 'ISA', en: 'Individual Savings Account — a tax-free savings/investment wrapper. Annual allowance is £20,000 across all ISA types.', pt: 'Individual Savings Account — conta de poupança/investimento isenta de impostos. Limite anual de £20.000 em todos os tipos de ISA.', category: 'Savings' },
+  { term: 'Capital Gains Tax (CGT)', en: 'Tax on profit when you sell assets that have increased in value. Annual allowance of £3,000 (2024/25). Different rates for basic/higher rate taxpayers.', pt: 'Imposto sobre lucro na venda de ativos que aumentaram de valor. Isenção anual de £3.000 (2024/25). Alíquotas diferentes para contribuintes de taxa básica/alta.', category: 'Tax' },
+  { term: 'Allowable Expenses', en: 'Business costs you can deduct from your income before calculating tax. Must be wholly and exclusively for business purposes.', pt: 'Custos empresariais que você pode deduzir da renda antes de calcular o imposto. Devem ser total e exclusivamente para fins comerciais.', category: 'Tax' },
+  { term: 'Payment on Account', en: 'Advance payments towards your Self Assessment tax bill, due 31 January and 31 July. Each payment is half of last year\'s bill.', pt: 'Pagamentos antecipados da sua conta de Self Assessment, vencendo em 31 de janeiro e 31 de julho. Cada pagamento é metade da conta do ano anterior.', category: 'Tax' },
+  { term: 'P60', en: 'An annual certificate from your employer showing your total pay and tax deducted for the tax year. Given to employees after 5 April.', pt: 'Certificado anual do empregador mostrando salário total e imposto descontado no ano fiscal. Entregue aos funcionários após 5 de abril.', category: 'Employment' },
+  { term: 'P45', en: 'A form given when you leave a job, showing your pay and tax for the year so far. Give it to your next employer.', pt: 'Formulário recebido ao sair de um emprego, mostrando salário e imposto do ano até então. Entregue ao próximo empregador.', category: 'Employment' },
+  { term: 'P11D', en: 'A form reporting benefits in kind (company car, health insurance, etc.) that employees receive from their employer.', pt: 'Formulário declarando benefícios em espécie (carro da empresa, plano de saúde, etc.) que funcionários recebem do empregador.', category: 'Employment' },
+  { term: 'Student Loan Repayment', en: 'Repaid through your salary once you earn above the threshold. Plan 1: £22,015/yr, Plan 2: £27,295/yr, Plan 5: £25,000/yr.', pt: 'Pago através do salário quando você ganha acima do limite. Plano 1: £22.015/ano, Plano 2: £27.295/ano, Plano 5: £25.000/ano.', category: 'Employment' },
+  { term: 'Council Tax', en: 'A local tax on domestic properties, set by your local council. Bands A-H based on property value. Some discounts available (single person 25% off).', pt: 'Imposto local sobre imóveis residenciais, definido pelo council local. Faixas A-H baseadas no valor do imóvel. Descontos disponíveis (25% para pessoa solteira).', category: 'Property' },
+  { term: 'Mortgage', en: 'A loan specifically for buying property. Types include fixed rate, variable rate, tracker, and interest-only. Usually 25-35 year terms.', pt: 'Empréstimo especificamente para compra de imóvel. Tipos incluem taxa fixa, variável, tracker e somente juros. Geralmente prazos de 25-35 anos.', category: 'Property' },
+  { term: 'LTV', en: 'Loan-to-Value ratio — your mortgage amount as a percentage of the property value. Lower LTV usually means better interest rates.', pt: 'Loan-to-Value — valor da hipoteca como porcentagem do valor do imóvel. LTV mais baixo geralmente significa melhores taxas de juros.', category: 'Property' },
+  { term: 'Credit Score', en: 'A numerical rating of your creditworthiness. UK agencies: Experian, Equifax, TransUnion. Used by lenders to assess risk.', pt: 'Uma classificação numérica da sua capacidade creditícia. Agências do UK: Experian, Equifax, TransUnion. Usado por credores para avaliar risco.', category: 'Finance' },
+  { term: 'Emergency Tax', en: 'A temporary tax code applied when HMRC doesn\'t have your details. Usually results in overpayment — you can claim a refund.', pt: 'Código fiscal temporário aplicado quando o HMRC não tem seus dados. Geralmente resulta em pagamento a mais — você pode pedir reembolso.', category: 'Tax' },
 ];
 
 // ---- GUIDE DATA ----
@@ -93,7 +93,7 @@ const GUIDES = [
       { heading: 'Key deadlines', content: '**5 April**: Tax year ends. **31 July**: 2nd payment on account. **5 October**: Register for new self-employed. **31 October**: Paper return deadline. **31 January**: Online return + tax payment deadline.' },
       { heading: 'Allowable expenses', content: 'Office costs, travel, clothing (uniforms), staff costs, stock, legal/financial fees, marketing, training, insurance. Keep receipts for 5 years!' },
       { heading: 'National Insurance', content: '**Class 2**: £3.45/week if profits above £12,570. **Class 4**: 6% on profits £12,570-£50,270, then 2% above.' },
-      { heading: 'Tips', content: 'Set aside 25-30% of income for tax. Use accounting software (or HomeLedger!). Consider flat rate expenses for working from home (£6/week). Trading allowance: first £1,000 of income is tax-free.' },
+      { heading: 'Tips', content: 'Set aside 25-30% of income for tax. Use accounting software (or Clarity & Co!). Consider flat rate expenses for working from home (£6/week). Trading allowance: first £1,000 of income is tax-free.' },
     ],
   },
   {
@@ -144,7 +144,8 @@ const GUIDES = [
 ];
 
 export function LearnClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [glossarySearch, setGlossarySearch] = useState('');
@@ -153,6 +154,8 @@ export function LearnClient() {
   const [aiAnswer, setAiAnswer] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'guides' | 'glossary' | 'ask'>('guides');
+
+  const GLOSSARY = GLOSSARY_DATA.map(g => ({ term: g.term, definition: isPt ? g.pt : g.en, category: g.category }));
 
   const filteredGlossary = GLOSSARY.filter(g => {
     const matchSearch = !glossarySearch || g.term.toLowerCase().includes(glossarySearch.toLowerCase()) || g.definition.toLowerCase().includes(glossarySearch.toLowerCase());
@@ -190,15 +193,15 @@ export function LearnClient() {
           <GraduationCap className="h-7 w-7 text-primary" />
           {t('learn.title')}
         </h1>
-        <p className="text-muted-foreground mt-1">Your guide to UK tax, finance, and business</p>
+        <p className="text-muted-foreground mt-1">{isPt ? 'Seu guia sobre impostos, finanças e negócios no UK' : 'Your guide to UK tax, finance, and business'}</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b pb-1">
         {([
-          { id: 'guides' as const, label: 'Guides', icon: BookOpen },
-          { id: 'glossary' as const, label: 'Glossary', icon: FileText },
-          { id: 'ask' as const, label: 'Ask AI', icon: Sparkles },
+          { id: 'guides' as const, label: isPt ? 'Guias' : 'Guides', icon: BookOpen },
+          { id: 'glossary' as const, label: isPt ? 'Glossário' : 'Glossary', icon: FileText },
+          { id: 'ask' as const, label: isPt ? 'Perguntar à IA' : 'Ask AI', icon: Sparkles },
         ]).map(tab => {
           const Icon = tab.icon;
           return (
@@ -257,10 +260,10 @@ export function LearnClient() {
                           variant="outline"
                           onClick={() => {
                             setActiveTab('ask');
-                            setAiQuestion(`Tell me more about: ${guide.title}`);
+                            setAiQuestion(isPt ? `Me conte mais sobre: ${guide.title}` : `Tell me more about: ${guide.title}`);
                           }}
                         >
-                          <Bot className="h-4 w-4 mr-1" /> Ask AI about this topic
+                          <Bot className="h-4 w-4 mr-1" /> {isPt ? 'Perguntar à IA sobre este tema' : 'Ask AI about this topic'}
                         </Button>
                       </div>
                     )}
@@ -274,7 +277,7 @@ export function LearnClient() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" /> Useful Links
+                <ExternalLink className="h-5 w-5" /> {isPt ? 'Links Úteis' : 'Useful Links'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -311,7 +314,7 @@ export function LearnClient() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search terms..."
+                placeholder={isPt ? 'Buscar termos...' : 'Search terms...'}
                 className="pl-9"
                 value={glossarySearch}
                 onChange={e => setGlossarySearch(e.target.value)}
@@ -328,13 +331,13 @@ export function LearnClient() {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {cat === 'all' ? 'All' : cat}
+                  {cat === 'all' ? (isPt ? 'Todos' : 'All') : cat}
                 </button>
               ))}
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground">{filteredGlossary.length} terms</p>
+          <p className="text-sm text-muted-foreground">{filteredGlossary.length} {isPt ? 'termos' : 'terms'}</p>
 
           <div className="grid gap-2">
             {filteredGlossary.map(g => (
@@ -365,16 +368,16 @@ export function LearnClient() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-amber-500" /> Ask about UK Finance
+                <Sparkles className="h-5 w-5 text-amber-500" /> {isPt ? 'Pergunte sobre Finanças no UK' : 'Ask about UK Finance'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Ask any question about UK tax, HMRC, business, property, or personal finance.
+                {isPt ? 'Faça qualquer pergunta sobre impostos, HMRC, negócios, imóveis ou finanças pessoais no UK.' : 'Ask any question about UK tax, HMRC, business, property, or personal finance.'}
               </p>
               <div className="flex gap-2">
                 <Input
-                  placeholder="e.g. How do I register as self-employed?"
+                  placeholder={isPt ? 'ex: Como me registro como autônomo?' : 'e.g. How do I register as self-employed?'}
                   value={aiQuestion}
                   onChange={e => setAiQuestion(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !aiLoading && askAI()}
@@ -388,12 +391,21 @@ export function LearnClient() {
               {/* Quick suggestions */}
               <div className="flex flex-wrap gap-2">
                 {[
-                  'How do I buy my first home in the UK?',
-                  'What expenses can I claim as self-employed?',
-                  'How does Corporation Tax work?',
-                  'What is the difference between PAYE and Self Assessment?',
-                  'How do I register for VAT?',
-                  'What is Stamp Duty for buy-to-let?',
+                  ...(isPt ? [
+                    'Como comprar meu primeiro imóvel no UK?',
+                    'Quais despesas posso declarar como autônomo?',
+                    'Como funciona o Corporation Tax?',
+                    'Qual a diferença entre PAYE e Self Assessment?',
+                    'Como me registrar para o VAT?',
+                    'O que é Stamp Duty para buy-to-let?',
+                  ] : [
+                    'How do I buy my first home in the UK?',
+                    'What expenses can I claim as self-employed?',
+                    'How does Corporation Tax work?',
+                    'What is the difference between PAYE and Self Assessment?',
+                    'How do I register for VAT?',
+                    'What is Stamp Duty for buy-to-let?',
+                  ]),
                 ].map(q => (
                   <button
                     key={q}
@@ -410,7 +422,7 @@ export function LearnClient() {
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-2 mb-3">
                     <Bot className="h-5 w-5 text-primary" />
-                    <span className="font-medium text-sm">AI Answer</span>
+                    <span className="font-medium text-sm">{isPt ? 'Resposta da IA' : 'AI Answer'}</span>
                   </div>
                   <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                     {aiAnswer}
@@ -421,7 +433,7 @@ export function LearnClient() {
               {aiLoading && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Thinking...
+                  {isPt ? 'Pensando...' : 'Thinking...'}
                 </div>
               )}
             </CardContent>

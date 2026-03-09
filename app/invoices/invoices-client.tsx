@@ -99,7 +99,8 @@ const emptyInvoice: InvoiceFormData = {
 };
 
 export default function InvoicesClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { entities, selectedEntityId, selectedEntity } = useEntityContext();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -201,12 +202,12 @@ export default function InvoicesClient() {
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
     });
-    toast({ title: 'Template Applied', description: `Using "${template.name}" template` });
+    toast({ title: isPt ? 'Modelo Aplicado' : 'Template Applied', description: isPt ? `Usando modelo "${template.name}"` : `Using "${template.name}" template` });
   };
 
   const saveAsTemplate = async () => {
     if (!templateName.trim()) {
-      toast({ title: 'Error', description: 'Please enter a template name', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Insira um nome para o modelo' : 'Please enter a template name', variant: 'destructive' });
       return;
     }
     setSavingTemplate(true);
@@ -240,7 +241,7 @@ export default function InvoicesClient() {
       });
       
       if (res.ok) {
-        toast({ title: 'Template Saved', description: `Template "${templateName}" has been saved` });
+        toast({ title: isPt ? 'Modelo Salvo' : 'Template Saved', description: isPt ? `Modelo "${templateName}" foi salvo` : `Template "${templateName}" has been saved` });
         setShowTemplateDialog(false);
         setTemplateName('');
         setIsDefaultTemplate(false);
@@ -248,7 +249,7 @@ export default function InvoicesClient() {
         fetchTemplates();
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to save template', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar modelo' : 'Failed to save template', variant: 'destructive' });
     } finally {
       setSavingTemplate(false);
     }
@@ -257,13 +258,13 @@ export default function InvoicesClient() {
   const deleteTemplate = async (id: string) => {
     try {
       await fetch(`/api/invoice-templates/${id}`, { method: 'DELETE' });
-      toast({ title: 'Template Deleted' });
+      toast({ title: isPt ? 'Modelo Excluído' : 'Template Deleted' });
       fetchTemplates();
       if (selectedTemplate === id) {
         setSelectedTemplate('none');
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete template', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir modelo' : 'Failed to delete template', variant: 'destructive' });
     }
   };
 
@@ -280,7 +281,7 @@ export default function InvoicesClient() {
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (files.length > 12) {
-      toast({ title: 'Too many files', description: 'Maximum 12 files allowed', variant: 'destructive' });
+      toast({ title: isPt ? 'Muitos arquivos' : 'Too many files', description: isPt ? 'Máximo de 12 arquivos permitidos' : 'Maximum 12 files allowed', variant: 'destructive' });
       return;
     }
     setUploading(true);
@@ -311,14 +312,14 @@ export default function InvoicesClient() {
         uploadedInvoices.push(invoice);
       }
 
-      toast({ title: 'Upload Complete', description: `${uploadedInvoices.length} invoice(s) uploaded successfully` });
+      toast({ title: isPt ? 'Envio Concluído' : 'Upload Complete', description: isPt ? `${uploadedInvoices.length} fatura(s) enviada(s) com sucesso` : `${uploadedInvoices.length} invoice(s) uploaded successfully` });
       for (const invoice of uploadedInvoices) {
         await processInvoice(invoice);
       }
       fetchInvoices();
     } catch (error) {
       console.error('Upload error:', error);
-      toast({ title: 'Upload Failed', description: 'Failed to upload one or more files', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha no Envio' : 'Upload Failed', description: isPt ? 'Falha ao enviar um ou mais arquivos' : 'Failed to upload one or more files', variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -340,7 +341,7 @@ export default function InvoicesClient() {
       const processRes = await fetch('/api/invoices/process', { method: 'POST', body: formData });
       if (processRes.ok) {
         const processData = await processRes.json();
-        toast({ title: 'Invoice Processed', description: `Data extracted from ${invoice.fileName}` });
+        toast({ title: isPt ? 'Fatura Processada' : 'Invoice Processed', description: isPt ? `Dados extraídos de ${invoice.fileName}` : `Data extracted from ${invoice.fileName}` });
         // Check entity match
         if (processData.entityMatch && (processData.entityMatch.needsConfirmation || processData.entityMatch.mismatch)) {
           setPendingEntityMatch(processData.entityMatch);
@@ -353,7 +354,7 @@ export default function InvoicesClient() {
       }
     } catch (error) {
       console.error('Processing error:', error);
-      toast({ title: 'Processing Failed', description: `Could not extract data from ${invoice.fileName}`, variant: 'destructive' });
+      toast({ title: isPt ? 'Falha no Processamento' : 'Processing Failed', description: isPt ? `Não foi possível extrair dados de ${invoice.fileName}` : `Could not extract data from ${invoice.fileName}`, variant: 'destructive' });
     } finally {
       setProcessing(null);
       fetchInvoices();

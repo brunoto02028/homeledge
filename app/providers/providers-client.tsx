@@ -91,7 +91,8 @@ const UK_BANKS = [
 ];
 
 export default function ProvidersClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [providers, setProviders] = useState<Provider[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,11 +193,11 @@ export default function ProvidersClient() {
         : isSyncing
           ? `Connected to ${bankLabel} — syncing transactions in background. Refresh in a minute to see your data.`
           : `Successfully connected to ${bankLabel}`;
-      toast({ title: 'Bank Connected!', description: desc, duration: 15000 });
+      toast({ title: isPt ? 'Banco Conectado!' : 'Bank Connected!', description: desc, duration: 15000 });
       fetchBankConnections();
       window.history.replaceState({}, '', '/providers');
     } else if (params.get('ob_error')) {
-      toast({ title: 'Connection Failed', description: params.get('ob_error') || 'Unknown error', variant: 'destructive' });
+      toast({ title: isPt ? 'Falha na Conexão' : 'Connection Failed', description: params.get('ob_error') || (isPt ? 'Erro desconhecido' : 'Unknown error'), variant: 'destructive' });
       window.history.replaceState({}, '', '/providers');
     }
   }, [fetchProviders, fetchAccounts, fetchEntities, fetchBankConnections]);
@@ -213,10 +214,10 @@ export default function ProvidersClient() {
       if (data.authUrl) {
         window.location.href = data.authUrl;
       } else {
-        toast({ title: 'Error', description: data.message || data.error || 'Failed to start connection', variant: 'destructive' });
+        toast({ title: isPt ? 'Erro' : 'Error', description: data.message || data.error || (isPt ? 'Falha ao iniciar conexão' : 'Failed to start connection'), variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to connect', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao conectar' : 'Failed to connect', variant: 'destructive' });
     } finally {
       setConnectingBank(false);
     }
@@ -242,13 +243,13 @@ export default function ProvidersClient() {
       });
       const data = await res.json();
       if (data.authUrl) {
-        toast({ title: 'Reconnecting...', description: 'You will be redirected to your bank. After login, all history will be synced automatically.' });
+        toast({ title: isPt ? 'Reconectando...' : 'Reconnecting...', description: isPt ? 'Você será redirecionado ao seu banco. Após login, todo o histórico será sincronizado automaticamente.' : 'You will be redirected to your bank. After login, all history will be synced automatically.' });
         window.location.href = data.authUrl;
       } else {
-        toast({ title: 'Error', description: data.message || 'Failed to reconnect', variant: 'destructive' });
+        toast({ title: isPt ? 'Erro' : 'Error', description: data.message || (isPt ? 'Falha ao reconectar' : 'Failed to reconnect'), variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to reconnect', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao reconectar' : 'Failed to reconnect', variant: 'destructive' });
     } finally {
       setConnectingBank(false);
     }
@@ -305,11 +306,11 @@ export default function ProvidersClient() {
         body: JSON.stringify({ connectionId: connId }),
       });
       if (res.ok) {
-        toast({ title: 'Disconnected' });
+        toast({ title: isPt ? 'Desconectado' : 'Disconnected' });
         fetchBankConnections();
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to disconnect', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao desconectar' : 'Failed to disconnect', variant: 'destructive' });
     }
   };
 
@@ -326,7 +327,7 @@ export default function ProvidersClient() {
 
   const handleSaveProvider = async () => {
     if (!providerForm.name || !providerForm.type) {
-      toast({ title: 'Error', description: 'Name and type are required', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Nome e tipo são obrigatórios' : 'Name and type are required', variant: 'destructive' });
       return;
     }
 
@@ -341,7 +342,7 @@ export default function ProvidersClient() {
       });
 
       if (res.ok) {
-        toast({ title: editProvider ? 'Provider Updated' : 'Provider Added' });
+        toast({ title: editProvider ? (isPt ? 'Provedor Atualizado' : 'Provider Updated') : (isPt ? 'Provedor Adicionado' : 'Provider Added') });
         setProviderDialogOpen(false);
         setEditProvider(null);
         setProviderForm({ name: '', type: 'bank', logoUrl: '', contactInfo: '' });
@@ -351,25 +352,25 @@ export default function ProvidersClient() {
       }
     } catch (error) {
       console.error('Error saving provider:', error);
-      toast({ title: 'Error', description: 'Failed to save provider', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar provedor' : 'Failed to save provider', variant: 'destructive' });
     }
   };
 
   const handleDeleteProvider = async (id: string) => {
     try {
       await fetch(`/api/providers/${id}`, { method: 'DELETE' });
-      toast({ title: 'Provider Deleted' });
+      toast({ title: isPt ? 'Provedor Excluído' : 'Provider Deleted' });
       fetchProviders();
       fetchAccounts();
     } catch (error) {
       console.error('Error deleting provider:', error);
-      toast({ title: 'Error', description: 'Failed to delete provider', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir provedor' : 'Failed to delete provider', variant: 'destructive' });
     }
   };
 
   const handleSaveAccount = async () => {
     if (!accountForm.providerId || !accountForm.accountName || !accountForm.accountType) {
-      toast({ title: 'Error', description: 'Provider, account name and type are required', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Provedor, nome e tipo da conta são obrigatórios' : 'Provider, account name and type are required', variant: 'destructive' });
       return;
     }
 
@@ -388,7 +389,7 @@ export default function ProvidersClient() {
       });
 
       if (res.ok) {
-        toast({ title: editAccount ? 'Account Updated' : 'Account Added' });
+        toast({ title: editAccount ? (isPt ? 'Conta Atualizada' : 'Account Updated') : (isPt ? 'Conta Adicionada' : 'Account Added') });
         setAccountDialogOpen(false);
         setEditAccount(null);
         setAccountForm({ providerId: '', entityId: '', accountName: '', accountNumber: '', accountType: 'current', balance: '', currency: 'GBP', isActive: true });
@@ -398,18 +399,18 @@ export default function ProvidersClient() {
       }
     } catch (error) {
       console.error('Error saving account:', error);
-      toast({ title: 'Error', description: 'Failed to save account', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao salvar conta' : 'Failed to save account', variant: 'destructive' });
     }
   };
 
   const handleDeleteAccount = async (id: string) => {
     try {
       await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
-      toast({ title: 'Account Deleted' });
+      toast({ title: isPt ? 'Conta Excluída' : 'Account Deleted' });
       fetchAccounts();
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast({ title: 'Error', description: 'Failed to delete account', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao excluir conta' : 'Failed to delete account', variant: 'destructive' });
     }
   };
 
@@ -661,7 +662,7 @@ export default function ProvidersClient() {
                       </p>
                       <ol className="text-sm text-muted-foreground mt-2 space-y-1 list-decimal list-inside">
                         <li>Create an account at <a href="https://console.truelayer.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">console.truelayer.com</a></li>
-                        <li>Create an application and set redirect URI to: <code className="text-xs bg-muted px-1 py-0.5 rounded">https://homeledger.co.uk/api/open-banking/callback</code></li>
+                        <li>Create an application and set redirect URI to: <code className="text-xs bg-muted px-1 py-0.5 rounded">https://Clarity & Co.co.uk/api/open-banking/callback</code></li>
                         <li>Add <code className="text-xs bg-muted px-1 py-0.5 rounded">TRUELAYER_CLIENT_ID</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">TRUELAYER_CLIENT_SECRET</code>, and <code className="text-xs bg-muted px-1 py-0.5 rounded">TRUELAYER_REDIRECT_URI</code> to your server environment</li>
                         <li>Restart the application</li>
                       </ol>
@@ -702,7 +703,7 @@ export default function ProvidersClient() {
                 </div>
               </div>
               {obConfigured !== false && (
-                <p className="text-xs text-muted-foreground mt-3">You&apos;ll be redirected to your bank to authorise access. HomeLedger uses TrueLayer (FCA-regulated) for secure Open Banking connections.</p>
+                <p className="text-xs text-muted-foreground mt-3">You&apos;ll be redirected to your bank to authorise access. Clarity & Co uses TrueLayer (FCA-regulated) for secure Open Banking connections.</p>
               )}
             </CardContent>
           </Card>
@@ -711,10 +712,13 @@ export default function ProvidersClient() {
           {bankConnections.length > 0 && (
             <div className="grid gap-4 sm:grid-cols-2">
               {bankConnections.map(conn => {
+                const hasTemporaryError = conn.status === 'active' && conn.lastSyncError;
                 const statusConfig: Record<string, { color: string; border: string; dot: string; label: string }> = {
-                  active: { color: 'text-emerald-500', border: 'border-emerald-500/30', dot: 'bg-emerald-500', label: 'Active' },
+                  active: hasTemporaryError
+                    ? { color: 'text-amber-500', border: 'border-amber-500/30', dot: 'bg-amber-500', label: 'Active (retrying)' }
+                    : { color: 'text-emerald-500', border: 'border-emerald-500/30', dot: 'bg-emerald-500', label: 'Active' },
                   pending: { color: 'text-amber-500', border: 'border-amber-500/30', dot: 'bg-amber-500', label: 'Pending' },
-                  expired: { color: 'text-red-500', border: 'border-red-500/30', dot: 'bg-red-500', label: 'Expired' },
+                  expired: { color: 'text-red-500', border: 'border-red-500/30', dot: 'bg-red-500', label: 'Reconnect Required' },
                   revoked: { color: 'text-red-500', border: 'border-red-500/30', dot: 'bg-red-500', label: 'Disconnected' },
                   error: { color: 'text-red-500', border: 'border-red-500/30', dot: 'bg-red-500', label: 'Error' },
                 };

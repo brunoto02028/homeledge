@@ -1,7 +1,7 @@
-# HomeLedger — Complete User Guide
+# Clarity & Co — Complete User Guide
 
 > **Your finances, simplified.**
-> HomeLedger is a UK-focused household finance management platform that helps individuals, sole traders, and limited companies organise their money, track expenses, generate HMRC-ready reports, and plan for the future.
+> Clarity & Co is a UK-focused household finance management platform that helps individuals, sole traders, and limited companies organise their money, track expenses, generate HMRC-ready reports, and plan for the future.
 
 ---
 
@@ -43,14 +43,14 @@
 
 ### Creating Your Account
 
-1. Go to [homeledger.co.uk](https://homeledger.co.uk)
+1. Go to [clarityco.co.uk](https://clarityco.co.uk)
 2. Click **Register** and enter your name, email, and a strong password
 3. Verify your email address
 4. Log in and you'll land on your **Dashboard**
 
 ### First Steps (Recommended Order)
 
-Follow this order to get the most out of HomeLedger:
+Follow this order to get the most out of Clarity & Co:
 
 ```
 Step 1: Create your Entity (who are you financially?)
@@ -152,7 +152,7 @@ If you manage multiple financial identities (e.g. personal + business), use the 
 
 ## 5. Statements
 
-**What it is:** The heart of HomeLedger. Upload bank statements, and the system extracts, categorises, and organises every transaction.
+**What it is:** The heart of Clarity & Co. Upload bank statements, and the system extracts, categorises, and organises every transaction.
 
 ### Uploading a Statement
 
@@ -273,7 +273,7 @@ At the top of each statement, you'll see:
 
 ### Default Categories
 
-HomeLedger comes with UK-relevant categories pre-configured:
+Clarity & Co comes with UK-relevant categories pre-configured:
 
 **Income categories:**
 - Salary / Wages
@@ -351,7 +351,7 @@ The system checks the transaction description against a database of rules. If it
 
 **Example:** "TESCO STORES" matches the rule "TESCO → Groceries" ✅
 
-HomeLedger comes with **100+ pre-loaded rules** for common UK merchants (Tesco, Sainsbury's, Netflix, British Gas, HMRC, etc.)
+Clarity & Co comes with **100+ pre-loaded rules** for common UK merchants (Tesco, Sainsbury's, Netflix, British Gas, HMRC, etc.)
 
 #### Layer 2 — Patterns (Your History)
 If no rule matches, the system looks at your past corrections. If you've categorised similar transactions before, it recognises the pattern.
@@ -423,7 +423,7 @@ Month 6:  95%+ auto-categorised → only new merchants need review
 3. Select your bank from the list
 4. You'll be redirected to your bank's website to authorise the connection
 5. Grant permission (read-only access to your transactions)
-6. You'll be redirected back to HomeLedger
+6. You'll be redirected back to Clarity & Co
 
 ### What Happens After Connecting
 
@@ -442,7 +442,7 @@ Each connected bank shows:
 
 ### Important Notes
 
-- **Read-only** — HomeLedger can only READ your transactions. It cannot make payments or move money.
+- **Read-only** — Clarity & Co can only READ your transactions. It cannot make payments or move money.
 - **SCA (Strong Customer Authentication)** — UK banks require re-authorisation every 90 days. When prompted, click "Reconnect" to refresh access.
 - **Deduplication** — If you upload a statement AND have Open Banking connected for the same account, the system detects duplicates and won't create double entries.
 
@@ -486,7 +486,7 @@ Income tracking:
 
 ### HMRC-Ready Reports
 
-For sole traders and limited companies, HomeLedger maps your categories to **HMRC Self Assessment boxes**:
+For sole traders and limited companies, Clarity & Co maps your categories to **HMRC Self Assessment boxes**:
 
 | HMRC Box | Category | Example |
 |----------|----------|---------|
@@ -816,7 +816,7 @@ In Study Mode, you can open the **AI Tutor Panel** for any question. The AI will
 
 ## 26. Settings
 
-**What it is:** Personalise your HomeLedger experience.
+**What it is:** Personalise your Clarity & Co experience.
 
 **What you can configure:**
 
@@ -956,6 +956,6 @@ Choose how the AI categorises your transactions:
 
 ---
 
-*HomeLedger — Your finances, simplified.*
+*Clarity & Co — Your finances, simplified.*
 *Built for UK households, sole traders, and limited companies.*
-*© 2026 HomeLedger. All rights reserved.*
+*© 2026 Clarity & Co. All rights reserved.*

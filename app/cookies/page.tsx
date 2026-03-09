@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { ManagePrefsButton } from './manage-prefs-button';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy | HomeLedger',
-  description: 'How HomeLedger uses cookies and similar technologies.',
+  title: 'Cookie Policy | Clarity & Co',
+  description: 'How Clarity & Co uses cookies and similar technologies.',
 };
 
 export default function CookiePolicyPage() {
@@ -21,7 +21,7 @@ export default function CookiePolicyPage() {
             <h2 className="text-2xl font-semibold mb-3">1. What Are Cookies</h2>
             <p className="text-muted-foreground leading-relaxed">
               Cookies are small text files stored on your device when you visit a website. They help the website
-              remember your preferences and provide essential functionality. HomeLedger uses cookies to keep you
+              remember your preferences and provide essential functionality. Clarity & Co uses cookies to keep you
               signed in and provide a secure experience.
             </p>
           </section>
@@ -139,7 +139,7 @@ export default function CookiePolicyPage() {
 
             <h3 className="text-lg font-medium mt-4 mb-2">Advertising Cookies</h3>
             <p className="text-muted-foreground leading-relaxed">
-              We do not use any advertising or tracking cookies. HomeLedger does not serve ads.
+              We do not use any advertising or tracking cookies. Clarity & Co does not serve ads.
             </p>
           </section>
 
@@ -158,14 +158,14 @@ export default function CookiePolicyPage() {
               <li><strong>Edge</strong>: Settings &gt; Cookies and Site Permissions</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-3">
-              Please note that disabling essential cookies will prevent you from signing in to HomeLedger.
+              Please note that disabling essential cookies will prevent you from signing in to Clarity & Co.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-3">5. Local Storage</h2>
             <p className="text-muted-foreground leading-relaxed">
-              In addition to cookies, HomeLedger uses browser local storage to cache UI preferences
+              In addition to cookies, Clarity & Co uses browser local storage to cache UI preferences
               (e.g., sidebar state, theme preference, financial projections data). This data never leaves
               your browser and is not sent to our servers.
             </p>
@@ -184,14 +184,14 @@ export default function CookiePolicyPage() {
             <h2 className="text-2xl font-semibold mb-3">7. Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
               Questions about cookies? Email{' '}
-              <a href="mailto:privacy@homeledger.co.uk" className="text-primary hover:underline">privacy@homeledger.co.uk</a>.
+              <a href="mailto:privacy@clarityco.co.uk" className="text-primary hover:underline">privacy@clarityco.co.uk</a>.
             </p>
           </section>
         </div>
 
         <div className="mt-16 pt-8 border-t text-center">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-            &larr; Back to HomeLedger
+            &larr; Back to Clarity & Co
           </Link>
         </div>
       </div>

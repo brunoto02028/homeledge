@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     });
 
     if (existing.length > 0) {
-      const baseUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://Clarity & Co.co.uk';
       return NextResponse.json({
         success: true,
         email: customerEmail,
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
           expiresAt,
         },
       });
-      const baseUrl = process.env.NEXTAUTH_URL || 'https://homeledger.co.uk';
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://Clarity & Co.co.uk';
       links.push({
         url: `${baseUrl}/verify/${link.token}`,
         token: link.token,

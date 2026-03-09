@@ -110,7 +110,7 @@ export function LandingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="h-14 w-14 rounded-2xl shadow-lg shadow-amber-500/30 animate-pulse overflow-hidden">
-          <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+          <img src="/site-logo.png" alt="Clarity &amp; Co" className="h-full w-full object-contain" />
         </div>
       </div>
     );
@@ -120,6 +120,7 @@ export function LandingPage() {
     { href: '#features', label: t('landing.nav.features') },
     { href: '#how-it-works', label: t('landing.nav.howItWorks') },
     { href: '#pricing', label: t('landing.nav.pricing') },
+    { href: '/professional-services', label: t('proServices.navLabel') },
     { href: '/intelligence/subscribe', label: '🌐 Intelligence' },
     { href: '#faq', label: t('landing.nav.faq') },
   ];
@@ -142,7 +143,7 @@ export function LandingPage() {
   const plans = dbPlans.length > 0
     ? dbPlans.map((p: any) => ({
         key: p.id, name: p.displayName,
-        price: p.price === 0 ? '£0' : `£${p.price}`,
+        price: p.price === 0 ? '£0' : `£${Number(p.price).toFixed(2)}`,
         period: p.price === 0 ? '' : t('landing.pricing.perMonth'),
         features: p.features || [], highlighted: p.isDefault,
         cta: t('landing.pricing.startFreeTrial'),
@@ -156,9 +157,9 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
-              <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+              <img src="/site-logo.png" alt="Clarity &amp; Co" className="h-full w-full object-contain" />
             </div>
-            <span className="text-xl font-bold text-white">HomeLedger</span>
+            <span className="text-xl font-bold tracking-tight text-white">Clarity<span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent">&amp; Co</span></span>
           </Link>
           <div className="hidden xl:flex items-center gap-4 text-[13px] font-medium text-slate-400">
             {NAV_PRIMARY.map(l => <a key={l.href} href={l.href} className="hover:text-amber-400 transition-colors duration-200 whitespace-nowrap">{l.label}</a>)}
@@ -224,7 +225,7 @@ export function LandingPage() {
               <Sparkles className="h-3.5 w-3.5" /> {t('landing.hero.badge')}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
-              {getCms('hero')?.content?.headline || (
+              {(
                 <>
                   <span className="text-white">{t('landing.hero.titleLine1')}</span><br />
                   <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400 bg-clip-text text-transparent neon-text-amber">
@@ -234,7 +235,7 @@ export function LandingPage() {
               )}
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-              {getCms('hero')?.content?.subheadline || t('landing.hero.subtitle')}
+              {t('landing.hero.subtitle')}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register" className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-bold text-base hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:shadow-amber-500/40 hover:scale-[1.02]">
@@ -255,7 +256,7 @@ export function LandingPage() {
                   <div className="h-3 w-3 rounded-full bg-red-400/80" />
                   <div className="h-3 w-3 rounded-full bg-yellow-400/80" />
                   <div className="h-3 w-3 rounded-full bg-green-400/80" />
-                  <span className="ml-3 text-xs text-slate-500">homeledger.co.uk/dashboard</span>
+                  <span className="ml-3 text-xs text-slate-500">clarityco.co.uk/dashboard</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
@@ -296,12 +297,128 @@ export function LandingPage() {
         <div className="neon-line w-full mt-10" />
       </section>
 
+      {/* ── Managed Services — Platform + Professional Support ─────────── */}
+      <section className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-slate-950 to-amber-950/20" />
+        <div className="absolute top-20 right-[15%] w-72 h-72 bg-violet-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-20 left-[15%] w-80 h-80 bg-amber-500/8 rounded-full blur-[120px]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-semibold mb-6">
+              <Users className="h-3.5 w-3.5" /> {t('landing.managed.badge')}
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+              {t('landing.managed.title1')}<br />
+              <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">{t('landing.managed.title2')}</span>
+            </h2>
+            <p className="mt-6 text-lg text-slate-400 leading-relaxed">
+              {t('landing.managed.desc')}
+            </p>
+          </div>
+
+          {/* Two columns: Platform + Professional */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {/* Column 1: The Platform */}
+            <div className="neon-card p-8 relative overflow-hidden group hover:border-amber-400/20 transition-all">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-[60px] group-hover:bg-amber-500/10 transition-all" />
+              <div className="relative">
+                <div className="h-12 w-12 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mb-5">
+                  <Zap className="h-6 w-6 text-amber-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">{t('landing.managed.platformTitle')}</h3>
+                <p className="text-sm text-slate-400 mb-5 leading-relaxed">{t('landing.managed.platformDesc')}</p>
+                <div className="space-y-3">
+                  {[
+                    { icon: FileSpreadsheet, text: t('landing.managed.pf1') },
+                    { icon: Receipt, text: t('landing.managed.pf2') },
+                    { icon: BarChart3, text: t('landing.managed.pf3') },
+                    { icon: Camera, text: t('landing.managed.pf4') },
+                    { icon: Brain, text: t('landing.managed.pf5') },
+                    { icon: CalendarClock, text: t('landing.managed.pf6') },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-7 w-7 rounded-lg bg-amber-400/10 flex items-center justify-center flex-shrink-0">
+                        <item.icon className="h-3.5 w-3.5 text-amber-400" />
+                      </div>
+                      <span className="text-sm text-slate-300">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Professional Support */}
+            <div className="neon-card p-8 relative overflow-hidden group hover:border-violet-400/20 transition-all">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/5 rounded-full blur-[60px] group-hover:bg-violet-500/10 transition-all" />
+              <div className="relative">
+                <div className="h-12 w-12 rounded-xl bg-violet-400/10 border border-violet-400/20 flex items-center justify-center mb-5">
+                  <Briefcase className="h-6 w-6 text-violet-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">{t('landing.managed.serviceTitle')}</h3>
+                <p className="text-sm text-slate-400 mb-5 leading-relaxed">{t('landing.managed.serviceDesc')}</p>
+                <div className="space-y-3">
+                  {[
+                    { icon: FileText, text: t('landing.managed.sv1') },
+                    { icon: BarChart3, text: t('landing.managed.sv2') },
+                    { icon: Users, text: t('landing.managed.sv3') },
+                    { icon: Building2, text: t('landing.managed.sv4') },
+                    { icon: Shield, text: t('landing.managed.sv5') },
+                    { icon: GraduationCap, text: t('landing.managed.sv6') },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-7 w-7 rounded-lg bg-violet-400/10 flex items-center justify-center flex-shrink-0">
+                        <item.icon className="h-3.5 w-3.5 text-violet-400" />
+                      </div>
+                      <span className="text-sm text-slate-300">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* How it works mini */}
+          <div className="neon-card p-8">
+            <h3 className="text-lg font-bold text-white text-center mb-8">{t('landing.managed.howTitle')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { step: '01', icon: UserPlus, color: 'from-amber-400 to-orange-400', text: t('landing.managed.hw1') },
+                { step: '02', icon: Briefcase, color: 'from-violet-400 to-purple-400', text: t('landing.managed.hw2') },
+                { step: '03', icon: Zap, color: 'from-cyan-400 to-blue-400', text: t('landing.managed.hw3') },
+                { step: '04', icon: TrendingUp, color: 'from-emerald-400 to-green-400', text: t('landing.managed.hw4') },
+              ].map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <div key={i} className="text-center">
+                    <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br ${item.color} shadow-lg mb-3`}>
+                      <Icon className="h-6 w-6 text-slate-900" />
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-500 mb-1">{item.step}</div>
+                    <p className="text-sm text-slate-300 leading-relaxed">{item.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-10 flex flex-wrap justify-center gap-4">
+            <Link href="/professional-services" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-violet-400 to-cyan-400 text-slate-900 font-semibold text-sm hover:from-violet-300 hover:to-cyan-300 shadow-lg shadow-violet-500/20 transition-all">
+              {t('landing.managed.cta1')} <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/register" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl glass text-white font-semibold text-sm hover:bg-white/10 transition-all">
+              {t('landing.managed.cta2')}
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── Features ────────────────────────────────────────────────────── */}
       <section id="features" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('features')?.title || t('landing.features.title')}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('features')?.subtitle || t('landing.features.subtitle')}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.features.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.features.subtitle')}</p>
           </div>
 
           {/* Category Tabs — scrollable on mobile */}
@@ -405,11 +522,11 @@ export function LandingPage() {
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
                 <div className="flex items-center gap-3 mb-2"><Landmark className="h-5 w-5 text-cyan-400" /><span className="font-semibold text-white">{t('landing.business.mockTitle')}</span></div>
-                {[{ name: 'Tech Solutions Ltd', type: 'Limited Company', co: '#12345678' }, { name: 'Sarah Consulting', type: 'Sole Trader', co: 'UTR: 12345' }, { name: 'Personal Account', type: 'Personal', co: '' }].map((e, i) => (
+                {[{ name: t('landing.mock.businessEntity1'), type: t('landing.mock.businessEntity1Type') }, { name: t('landing.mock.businessEntity2'), type: t('landing.mock.businessEntity2Type') }, { name: t('landing.mock.businessEntity3'), type: t('landing.mock.businessEntity3Type') }].map((e, i) => (
                   <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-cyan-400/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-lg bg-cyan-400/10 flex items-center justify-center"><Building2 className="h-4 w-4 text-cyan-400" /></div>
-                      <div><div className="text-sm font-medium text-white">{e.name}</div><div className="text-xs text-slate-500">{e.type}{e.co && ` · ${e.co}`}</div></div>
+                      <div><div className="text-sm font-medium text-white">{e.name}</div><div className="text-xs text-slate-500">{e.type}</div></div>
                     </div>
                     <div className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">{t('landing.mock.active')}</div>
                   </div>
@@ -427,13 +544,13 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 text-xs font-semibold mb-6">
-                <Home className="h-3.5 w-3.5" /> {getCms('propertyIntelligence')?.subtitle || t('landing.property.badge')}
+                <Home className="h-3.5 w-3.5" /> {t('landing.property.badge')}
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-                {getCms('propertyIntelligence')?.title || t('landing.property.title')}
+                {t('landing.property.title')}
               </h2>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                {getCms('propertyIntelligence')?.content?.description || t('landing.property.description')}
+                {t('landing.property.description')}
               </p>
               <div className="mt-8 space-y-4">
                 {[
@@ -504,8 +621,8 @@ export function LandingPage() {
                 <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-violet-400/20 flex items-center justify-center"><Building2 className="h-4 w-4 text-violet-400" /></div>
                   <div>
-                    <p className="text-xs text-white font-medium">Tech Solutions Ltd</p>
-                    <p className="text-[10px] text-slate-500">£22k retained — dividend extraction strategy available</p>
+                    <p className="text-xs text-white font-medium">{t('landing.mock.propertyStrategy')}</p>
+                    <p className="text-[10px] text-slate-500">{t('landing.mock.propertyStrategyDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -525,22 +642,21 @@ export function LandingPage() {
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 text-xs font-semibold mb-6">
               <Globe className="h-3.5 w-3.5" />
-              <span>Real-Time Global Intelligence</span>
+              <span>{t('landing.intelligence.badge')}</span>
               <span className="relative flex h-2 w-2 ml-1">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
-              <span className="text-red-400 text-[10px] font-bold tracking-wider">LIVE</span>
+              <span className="text-red-400 text-[10px] font-bold tracking-wider">{t('landing.intelligence.live')}</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight">
-              The World at Your{' '}
+              {t('landing.intelligence.title1')}{' '}
               <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Fingertips
+                {t('landing.intelligence.title2')}
               </span>
             </h2>
             <p className="mt-5 text-lg text-slate-400 leading-relaxed">
-              Monitor global events, military movements, earthquakes, weather patterns, and breaking news — all on one
-              interactive map with AI-powered analysis. Your personal war room.
+              {t('landing.intelligence.desc')}
             </p>
           </div>
 
@@ -633,10 +749,10 @@ export function LandingPage() {
 
                 {/* Legend */}
                 <div className="absolute bottom-3 left-3 flex gap-3 text-[9px] font-mono text-slate-500">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />Crisis</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />Opportunity</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />Neutral</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" />Military</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{t('landing.intelligence.legendCrisis')}</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{t('landing.intelligence.legendOpportunity')}</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />{t('landing.intelligence.legendNeutral')}</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" />{t('landing.intelligence.legendMilitary')}</span>
                 </div>
 
                 {/* Mini news ticker */}
@@ -662,14 +778,14 @@ export function LandingPage() {
           {/* Feature Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-12">
             {[
-              { icon: Globe, title: 'Live Global News', desc: '50+ countries, 11 war searches, auto-refresh every 60s', color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400' },
-              { icon: Plane, title: 'Aircraft Tracking', desc: 'Real-time military & civilian aircraft via OpenSky Network', color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400' },
-              { icon: AlertTriangle, title: 'Earthquake Monitor', desc: 'USGS seismic data with magnitude, depth & tsunami alerts', color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400' },
-              { icon: Anchor, title: 'Naval Tracker', desc: 'Aircraft carriers, warships & strategic waterway monitoring worldwide', color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400' },
-              { icon: Brain, title: 'AI Intelligence Agent', desc: 'Geopolitical analyst AI for news analysis & strategy', color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400' },
-              { icon: Shield, title: 'Prophecy Tracking', desc: 'Biblical prophecy cross-reference with current events', color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400' },
-              { icon: BarChart3, title: 'Economic Calendar', desc: 'Central bank decisions, GDP, CPI, employment data from 20+ countries', color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400' },
-              { icon: DollarSign, title: 'World Economy', desc: 'GDP rankings, population stats, region data from World Bank', color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400' },
+              { icon: Globe, title: t('landing.intelligence.liveGlobalNews'), desc: t('landing.intelligence.liveGlobalNewsDesc'), color: 'from-cyan-500/20 to-blue-500/10', ic: 'text-cyan-400' },
+              { icon: Plane, title: t('landing.intelligence.aircraftTracking'), desc: t('landing.intelligence.aircraftTrackingDesc'), color: 'from-yellow-500/20 to-amber-500/10', ic: 'text-yellow-400' },
+              { icon: AlertTriangle, title: t('landing.intelligence.earthquakeMonitor'), desc: t('landing.intelligence.earthquakeMonitorDesc'), color: 'from-orange-500/20 to-red-500/10', ic: 'text-orange-400' },
+              { icon: Anchor, title: t('landing.intelligence.navalTracker'), desc: t('landing.intelligence.navalTrackerDesc'), color: 'from-blue-500/20 to-indigo-500/10', ic: 'text-blue-400' },
+              { icon: Brain, title: t('landing.intelligence.aiAgent'), desc: t('landing.intelligence.aiAgentDesc'), color: 'from-purple-500/20 to-violet-500/10', ic: 'text-purple-400' },
+              { icon: Shield, title: t('landing.intelligence.prophecyTracking'), desc: t('landing.intelligence.prophecyTrackingDesc'), color: 'from-amber-500/20 to-orange-500/10', ic: 'text-amber-400' },
+              { icon: BarChart3, title: t('landing.intelligence.economicCalendar'), desc: t('landing.intelligence.economicCalendarDesc'), color: 'from-emerald-500/20 to-teal-500/10', ic: 'text-emerald-400' },
+              { icon: DollarSign, title: t('landing.intelligence.worldEconomy'), desc: t('landing.intelligence.worldEconomyDesc'), color: 'from-green-500/20 to-emerald-500/10', ic: 'text-green-400' },
             ].map((f, i) => (
               <div key={i} className={`bg-gradient-to-br ${f.color} rounded-xl p-4 border border-white/5 hover:border-cyan-400/20 transition-colors group`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -688,10 +804,10 @@ export function LandingPage() {
               className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-base hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:shadow-cyan-500/40 hover:scale-[1.02]"
             >
               <Globe className="h-5 w-5" />
-              Open Intelligence Dashboard
+              {t('landing.intelligence.cta')}
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <p className="mt-4 text-sm text-slate-500">7-day free trial · £2.99/month · Cancel anytime</p>
+            <p className="mt-4 text-sm text-slate-500">{t('landing.intelligence.ctaSub')}</p>
           </div>
         </div>
       </section>
@@ -700,8 +816,8 @@ export function LandingPage() {
       <section id="how-it-works" className="py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('howItWorks')?.title || t('landing.howItWorks.title')}</h2>
-            <p className="mt-4 text-lg text-slate-400">{getCms('howItWorks')?.subtitle || t('landing.howItWorks.subtitle')}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.howItWorks.title')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('landing.howItWorks.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
@@ -736,9 +852,9 @@ export function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: 'James Mitchell', role: 'Sole Trader, London', text: t('landing.testimonials.quote1'), avatar: 'JM' },
-              { name: 'Sarah Chen', role: 'Director, Tech Solutions Ltd', text: t('landing.testimonials.quote2'), avatar: 'SC' },
-              { name: 'David Okafor', role: 'Chartered Accountant', text: t('landing.testimonials.quote3'), avatar: 'DO' },
+              { name: 'James Mitchell', role: t('landing.mock.testimonialRole1'), text: t('landing.testimonials.quote1'), avatar: 'JM' },
+              { name: 'Sarah Chen', role: t('landing.mock.testimonialRole2'), text: t('landing.testimonials.quote2'), avatar: 'SC' },
+              { name: 'David Okafor', role: t('landing.mock.testimonialRole3'), text: t('landing.testimonials.quote3'), avatar: 'DO' },
             ].map((tm, i) => (
               <div key={i} className="neon-card p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -794,7 +910,7 @@ export function LandingPage() {
             <div className="hidden md:block">
               <div className="neon-card p-6 space-y-4">
                 <div className="flex items-center gap-3 mb-4"><Briefcase className="h-6 w-6 text-amber-400" /><span className="text-white font-semibold">{t('landing.mock.accountantDashboard')}</span></div>
-                {['John Smith — Sole Trader', 'ABC Ltd — Limited Company', 'Sarah Jones — Freelancer'].map((name, i) => (
+                {[t('landing.mock.accountantClient1'), t('landing.mock.accountantClient2'), t('landing.mock.accountantClient3')].map((name, i) => (
                   <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5 hover:border-amber-400/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-amber-400/20 flex items-center justify-center"><Users className="h-4 w-4 text-amber-400" /></div>
@@ -1313,7 +1429,7 @@ export function LandingPage() {
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section id="faq" className="py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('faq')?.title || t('landing.faq.title')}</h2></div>
+          <div className="text-center mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.faq.title')}</h2></div>
           <div className="space-y-3">
             {Array.from({ length: 12 }, (_, i) => ({
               q: t(`landing.faq.q${i + 1}`),
@@ -1336,8 +1452,8 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px]" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">{getCms('cta')?.content?.headline || t('landing.cta.title')}</h2>
-          <p className="mt-4 text-lg text-slate-400">{getCms('cta')?.content?.subheadline || t('landing.cta.subtitle')}</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('landing.cta.title')}</h2>
+          <p className="mt-4 text-lg text-slate-400">{t('landing.cta.subtitle')}</p>
           <Link href="/register" className="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-bold text-base hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:shadow-amber-500/40 hover:scale-[1.02]">
             {t('landing.cta.ctaPrimary')} <ArrowRight className="h-4 w-4" />
           </Link>
@@ -1353,9 +1469,9 @@ export function LandingPage() {
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="h-8 w-8 rounded-lg overflow-hidden shadow-md shadow-amber-500/20">
-                  <img src="/site-logo.png" alt="HomeLedger" className="h-full w-full object-contain" />
+                  <img src="/site-logo.png" alt="Clarity &amp; Co" className="h-full w-full object-contain" />
                 </div>
-                <span className="text-lg font-bold text-white">HomeLedger</span>
+                <span className="text-lg font-bold tracking-tight text-white">Clarity<span className="text-amber-400">&amp; Co</span></span>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed">{t('landing.footer.description')}</p>
               <div className="flex items-center gap-3 mt-4">
@@ -1381,6 +1497,7 @@ export function LandingPage() {
                 <a href="#accountants" className="block hover:text-amber-400 transition-colors">{t('landing.footer.forAccountants')}</a>
                 <a href="#property" className="block hover:text-amber-400 transition-colors">{t('landing.footer.propertyIntelligence')}</a>
                 <a href="#features" className="block hover:text-amber-400 transition-colors">{t('landing.footer.personalFinance')}</a>
+                <Link href="/professional-services" className="block hover:text-amber-400 transition-colors">{t('proServices.navLabel')}</Link>
               </div>
             </div>
             <div>
@@ -1405,7 +1522,7 @@ export function LandingPage() {
           </div>
           <div className="neon-line w-full mb-8" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} HomeLedger. {t('landing.footer.allRightsReserved')}</p>
+            <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} Clarity & Co. {t('landing.footer.allRightsReserved')}</p>
             <div className="flex items-center gap-4 text-sm text-slate-600">
               <Link href="/login" className="hover:text-amber-400 transition-colors">{t('landing.nav.signIn')}</Link>
               <Link href="/register" className="hover:text-amber-400 transition-colors">{t('landing.cta.ctaPrimary')}</Link>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendPasswordResetEmail, isEmailConfigured } from '@/lib/email';
+import { sensitiveLimiter, getClientIp } from '@/lib/rate-limit';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -8,6 +9,15 @@ function generateOTP(): string {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const { success, remaining } = sensitiveLimiter.check(`forgot-pwd:${ip}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '60', 'X-RateLimit-Remaining': '0' } }
+      );
+    }
+
     const { email } = await request.json();
 
     if (!email) {

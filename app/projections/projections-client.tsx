@@ -50,7 +50,8 @@ interface DebtItem {
 }
 
 export function ProjectionsClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const [budgets, setBudgets] = useState<BudgetItem[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ export function ProjectionsClient() {
         }
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to load financial data', variant: 'destructive' });
+      toast({ title: isPt ? 'Erro' : 'Error', description: isPt ? 'Falha ao carregar dados financeiros' : 'Failed to load financial data', variant: 'destructive' });
     }
     setLoading(false);
   }, [toast]);
@@ -126,7 +127,7 @@ export function ProjectionsClient() {
         setSavingsForm({ name: '', targetAmount: '', currentAmount: '', deadline: '' });
         setShowSavingsForm(false);
       }
-    } catch { toast({ title: 'Failed to save goal', variant: 'destructive' }); }
+    } catch { toast({ title: isPt ? 'Falha ao salvar meta' : 'Failed to save goal', variant: 'destructive' }); }
   };
 
   const handleAddDebt = async () => {
@@ -143,7 +144,7 @@ export function ProjectionsClient() {
         setDebtForm({ name: '', totalAmount: '', remainingAmount: '', monthlyPayment: '', interestRate: '' });
         setShowDebtForm(false);
       }
-    } catch { toast({ title: 'Failed to save debt', variant: 'destructive' }); }
+    } catch { toast({ title: isPt ? 'Falha ao salvar dívida' : 'Failed to save debt', variant: 'destructive' }); }
   };
 
   if (loading) {

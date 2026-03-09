@@ -6,7 +6,7 @@
  * Required env vars:
  *   TRUELAYER_CLIENT_ID
  *   TRUELAYER_CLIENT_SECRET
- *   TRUELAYER_REDIRECT_URI  (e.g. https://homeledger.co.uk/api/open-banking/callback)
+ *   TRUELAYER_REDIRECT_URI  (e.g. https://Clarity & Co.co.uk/api/open-banking/callback)
  *   TRUELAYER_SANDBOX       (true/false - use sandbox for testing)
  */
 

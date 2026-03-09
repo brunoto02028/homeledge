@@ -1,29 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f5d442"/>
-      <stop offset="100%" stop-color="#d4a017"/>
-    </linearGradient>
-    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#d4a017"/>
-      <stop offset="100%" stop-color="#22c55e"/>
-    </linearGradient>
-  </defs>
-  <rect width="256" height="256" rx="48" fill="#0f172a"/>
-  <!-- H letter left vertical -->
-  <rect x="42" y="70" width="22" height="150" fill="url(#gold)"/>
-  <!-- H crossbar -->
-  <rect x="42" y="130" width="70" height="22" fill="url(#gold)"/>
-  <!-- H right vertical (forms left wall of house) -->
-  <rect x="90" y="70" width="22" height="150" fill="url(#gold)"/>
-  <!-- L bottom horizontal -->
-  <rect x="130" y="198" width="85" height="22" fill="url(#gold)"/>
-  <!-- L vertical -->
-  <rect x="130" y="100" width="22" height="120" fill="url(#gold)"/>
-  <!-- Roof -->
-  <polygon points="80,78 170,78 215,38" fill="url(#roof)" opacity="0.9"/>
-  <!-- Window -->
-  <rect x="145" y="120" width="24" height="24" rx="3" fill="url(#gold)" opacity="0.4"/>
-  <line x1="157" y1="120" x2="157" y2="144" stroke="#0f172a" stroke-width="3"/>
-  <line x1="145" y1="132" x2="169" y2="132" stroke="#0f172a" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#0F172A"/>
+  <path d="M 64 22 A 34 34 0 1 0 64 78" fill="none" stroke="#F59E0B" stroke-width="11" stroke-linecap="round"/>
+  <path d="M 48 39 L 73 39" stroke="#F59E0B" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 48 61 L 73 61" stroke="#F59E0B" stroke-width="7" stroke-linecap="round"/>
 </svg>

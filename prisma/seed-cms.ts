@@ -5,14 +5,14 @@ const prisma = new PrismaClient();
 const sections = [
   {
     sectionKey: 'meta',
-    title: 'HomeLedger — UK Finance Management',
+    title: 'Clarity & Co — UK Finance Management',
     subtitle: null,
     content: {
-      pageTitle: 'HomeLedger — Simplify Your UK Finances',
+      pageTitle: 'Clarity & Co — Simplify Your UK Finances',
       metaDescription: 'Manage bank statements, invoices, HMRC tax reports, bills, and more. Free UK personal and business finance platform with AI-powered tools.',
-      ogTitle: 'HomeLedger — Your Finances, Simplified',
+      ogTitle: 'Clarity & Co — Your Finances, Simplified',
       ogDescription: 'The all-in-one UK finance platform for individuals and small businesses. Bank statements, invoices, tax reports, secure vault, and AI tools.',
-      keywords: ['UK finance', 'personal finance', 'HMRC tax', 'self assessment', 'invoice management', 'bank statements', 'bill tracker', 'financial projections', 'HomeLedger'],
+      keywords: ['UK finance', 'personal finance', 'HMRC tax', 'self assessment', 'invoice management', 'bank statements', 'bill tracker', 'financial projections', 'Clarity & Co'],
     },
     sortOrder: 0,
   },
@@ -22,7 +22,7 @@ const sections = [
     subtitle: 'Bank statements, invoices, HMRC tax reports, bills, secure vault — all in one beautiful platform. Powered by AI.',
     content: {
       headline: 'Your UK Finances, Finally Simplified',
-      subheadline: 'Stop juggling spreadsheets, receipts, and HMRC deadlines. HomeLedger brings everything together — bank statements, invoices, tax reports, bills, and more — so you can focus on what matters.',
+      subheadline: 'Stop juggling spreadsheets, receipts, and HMRC deadlines. Clarity & Co brings everything together — bank statements, invoices, tax reports, bills, and more — so you can focus on what matters.',
       ctaPrimary: 'Start Free',
       ctaSecondary: 'See How It Works',
     },
@@ -144,12 +144,12 @@ const sections = [
   {
     sectionKey: 'testimonials',
     title: 'Loved by Thousands',
-    subtitle: 'See what our users say about HomeLedger',
+    subtitle: 'See what our users say about Clarity & Co',
     content: {
       items: [
-        { name: 'Sarah Mitchell', role: 'Freelance Designer, London', quote: 'HomeLedger saved me hours every month on Self Assessment. The AI categorisation is scarily accurate.', rating: 5 },
+        { name: 'Sarah Mitchell', role: 'Freelance Designer, London', quote: 'Clarity & Co saved me hours every month on Self Assessment. The AI categorisation is scarily accurate.', rating: 5 },
         { name: 'James Okonkwo', role: 'Landlord, Manchester', quote: 'Finally a tool that handles multiple properties AND personal finances. The property portfolio feature is brilliant.', rating: 5 },
-        { name: 'Priya Sharma', role: 'Small Business Owner, Birmingham', quote: 'I switched from Xero for my personal stuff. HomeLedger is simpler, faster, and the vault feature is a game-changer.', rating: 5 },
+        { name: 'Priya Sharma', role: 'Small Business Owner, Birmingham', quote: 'I switched from Xero for my personal stuff. Clarity & Co is simpler, faster, and the vault feature is a game-changer.', rating: 5 },
       ],
     },
     sortOrder: 5,
@@ -160,12 +160,12 @@ const sections = [
     subtitle: null,
     content: {
       items: [
-        { question: 'Is HomeLedger really free?', answer: 'Yes! The Free plan includes bank statement uploads, invoice creation, bill tracking, and basic tax reports. No credit card required.' },
+        { question: 'Is Clarity & Co really free?', answer: 'Yes! The Free plan includes bank statement uploads, invoice creation, bill tracking, and basic tax reports. No credit card required.' },
         { question: 'Is my data secure?', answer: 'Absolutely. We use AES-256 encryption for vault entries, HTTPS everywhere, and your data is stored on secure UK/EU servers. We never share your data with third parties.' },
-        { question: 'Can I use it for Self Assessment?', answer: 'Yes. HomeLedger maps your income and expenses to HMRC SA103 boxes automatically. You can export PDF reports ready for your tax return.' },
-        { question: 'Does it work with my bank?', answer: 'HomeLedger supports PDF, CSV, OFX, and QIF bank statement formats from any UK bank including HSBC, Barclays, Lloyds, NatWest, Monzo, Starling, and more.' },
+        { question: 'Can I use it for Self Assessment?', answer: 'Yes. Clarity & Co maps your income and expenses to HMRC SA103 boxes automatically. You can export PDF reports ready for your tax return.' },
+        { question: 'Does it work with my bank?', answer: 'Clarity & Co supports PDF, CSV, OFX, and QIF bank statement formats from any UK bank including HSBC, Barclays, Lloyds, NatWest, Monzo, Starling, and more.' },
         { question: 'Can I invite my accountant?', answer: 'Yes! With the Accountant Portal feature, you can generate secure read-only links to share specific data with your accountant — no login required.' },
-        { question: 'What about VAT?', answer: 'HomeLedger supports VAT-registered businesses. Invoices auto-calculate VAT, and reports show your VAT liability. We support Standard, Flat Rate, and Cash Accounting schemes.' },
+        { question: 'What about VAT?', answer: 'Clarity & Co supports VAT-registered businesses. Invoices auto-calculate VAT, and reports show your VAT liability. We support Standard, Flat Rate, and Cash Accounting schemes.' },
       ],
     },
     sortOrder: 6,
@@ -202,7 +202,7 @@ const sections = [
         { title: 'Sponsor Licence (Visa Sponsors)', law: 'UK Points-Based Immigration System', description: 'Businesses holding a Sponsor Licence MUST maintain records of identity checks for all sponsored workers. UKVI audits can revoke your licence if records are missing.', penalty: 'Licence revocation' },
         { title: 'GDPR Data Verification', law: 'UK GDPR & Data Protection Act 2018', description: 'Organisations handling personal data may need to verify identity before granting Subject Access Requests. Proper IDV ensures GDPR compliance and data protection.', penalty: 'Up to £17.5 million' },
       ],
-      complianceBanner: 'Since April 2022, the Home Office requires all Right to Work and Right to Rent checks to use a certified Identity Document Validation Technology (IDVT) provider. Manual checks of physical documents are no longer sufficient for most document types. HomeLedger uses Yoti, a UK-government certified IDVT provider.',
+      complianceBanner: 'Since April 2022, the Home Office requires all Right to Work and Right to Rent checks to use a certified Identity Document Validation Technology (IDVT) provider. Manual checks of physical documents are no longer sufficient for most document types. Clarity & Co uses Yoti, a UK-government certified IDVT provider.',
     },
     sortOrder: 8,
   },
@@ -246,7 +246,7 @@ const sections = [
     subtitle: 'No hidden fees. No subscription. Pay once, verify as needed.',
     content: {
       headline: 'Simple, Transparent Verification Pricing',
-      description: 'No hidden fees. No subscription. Pay once, verify as needed. No HomeLedger account required.',
+      description: 'No hidden fees. No subscription. Pay once, verify as needed. No Clarity & Co account required.',
       plans: [
         { id: 'single-check', name: 'Single Check', price: '£2.99', per: '/check', checks: 1, validityDays: 30, features: ['Document scanning', 'Biometric face match', 'Certified PDF result', 'Email delivery', '30-day link validity', 'Passport, DL, or BRP'] },
         { id: 'business-pack', name: 'Business Pack', price: '£19.99', per: '/pack', checks: 10, validityDays: 60, badge: 'Best Value — Save 33%', features: ['Everything in Single', '10 unique verification links', 'Bulk management dashboard', 'Priority processing', '60-day link validity', 'Ideal for SMEs & agencies'] },
@@ -263,13 +263,13 @@ const sections = [
     subtitle: 'Navigate UK finances, qualifications, and professional services from day one.',
     content: {
       headline: 'New to the UK? We\'ve Got You Covered',
-      subheadline: 'Whether you\'re relocating for work, study, or family — HomeLedger helps you navigate UK finances, accounting qualifications, and professional services from day one.',
+      subheadline: 'Whether you\'re relocating for work, study, or family — Clarity & Co helps you navigate UK finances, accounting qualifications, and professional services from day one.',
       features: [
         { icon: 'Globe', title: 'AI Relocation Guide', description: 'Visa advice, NI numbers, bank accounts, GP registration — fully OISC compliant.' },
         { icon: 'GraduationCap', title: 'Accounting Academy', description: 'AAT & ACCA exam practice with AI tutor and career roadmap from Level 2 to Level 6.' },
         { icon: 'ShoppingBag', title: 'Service Marketplace', description: 'Professional accounting, tax filing, and bookkeeping packages.' },
         { icon: 'HeartPulse', title: 'Financial Health Score', description: 'Track your financial wellbeing with a real-time dashboard.' },
-        { icon: 'Smartphone', title: 'Install as App', description: 'Access HomeLedger offline from your phone or desktop.' },
+        { icon: 'Smartphone', title: 'Install as App', description: 'Access Clarity & Co offline from your phone or desktop.' },
       ],
       ctaPrimary: 'Start Free Today',
     },
@@ -278,10 +278,10 @@ const sections = [
   {
     sectionKey: 'cta',
     title: 'Ready to Take Control?',
-    subtitle: 'Join thousands of UK users and businesses already using HomeLedger.',
+    subtitle: 'Join thousands of UK users and businesses already using Clarity & Co.',
     content: {
       headline: 'Ready to Take Control of Your Finances?',
-      subheadline: 'Join thousands of UK users and businesses already using HomeLedger. Free forever — no credit card required.',
+      subheadline: 'Join thousands of UK users and businesses already using Clarity & Co. Free forever — no credit card required.',
       buttonText: 'Create Your Free Account',
     },
     sortOrder: 13,
@@ -292,11 +292,11 @@ const sections = [
     subtitle: null,
     content: {
       tagline: 'Your finances, simplified.',
-      copyright: `© ${new Date().getFullYear()} HomeLedger. All rights reserved.`,
+      copyright: `© ${new Date().getFullYear()} Clarity & Co. All rights reserved.`,
       links: [
         { label: 'Privacy Policy', href: '/privacy' },
         { label: 'Terms of Service', href: '/terms' },
-        { label: 'Contact', href: 'mailto:hello@homeledger.co.uk' },
+        { label: 'Contact', href: 'mailto:hello@clarityco.co.uk' },
       ],
     },
     sortOrder: 14,

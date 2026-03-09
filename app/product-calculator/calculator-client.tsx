@@ -200,7 +200,8 @@ function calcProduct(product: Product, overheads: Overheads) {
 
 // ─── Main Component ──────────────────────────────────────────────────────
 export function ProductCalculatorClient() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isPt = locale === 'pt-BR';
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([createEmptyProduct()]);
   const [overheads, setOverheads] = useState<Overheads>(defaultOverheads);
@@ -262,7 +263,7 @@ export function ProductCalculatorClient() {
 
   const removeProduct = (id: string) => {
     if (products.length <= 1) {
-      toast({ title: 'You need at least one product', variant: 'destructive' });
+      toast({ title: isPt ? 'Você precisa de pelo menos um produto' : 'You need at least one product', variant: 'destructive' });
       return;
     }
     setProducts(prev => prev.filter(p => p.id !== id));
@@ -295,7 +296,7 @@ export function ProductCalculatorClient() {
             size="sm"
             onClick={() => {
               setProducts(prev => [...prev, createEmptyProduct()]);
-              toast({ title: 'New product added' });
+              toast({ title: isPt ? 'Novo produto adicionado' : 'New product added' });
             }}
           >
             <Plus className="h-4 w-4 mr-2" />

@@ -141,7 +141,7 @@ export async function chFilingDelete(path: string, accessToken: string): Promise
  * @param accessToken - OAuth 2.0 access token
  * @param companyNumber - Companies House company number (e.g. `'12345678'`)
  * @param description - Filing description (e.g. `'Change of registered office address'`)
- * @param reference - Optional reference string (defaults to `HomeLedger-{timestamp}`)
+ * @param reference - Optional reference string (defaults to `clarityco-{timestamp}`)
  * @returns Transaction object with `id` and metadata
  */
 export async function createCHTransaction(
@@ -160,7 +160,7 @@ export async function createCHTransaction(
     body: JSON.stringify({
       company_number: companyNumber,
       description,
-      reference: reference || `HomeLedger-${Date.now()}`,
+      reference: reference || `clarityco-${Date.now()}`,
     }),
     signal: AbortSignal.timeout(30000),
   });
