@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useId } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Sparkles, ClipboardList, Megaphone, FilePen, Zap } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Sparkles, ClipboardList, Megaphone, FilePen, Zap, BrainCircuit } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { ROUTE_PERMISSION_MAP, hasPermission, ADMIN_ONLY_MODULES, type PermissionKey } from "@/lib/permissions"
@@ -57,6 +57,7 @@ const adminItems = [
   { href: "/admin/credentials", labelKey: "nav.credentials", icon: KeyRound },
   { href: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/admin/automation", labelKey: "nav.automation", icon: Zap },
+  { href: "/admin/marketing/ai", labelKey: "nav.marketingAI", icon: BrainCircuit },
   { href: "/pdf-editor", labelKey: "nav.pdfEditor", icon: FilePen },
 ]
 

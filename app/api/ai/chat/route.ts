@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireUserId, getAccessibleUserIds } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { callAI } from '@/lib/ai-client';
+import { routeAI } from '@/lib/ai-router';
 
 const APP_CONTEXT = `
 Clarity & Co is a comprehensive UK household finance management app with 36+ modules. You are the AI assistant embedded in every module. Always respond in the same language the user writes in (Portuguese or English). Use £ for amounts.
@@ -730,7 +731,7 @@ export async function POST(request: Request) {
       })),
     ];
 
-    const result = await callAI(llmMessages, { maxTokens: 2000, temperature: 0.7 });
+    const result = await routeAI('chat', llmMessages, { maxTokens: 4096, temperature: 0.7 });
     const reply = result.content || 'Sorry, I could not generate a response.';
 
     // Save/update conversation persistently
@@ -784,12 +785,12 @@ export async function POST(request: Request) {
           section,
           provider: result.provider,
           messageCount: messages.length,
-          tokensUsed: result.usage?.total_tokens || result.usage?.totalTokenCount || null,
+          tokensUsed: (result as any).usage?.total_tokens || (result as any).usage?.totalTokenCount || null,
         },
       },
     }).catch(() => {});
 
-    return NextResponse.json({ reply, usage: result.usage, conversationId: savedConversationId });
+    return NextResponse.json({ reply, usage: (result as any).usage ?? null, conversationId: savedConversationId });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
