@@ -52,7 +52,8 @@
     "automation": "Automation Hub",
     "marketingAI": "Marketing AI",
     "socialScheduler": "Social Scheduler",
-    "leadIntelligence": "Lead Intelligence"
+    "leadIntelligence": "Lead Intelligence",
+    "cowork": "Claude Co-Work"
   },
   "common": {
     "save": "Save",

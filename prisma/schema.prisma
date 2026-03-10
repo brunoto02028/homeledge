@@ -2616,3 +2616,66 @@ model AutomationLog {
   @@index([runAt])
   @@map("automation_logs")
 }
+
+// ─── Claude Co-Work ──────────────────────────────────────────────────────────
+
+model ClaudeTask {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?  @db.Text
+  taskType      String   @map("task_type") // lead_scoring, marketing_report, post_generation, system_monitor, digest, custom
+  schedule      String   // cron expression: "0 9 * * *" or "manual"
+  isActive      Boolean  @default(true) @map("is_active")
+  requiresApproval Boolean @default(false) @map("requires_approval")
+  context       Json?    // additional context/config for the task
+  notifyEmail   Boolean  @default(true) @map("notify_email")
+  notifySms     Boolean  @default(false) @map("notify_sms")
+  notifyInApp   Boolean  @default(true) @map("notify_in_app")
+  lastRunAt     DateTime? @map("last_run_at")
+  nextRunAt     DateTime? @map("next_run_at")
+  runCount      Int      @default(0) @map("run_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  logs          ClaudeTaskLog[]
+
+  @@index([isActive])
+  @@index([taskType])
+  @@index([nextRunAt])
+  @@map("claude_tasks")
+}
+
+model ClaudeTaskLog {
+  id          String   @id @default(cuid())
+  taskId      String   @map("task_id")
+  status      String   // running, success, failed, pending_approval, approved, rejected
+  output      String?  @db.Text  // Claude's response
+  summary     String?  @db.Text  // short summary of what was done
+  tokensUsed  Int?     @map("tokens_used")
+  model       String?  // which Claude model was used
+  errorMsg    String?  @map("error_msg")
+  approvedAt  DateTime? @map("approved_at")
+  runAt       DateTime @default(now()) @map("run_at")
+  task        ClaudeTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([status])
+  @@index([runAt])
+  @@map("claude_task_logs")
+}
+
+model SystemNotification {
+  id        String   @id @default(cuid())
+  type      String   // alert, info, success, warning
+  channel   String   // email, sms, in_app
+  title     String
+  body      String   @db.Text
+  metadata  Json?
+  isRead    Boolean  @default(false) @map("is_read")
+  sentAt    DateTime? @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@map("system_notifications")
+}

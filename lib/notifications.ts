@@ -1,21 +1,86 @@
-// @deprecated — All email sending has been migrated to lib/email.ts (Nodemailer SMTP).
-// This file used the Abacus AI notification API (noreply@mail.abacusai.app).
-// It is no longer imported anywhere and can be safely deleted.
-// Kept temporarily for reference only.
+/**
+ * Unified Notification Engine for Clarity & Co
+ * Supports: Email (SMTP/Resend), SMS (Twilio), In-App (DB)
+ */
 
-interface NotificationParams {
-  notificationId: string;
-  recipientEmail: string;
-  subject: string;
+import { prisma } from '@/lib/db';
+import { sendEmail } from '@/lib/email';
+
+export interface NotificationPayload {
+  type: 'alert' | 'info' | 'success' | 'warning';
+  title: string;
   body: string;
-  isHtml?: boolean;
+  notifyEmail?: boolean;
+  notifySms?: boolean;
+  notifyInApp?: boolean;
+  metadata?: Record<string, any>;
 }
 
-export async function sendNotificationEmail(params: NotificationParams): Promise<boolean> {
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || process.env.SMTP_FROM?.replace(/.*<(.+)>/, '$1') || 'hello@clarityco.co.uk';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
+
+export async function sendNotification(payload: NotificationPayload): Promise<void> {
+  const { type, title, body, notifyEmail, notifySms, notifyInApp, metadata } = payload;
+
+  await Promise.allSettled([
+    notifyInApp ? saveInAppNotification(type, title, body, metadata) : Promise.resolve(),
+    notifyEmail ? sendEmailNotification(title, body) : Promise.resolve(),
+    notifySms && ADMIN_PHONE ? sendSmsNotification(title, body) : Promise.resolve(),
+  ]);
+}
+
+async function saveInAppNotification(
+  type: string, title: string, body: string, metadata?: Record<string, any>
+): Promise<void> {
+  await (prisma as any).systemNotification.create({
+    data: { type, channel: 'in_app', title, body, metadata: metadata || {}, sentAt: new Date() },
+  });
+}
+
+async function sendEmailNotification(title: string, body: string): Promise<void> {
+  try {
+    const html = `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+        <div style="background:#7c3aed;color:white;padding:16px 24px;border-radius:8px 8px 0 0">
+          <h2 style="margin:0;font-size:18px">Clarity &amp; Co — Co-Work Alert</h2>
+        </div>
+        <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+          <h3 style="margin:0 0 12px;color:#111827">${title}</h3>
+          <p style="color:#374151;white-space:pre-wrap;line-height:1.6">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0">
+          <p style="color:#9ca3af;font-size:12px">Sent by Claude Co-Work · ${new Date().toLocaleString('en-GB')}</p>
+        </div>
+      </div>`;
+    await sendEmail(ADMIN_EMAIL, title, html);
+  } catch (err) {
+    console.error('[Notifications] Email failed:', err);
+  }
+}
+
+async function sendSmsNotification(title: string, body: string): Promise<void> {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM_NUMBER) {
+    console.warn('[Notifications] Twilio not configured — SMS skipped');
+    return;
+  }
+  try {
+    const message = `Clarity Co-Work: ${title}\n${body.slice(0, 140)}`;
+    const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: ADMIN_PHONE, From: process.env.TWILIO_FROM_NUMBER, Body: message }).toString(),
+    });
+  } catch (err) {
+    console.error('[Notifications] SMS failed:', err);
+  }
+}
+
+// Legacy compat — kept for any existing callers
+export async function sendNotificationEmail(params: { notificationId: string; recipientEmail: string; subject: string; body: string; isHtml?: boolean }): Promise<boolean> {
   try {
     const appUrl = process.env.NEXTAUTH_URL || '';
     const appName = 'Clarity & Co';
-    const senderEmail = appUrl ? `noreply@${new URL(appUrl).hostname}` : 'noreply@mail.abacusai.app';
+    const senderEmail = appUrl ? `noreply@${new URL(appUrl).hostname}` : 'noreply@clarityco.co.uk';
 
     const response = await fetch('https://apps.abacus.ai/api/sendNotificationEmail', {
       method: 'POST',

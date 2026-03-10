@@ -8,7 +8,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 // API routes that don't require authentication
 const publicApiPrefixes = ['/api/auth/', '/api/signup'];
 const publicApiExact = ['/api/auth/send-login-code', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/plans', '/api/analytics/collect', '/api/news', '/api/health', '/api/marketing/leads', '/api/pdf-render'];
-const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/', '/api/verify-dashboard', '/api/automation/run'];
+const publicApiDynamic = ['/api/shared-links/', '/api/documents/mobile-upload', '/api/government/callback/', '/api/open-banking/callback', '/api/cron/', '/api/stripe/webhook', '/api/stripe/verify-checkout', '/api/stripe/verify-session', '/api/yoti/webhook', '/api/yoti/verify-link/', '/api/yoti/qrcode', '/api/intelligence/', '/api/verify-dashboard', '/api/automation/run', '/api/cowork/run'];
 // Mobile upload flow — these routes authenticate via mobileToken internally
 const mobileUploadApiRoutes = ['/api/upload/presigned', '/api/upload/local', '/api/documents/scan', '/api/bills/scan', '/api/invoices/process'];
 
