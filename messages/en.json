@@ -50,7 +50,9 @@
     "accountantDashboard": "My Clients",
     "pdfEditor": "PDF Editor",
     "automation": "Automation Hub",
-    "marketingAI": "Marketing AI"
+    "marketingAI": "Marketing AI",
+    "socialScheduler": "Social Scheduler",
+    "leadIntelligence": "Lead Intelligence"
   },
   "common": {
     "save": "Save",

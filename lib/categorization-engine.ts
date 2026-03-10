@@ -3,12 +3,12 @@
  * 
  * Layer 1: Deterministic Rules (Hard Rules) — DB-stored patterns, 100% confidence
  * Layer 2: Smart Rules (Pattern Detection) — recurring patterns, fuzzy matching
- * Layer 3: AI Supervised — Gemini/Abacus with confidence scoring + justification
+ * Layer 3: AI Supervised — Claude Haiku with confidence scoring + justification (Gemini/Abacus fallback)
  * Layer 4: Feedback Loop — user corrections → auto-rule generation
  */
 
 import { prisma } from '@/lib/db';
-import { callAI } from '@/lib/ai-client';
+import { routeAI } from '@/lib/ai-router';
 
 // ============================================================
 // Types
@@ -406,10 +406,7 @@ Return JSON array ONLY (no markdown):
 Use null for "id" if genuinely uncertain.`;
 
   try {
-    const result = await callAI(
-      [{ role: 'user', content: prompt }],
-      { maxTokens: 4000, temperature: 0.1 }
-    );
+    const result = await routeAI('categorise', [{ role: 'user', content: prompt }], { maxTokens: 4000, temperature: 0.1 });
 
     let content = result.content || '[]';
     content = content.trim();

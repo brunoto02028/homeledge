@@ -58,6 +58,8 @@ const adminItems = [
   { href: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/admin/automation", labelKey: "nav.automation", icon: Zap },
   { href: "/admin/marketing/ai", labelKey: "nav.marketingAI", icon: BrainCircuit },
+  { href: "/admin/marketing/scheduler", labelKey: "nav.socialScheduler", icon: Radio },
+  { href: "/admin/marketing/leads", labelKey: "nav.leadIntelligence", icon: Sparkles },
   { href: "/pdf-editor", labelKey: "nav.pdfEditor", icon: FilePen },
 ]
 

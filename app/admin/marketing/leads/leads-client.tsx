@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Users, Flame, Thermometer, Snowflake, Search,
-  Mail, Phone, Building2, Calendar, TrendingUp, Download, Loader2,
+  Mail, Phone, Building2, Download, Loader2, Brain, Zap, RefreshCw, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Lead {
@@ -21,8 +21,14 @@ interface Lead {
   score: number;
   tag: string;
   subscribed: boolean;
+  notes: string | null;
   createdAt: string;
   _count: { actions: number };
+}
+
+interface Analysis {
+  score: number; tag: string; reasoning: string;
+  recommended_action: string; priority: string; best_feature_to_pitch: string;
 }
 
 const TAG_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
@@ -39,6 +45,12 @@ export default function LeadsClient() {
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [total, setTotal] = useState(0);
+  const [scoring, setScoring] = useState<string | null>(null);
+  const [bulkScoring, setBulkScoring] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [selected, setSelected] = useState<Lead | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => { loadLeads(); }, [search, tagFilter]);
 
@@ -59,6 +71,52 @@ export default function LeadsClient() {
   }
 
   const statsByTag = (tag: string) => stats?.find((s: any) => s.tag === tag)?._count?.id || 0;
+
+  async function scoreLead(leadId: string): Promise<any> {
+    setScoring(leadId);
+    try {
+      const res = await fetch('/api/leads/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, score: data.lead.score, tag: data.lead.tag, notes: data.lead.notes } : l));
+        toast({ title: 'Lead scored', description: `Score: ${data.analysis.score} · ${data.analysis.tag}` });
+        return data;
+      }
+    } catch {
+      toast({ title: 'Scoring failed', variant: 'destructive' });
+    } finally {
+      setScoring(null);
+    }
+  }
+
+  async function openAnalysis(lead: Lead) {
+    setSelected(lead);
+    setAnalysis(null);
+    setShowDialog(true);
+    const data = await scoreLead(lead.id);
+    if (data?.analysis) setAnalysis(data.analysis);
+  }
+
+  async function bulkScore() {
+    setBulkScoring(true);
+    setBulkProgress(0);
+    const unscored = leads.filter(l => l.score === 0).slice(0, 20);
+    if (unscored.length === 0) {
+      toast({ title: 'All leads already scored' });
+      setBulkScoring(false);
+      return;
+    }
+    for (let i = 0; i < unscored.length; i++) {
+      await scoreLead(unscored[i].id);
+      setBulkProgress(Math.round(((i + 1) / unscored.length) * 100));
+    }
+    setBulkScoring(false);
+    toast({ title: `Scored ${unscored.length} leads with Claude Haiku` });
+  }
 
   function exportCSV() {
     const rows = [
@@ -87,9 +145,16 @@ export default function LeadsClient() {
             <p className="text-sm text-muted-foreground">{total} leads captured</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCSV}>
-          <Download className="h-4 w-4 mr-2" /> Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={bulkScore} disabled={bulkScoring}>
+            {bulkScoring
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {bulkProgress}%</>
+              : <><Zap className="h-4 w-4 mr-2" /> Score All</>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportCSV}>
+            <Download className="h-4 w-4 mr-2" /> Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -146,6 +211,7 @@ export default function LeadsClient() {
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase hidden lg:table-cell">Source</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase hidden lg:table-cell">Actions</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase hidden md:table-cell">Date</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -153,7 +219,7 @@ export default function LeadsClient() {
                 const tagCfg = TAG_CONFIG[lead.tag] || TAG_CONFIG.cold;
                 const TagIcon = tagCfg.icon;
                 return (
-                  <tr key={lead.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={lead.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openAnalysis(lead)}>
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-medium text-sm">{lead.fullName || '—'}</p>
@@ -200,6 +266,11 @@ export default function LeadsClient() {
                         {new Date(lead.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </span>
                     </td>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openAnalysis(lead)} disabled={scoring === lead.id}>
+                        {scoring === lead.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5 text-violet-500" />}
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}
@@ -207,6 +278,79 @@ export default function LeadsClient() {
           </table>
         </div>
       )}
+
+      {/* AI Analysis Dialog */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-violet-500" /> AI Lead Analysis
+            </DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-4">
+              <div className="flex items-start justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <p className="font-semibold">{selected.fullName || selected.email}</p>
+                  <p className="text-sm text-muted-foreground">{selected.email}</p>
+                  {selected.businessType && <p className="text-xs mt-1 bg-muted px-2 py-0.5 rounded inline-block">{selected.businessType}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-violet-600">{selected.score}</p>
+                  <p className="text-xs text-muted-foreground">/ 100</p>
+                </div>
+              </div>
+
+              <div className="w-full bg-muted rounded-full h-2.5">
+                <div
+                  className={`h-2.5 rounded-full transition-all ${
+                    selected.score >= 70 ? 'bg-red-500' : selected.score >= 40 ? 'bg-orange-500' : 'bg-blue-400'
+                  }`}
+                  style={{ width: `${selected.score}%` }}
+                />
+              </div>
+
+              {!analysis && scoring === selected.id && (
+                <div className="flex items-center gap-2 text-muted-foreground py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+                  <span className="text-sm">Claude Haiku is analysing this lead...</span>
+                </div>
+              )}
+
+              {analysis && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                    <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Reasoning</p>
+                    <p className="text-sm">{analysis.reasoning}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                      <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">Recommended Action</p>
+                      <p className="text-sm">{analysis.recommended_action}</p>
+                    </div>
+                    <div className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-lg">
+                      <p className="text-xs font-medium text-violet-700 dark:text-violet-400 mb-1">Feature to Pitch</p>
+                      <p className="text-sm">{analysis.best_feature_to_pitch}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Priority: <strong className="capitalize">{analysis.priority}</strong> · Source: {selected.source || '—'}</p>
+                </div>
+              )}
+
+              {selected.notes && (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-xs font-medium mb-1">AI Notes History</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">{selected.notes}</p>
+                </div>
+              )}
+
+              <Button onClick={() => openAnalysis(selected)} disabled={scoring === selected.id} className="w-full bg-violet-600 hover:bg-violet-700 text-white">
+                {scoring === selected.id ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Re-scoring...</> : <><RefreshCw className="h-4 w-4 mr-2" /> Re-score with Claude Haiku</>}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
