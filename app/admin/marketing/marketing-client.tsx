@@ -8,6 +8,7 @@ import {
   Mic, MicOff, Send, Sparkles, FileText, Users, Mail, BarChart3,
   Image as ImageIcon, Globe, Plus, Loader2, CheckCircle, ChevronRight,
   Newspaper, Megaphone, TrendingUp, BookOpen, Settings2, Instagram,
+  BrainCircuit, Radio, Bot, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -322,6 +323,12 @@ export default function MarketingClient() {
     { href: '/admin/marketing/popups', icon: <Megaphone className="h-4 w-4" />, label: 'Pop-ups' },
   ];
 
+  const aiToolItems = [
+    { href: '/admin/marketing/ai', icon: <BrainCircuit className="h-4 w-4 text-violet-500" />, label: 'AI Composer' },
+    { href: '/admin/marketing/scheduler', icon: <Radio className="h-4 w-4 text-pink-500" />, label: 'Scheduler' },
+    { href: '/admin/cowork', icon: <Bot className="h-4 w-4 text-blue-500" />, label: 'Co-Work' },
+  ];
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
@@ -350,6 +357,19 @@ export default function MarketingClient() {
               )}
             </Link>
           ))}
+          <div className="pt-3 mt-2 border-t">
+            <p className="text-xs font-semibold text-muted-foreground px-3 mb-1 uppercase tracking-wide">AI Tools</p>
+            {aiToolItems.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </div>
         </nav>
         <div className="p-3 border-t">
           <Link href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
