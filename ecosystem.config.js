@@ -26,13 +26,19 @@ module.exports = {
     script: 'node_modules/.bin/next',
     args: 'start -p 3100',
     cwd: '/opt/homeledger',
-    // Zero-downtime reload settings
-    listen_timeout: 15000,  // Wait up to 15s for new process to be ready
-    kill_timeout: 5000,     // Give old process 5s to finish in-flight requests
-    max_restarts: 10,       // Allow up to 10 restarts before giving up
-    min_uptime: 5000,       // Process must run 5s to count as successful start
-    restart_delay: 2000,    // 2s delay between restart attempts
-    exp_backoff_restart_delay: 100, // Exponential backoff on repeated crashes
+    // Cluster mode: 2 instances — during reload PM2 recycles one at a time
+    // so there is ALWAYS at least 1 instance serving requests (true zero-downtime)
+    instances: 2,
+    exec_mode: 'cluster',
+    // Memory: give Node 1.5GB each to avoid heap pressure (server has 16GB)
+    node_args: '--max-old-space-size=1536',
+    // Reload / restart settings
+    listen_timeout: 30000,  // Wait up to 30s for new process to listen
+    kill_timeout: 8000,     // Give old process 8s to finish in-flight requests
+    max_restarts: 15,
+    min_uptime: 5000,
+    restart_delay: 1000,
+    exp_backoff_restart_delay: 100,
     env: {
       NODE_ENV: 'production',
       ...envVars,
