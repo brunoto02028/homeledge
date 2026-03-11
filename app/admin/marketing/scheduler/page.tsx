@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function SchedulerPage() {
-  redirect('/admin/marketing?tab=scheduler');
+export default async function SchedulerPage() {
+  redirect('/admin/marketing');
 }

@@ -17,23 +17,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Switch } from '@/components/ui/switch';
 
 const BUILTIN_TASK_TYPES: Record<string, { label: string; icon: any; color: string; desc: string }> = {
-  lead_scoring:         { label: 'Lead Scoring',        icon: Users,       color: 'text-blue-600',   desc: 'Score and analyse all leads with Claude Haiku' },
-  marketing_report:     { label: 'Marketing Report',    icon: BarChart2,   color: 'text-violet-600', desc: 'Full marketing performance analysis and recommendations' },
-  post_generation:      { label: 'Post Generation',     icon: Radio,       color: 'text-pink-600',   desc: 'Generate social media posts for approval' },
-  system_monitor:       { label: 'System Monitor',      icon: ShieldAlert, color: 'text-red-600',    desc: 'Health check — detect issues, anomalies, and alerts' },
-  digest:               { label: 'Weekly Digest',       icon: FileText,    color: 'text-amber-600',  desc: 'Summary of everything: leads, posts, tasks, metrics' },
-  campaign_suggestions: { label: 'Campaign Ideas',      icon: Lightbulb,   color: 'text-yellow-600', desc: 'AI-suggested marketing campaigns based on current data' },
-  error_monitor:        { label: 'Error Monitor',       icon: AlertCircle, color: 'text-orange-600', desc: 'Review task failures and system errors' },
-  custom:               { label: 'Custom Task',         icon: Sparkles,    color: 'text-gray-600',   desc: 'Define your own task with a custom prompt' },
+  lead_scoring:         { label: 'Scoring de Leads',      icon: Users,       color: 'text-blue-600',   desc: 'Pontua e analisa todos os leads com Claude Haiku' },
+  marketing_report:     { label: 'Relatório de Marketing', icon: BarChart2,   color: 'text-violet-600', desc: 'Análise completa de performance e recomendações de marketing' },
+  post_generation:      { label: 'Geração de Posts',       icon: Radio,       color: 'text-pink-600',   desc: 'Gera posts para redes sociais aguardando aprovação' },
+  system_monitor:       { label: 'Monitor do Sistema',     icon: ShieldAlert, color: 'text-red-600',    desc: 'Health check — detecta problemas, anomalias e alertas' },
+  digest:               { label: 'Digest Semanal',         icon: FileText,    color: 'text-amber-600',  desc: 'Resumo de tudo: leads, posts, tasks e métricas' },
+  campaign_suggestions: { label: 'Ideias de Campanha',     icon: Lightbulb,   color: 'text-yellow-600', desc: 'Campanhas de marketing sugeridas pela IA com base nos dados' },
+  error_monitor:        { label: 'Monitor de Erros',       icon: AlertCircle, color: 'text-orange-600', desc: 'Revê falhas de tasks e erros do sistema' },
+  custom:               { label: 'Task Personalizada',     icon: Sparkles,    color: 'text-gray-600',   desc: 'Define a tua própria task com um prompt personalizado' },
 };
 
 const SCHEDULE_OPTIONS = [
-  { value: 'manual', label: 'Manual only' },
-  { value: '0 9 * * *', label: 'Daily at 9am' },
-  { value: '0 8 * * 1', label: 'Every Monday 8am' },
-  { value: '0 9 * * 1,4', label: 'Mon & Thu 9am' },
-  { value: '0 7 1 * *', label: 'Monthly (1st, 7am)' },
-  { value: '*/30 * * * *', label: 'Every 30 minutes' },
+  { value: 'manual', label: 'Apenas manual' },
+  { value: '0 9 * * *', label: 'Diariamente às 9h' },
+  { value: '0 8 * * 1', label: 'Todas as segundas às 8h' },
+  { value: '0 9 * * 1,4', label: 'Seg & Qui às 9h' },
+  { value: '0 7 1 * *', label: 'Mensal (dia 1, 7h)' },
+  { value: '*/30 * * * *', label: 'A cada 30 minutos' },
 ];
 
 // Runtime task type registry (starts with builtins, can grow with custom types)
@@ -47,12 +47,12 @@ function TASK_TYPE_CONFIG_FN(key: string) {
 }
 
 const STATUS_STYLE: Record<string, { color: string; icon: any; label: string }> = {
-  running:          { color: 'text-blue-600 bg-blue-50',    icon: Loader2,     label: 'Running' },
-  success:          { color: 'text-green-700 bg-green-50',  icon: CheckCircle, label: 'Success' },
-  failed:           { color: 'text-red-700 bg-red-50',      icon: XCircle,     label: 'Failed' },
-  pending_approval: { color: 'text-amber-700 bg-amber-50',  icon: Clock,       label: 'Needs Approval' },
-  approved:         { color: 'text-green-700 bg-green-50',  icon: Check,       label: 'Approved' },
-  rejected:         { color: 'text-gray-600 bg-gray-50',    icon: X,           label: 'Rejected' },
+  running:          { color: 'text-blue-600 bg-blue-50',    icon: Loader2,     label: 'A executar' },
+  success:          { color: 'text-green-700 bg-green-50',  icon: CheckCircle, label: 'Concluído' },
+  failed:           { color: 'text-red-700 bg-red-50',      icon: XCircle,     label: 'Falhou' },
+  pending_approval: { color: 'text-amber-700 bg-amber-50',  icon: Clock,       label: 'Aguarda Aprovação' },
+  approved:         { color: 'text-green-700 bg-green-50',  icon: Check,       label: 'Aprovado' },
+  rejected:         { color: 'text-gray-600 bg-gray-50',    icon: X,           label: 'Rejeitado' },
 };
 
 interface ClaudeTask {
@@ -103,7 +103,7 @@ export default function CoWorkClient() {
 
   // ── Claude confirmation chat ────────────────────────────────────────────────
   const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([
-    { role: 'claude', content: '👋 Olá! Descreve por voz ou texto o que queres que eu faça. Vou interpretar, confirmar o plano e criar a task automaticamente.' },
+    { role: 'claude', content: '👋 Olá! Descreve por voz ou texto o que queres que eu faça. Vou interpretar a tua solicitação, confirmar o plano e criar a task automaticamente.' },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
@@ -195,7 +195,7 @@ export default function CoWorkClient() {
   }
 
   async function deleteTask(taskId: string) {
-    if (!confirm('Delete this task?')) return;
+    if (!confirm('Tens a certeza que queres apagar esta task?')) return;
     await fetch(`/api/cowork/tasks/${taskId}`, { method: 'DELETE' });
     fetchTasks();
   }
@@ -366,19 +366,19 @@ Always reply in the same language the user used.`,
           </div>
           <div>
             <h1 className="text-2xl font-bold">Claude Co-Work</h1>
-            <p className="text-sm text-muted-foreground">Autonomous AI — reads your system, executes tasks, notifies you</p>
+            <p className="text-sm text-muted-foreground">IA Autónoma — lê o teu sistema, executa tasks e notifica-te</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => { setShowChatPanel(p => !p); setShowCreateDialog(false); }} variant="outline" size="sm" className={showChatPanel ? 'border-violet-500 text-violet-600' : ''}>
-            <Bot className="h-4 w-4 mr-2" /> Chat with Claude
+            <Bot className="h-4 w-4 mr-2" /> Falar com Claude
           </Button>
           <Button onClick={getSuggestions} variant="outline" size="sm" disabled={loadingSuggestions}>
             {loadingSuggestions ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-            Suggest Tasks
+            Sugerir Tasks
           </Button>
           <Button onClick={() => { setShowCreateDialog(true); setShowChatPanel(false); }} className="bg-violet-600 hover:bg-violet-700 text-white" size="sm">
-            <Plus className="h-4 w-4 mr-2" /> New Task
+            <Plus className="h-4 w-4 mr-2" /> Nova Task
           </Button>
         </div>
       </div>
@@ -389,7 +389,7 @@ Always reply in the same language the user used.`,
           <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-white">
               <Bot className="h-5 w-5" />
-              <span className="font-semibold text-sm">Claude Co-Work Assistant</span>
+              <span className="font-semibold text-sm">Assistente Claude Co-Work</span>
               <span className="text-xs opacity-70">· Descreve por voz ou texto o que queres que eu faça</span>
             </div>
             <Button size="sm" variant="ghost" className="h-7 text-white hover:bg-white/20" onClick={() => setShowChatPanel(false)}>
@@ -432,7 +432,7 @@ Always reply in the same language the user used.`,
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
-                  placeholder={listening ? '🎙️ Ouvindo...' : 'Ex: quero monitorar erros de código todo dia às 9h...'}
+                  placeholder={listening ? '🎙️ A ouvir...' : 'Ex: quero monitorar erros do sistema todos os dias às 9h...'}
                   className="flex-1 text-sm"
                   disabled={chatLoading}
                 />
@@ -445,10 +445,10 @@ Always reply in the same language the user used.`,
             {/* Form preview — pre-filled by Claude */}
             <div className="p-4 bg-card space-y-3 overflow-y-auto max-h-72">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" /> Plano da Task (editável)
+                <CheckCircle className="h-3.5 w-3.5 text-green-500" /> Plano da Task (podes editar)
               </p>
               <div className="space-y-2">
-                <Input placeholder="Nome da task" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="text-sm" />
+                <Input placeholder="Nome da task *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="text-sm" />
                 <div className="flex gap-2">
                   <Select value={form.taskType} onValueChange={v => setForm(f => ({ ...f, taskType: v }))}>
                     <SelectTrigger className="text-sm flex-1"><SelectValue /></SelectTrigger>
@@ -464,19 +464,19 @@ Always reply in the same language the user used.`,
                 </div>
                 {showAddType && (
                   <div className="border rounded-lg p-2 space-y-1.5 bg-muted/30">
-                    <p className="text-xs font-medium text-muted-foreground">Novo tipo personalizado</p>
-                    <Input placeholder="Nome do tipo (ex: HMRC Monitor)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} className="text-xs h-7" />
-                    <Input placeholder="Descrição breve" value={newTypeDesc} onChange={e => setNewTypeDesc(e.target.value)} className="text-xs h-7" />
-                    <Button size="sm" onClick={addCustomType} disabled={!newTypeName.trim()} className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white w-full">Criar tipo</Button>
+                    <p className="text-xs font-medium text-muted-foreground">Novo tipo de task</p>
+                    <Input placeholder="Nome do tipo (ex: Monitor HMRC)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} className="text-xs h-7" />
+                    <Input placeholder="Descrição breve do tipo" value={newTypeDesc} onChange={e => setNewTypeDesc(e.target.value)} className="text-xs h-7" />
+                    <Button size="sm" onClick={addCustomType} disabled={!newTypeName.trim()} className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white w-full">Criar Tipo</Button>
                   </div>
                 )}
                 <Select value={form.schedule} onValueChange={v => setForm(f => ({ ...f, schedule: v }))}>
                   <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>{SCHEDULE_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
                 </Select>
-                <Textarea placeholder="Descrição / contexto adicional" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="text-sm" />
+                <Textarea placeholder="Descrição / contexto da task" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="text-sm" />
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Requer aprovação</span>
+                  <span className="text-muted-foreground">Requer Aprovação</span>
                   <Switch checked={form.requiresApproval} onCheckedChange={v => setForm(f => ({ ...f, requiresApproval: v }))} />
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -488,7 +488,7 @@ Always reply in the same language the user used.`,
                   <Switch checked={form.notifyInApp} onCheckedChange={v => setForm(f => ({ ...f, notifyInApp: v }))} />
                 </div>
               </div>
-              <Button onClick={async () => { await createTask(); setShowChatPanel(false); setChatMsgs([{ role: 'claude', content: '✅ Task criada! Podes pedir-me outra, sugerir mais tasks, ou fechar este painel.' }]); }} disabled={!form.name} className="w-full bg-violet-600 hover:bg-violet-700 text-white">
+              <Button onClick={async () => { await createTask(); setShowChatPanel(false); setChatMsgs([{ role: 'claude', content: '✅ Task criada com sucesso! Podes pedir-me outra tarefa, pedir sugestões, ou fechar este painel.' }]); }} disabled={!form.name} className="w-full bg-violet-600 hover:bg-violet-700 text-white">
                 <CheckCircle className="h-4 w-4 mr-2" /> Criar Task
               </Button>
             </div>
@@ -501,9 +501,9 @@ Always reply in the same language the user used.`,
         <div className="border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-violet-700 dark:text-violet-400 flex items-center gap-2">
-              <Sparkles className="h-4 w-4" /> Claude suggests {suggestions.length} tasks based on your system
+              <Sparkles className="h-4 w-4" /> Claude sugere {suggestions.length} tasks com base no teu sistema
             </p>
-            <Button size="sm" variant="ghost" onClick={() => setSuggestions([])} className="h-7 text-xs">Dismiss all</Button>
+            <Button size="sm" variant="ghost" onClick={() => setSuggestions([])} className="h-7 text-xs">Dispensar todas</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {suggestions.map((s, i) => {
@@ -516,11 +516,11 @@ Always reply in the same language the user used.`,
                     <div>
                       <p className="text-sm font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{s.reason}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">📅 {s.scheduleLabel} · {s.requiresApproval ? 'Needs approval' : 'Auto-execute'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">📅 {s.scheduleLabel} · {s.requiresApproval ? 'Requer aprovação' : 'Execução automática'}</p>
                     </div>
                   </div>
                   <Button size="sm" onClick={() => createFromSuggestion(s)} className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white h-7 text-xs">
-                    Add
+                    Adicionar
                   </Button>
                 </div>
               );
@@ -533,7 +533,7 @@ Always reply in the same language the user used.`,
       {pendingApprovals.length > 0 && (
         <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4">
           <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2 mb-3">
-            <Clock className="h-4 w-4" /> {pendingApprovals.length} task{pendingApprovals.length > 1 ? 's' : ''} waiting for your approval
+            <Clock className="h-4 w-4" /> {pendingApprovals.length} task{pendingApprovals.length > 1 ? 's' : ''} a aguardar a tua aprovação
           </p>
           <div className="space-y-2">
             {pendingApprovals.map(log => (
@@ -544,13 +544,13 @@ Always reply in the same language the user used.`,
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectedLog(log); setShowLogDialog(true); }}>
-                    <Eye className="h-3.5 w-3.5 mr-1" /> View
+                    <Eye className="h-3.5 w-3.5 mr-1" /> Ver
                   </Button>
                   <Button size="sm" variant="outline" className="h-7 text-xs text-red-600" onClick={() => approveLog(log.id, 'reject')} disabled={approving === log.id}>
                     <X className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white" onClick={() => approveLog(log.id, 'approve')} disabled={approving === log.id}>
-                    {approving === log.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />} Approve
+                    {approving === log.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />} Aprovar
                   </Button>
                 </div>
               </div>
@@ -563,8 +563,8 @@ Always reply in the same language the user used.`,
       <div className="flex gap-1 border-b">
         {([
           { key: 'tasks', label: 'Tasks', icon: Zap },
-          { key: 'logs', label: 'Execution Logs', icon: FileText },
-          { key: 'notifications', label: `Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: Bell },
+          { key: 'logs', label: 'Registo de Execuções', icon: FileText },
+          { key: 'notifications', label: `Notificações${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: Bell },
         ] as { key: Tab; label: string; icon: any }[]).map(t => {
           const Icon = t.icon;
           return (
@@ -596,13 +596,13 @@ Always reply in the same language the user used.`,
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
                     <Brain className="h-12 w-12 text-violet-300" />
-                    <p className="text-sm">No tasks yet — ask Claude to suggest tasks or create one manually</p>
+                    <p className="text-sm">Ainda sem tasks — pede ao Claude para sugerir ou cria uma manualmente</p>
                     <div className="flex gap-2">
                       <Button onClick={getSuggestions} variant="outline" size="sm" disabled={loadingSuggestions}>
-                        <Sparkles className="h-4 w-4 mr-2" /> Get Suggestions
+                        <Sparkles className="h-4 w-4 mr-2" /> Pedir Sugestões
                       </Button>
                       <Button onClick={() => setShowCreateDialog(true)} size="sm" className="bg-violet-600 hover:bg-violet-700 text-white">
-                        <Plus className="h-4 w-4 mr-2" /> Create Task
+                        <Plus className="h-4 w-4 mr-2" /> Criar Task
                       </Button>
                     </div>
                   </CardContent>
@@ -624,14 +624,14 @@ Always reply in the same language the user used.`,
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold">{task.name}</p>
-                              {!task.isActive && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Paused</span>}
-                              {task.requiresApproval && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Needs approval</span>}
+                              {!task.isActive && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Pausada</span>}
+                              {task.requiresApproval && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Requer aprovação</span>}
                             </div>
                             {task.description && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>}
                             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                               <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {SCHEDULE_OPTIONS.find(s => s.value === task.schedule)?.label || task.schedule}</span>
-                              <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {task.runCount} runs</span>
-                              {task.lastRunAt && <span>Last: {new Date(task.lastRunAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
+                              <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {task.runCount} execuções</span>
+                              {task.lastRunAt && <span>Última: {new Date(task.lastRunAt).toLocaleString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
                               <span className="flex items-center gap-1">
                                 {task.notifyEmail && <Mail className="h-3 w-3 text-blue-500" />}
                                 {task.notifySms && <MessageSquare className="h-3 w-3 text-green-500" />}
@@ -673,7 +673,7 @@ Always reply in the same language the user used.`,
                       {/* Expanded: last output */}
                       {isExpanded && lastLog?.output && (
                         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-xs font-medium mb-2 text-muted-foreground">Last Output ({lastLog.model || 'Claude'})</p>
+                          <p className="text-xs font-medium mb-2 text-muted-foreground">Último Resultado ({lastLog.model || 'Claude'})</p>
                           <pre className="text-xs text-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">{lastLog.output}</pre>
                         </div>
                       )}
@@ -693,16 +693,16 @@ Always reply in the same language the user used.`,
                     <thead>
                       <tr className="border-b bg-muted/30">
                         <th className="text-left p-3 font-medium">Task</th>
-                        <th className="text-left p-3 font-medium">Status</th>
-                        <th className="text-left p-3 font-medium">Summary</th>
-                        <th className="text-left p-3 font-medium">Model</th>
-                        <th className="text-left p-3 font-medium">When</th>
+                        <th className="text-left p-3 font-medium">Estado</th>
+                        <th className="text-left p-3 font-medium">Resumo</th>
+                        <th className="text-left p-3 font-medium">Modelo</th>
+                        <th className="text-left p-3 font-medium">Quando</th>
                         <th className="p-3"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {logs.length === 0 ? (
-                        <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">No logs yet — run a task to see results here</td></tr>
+                        <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">Ainda sem registos — executa uma task para ver resultados aqui</td></tr>
                       ) : logs.map(log => {
                         const s = STATUS_STYLE[log.status] || STATUS_STYLE.failed;
                         const SIcon = s.icon;
@@ -723,7 +723,7 @@ Always reply in the same language the user used.`,
                             </td>
                             <td className="p-3 text-xs text-muted-foreground">{log.model || '—'}</td>
                             <td className="p-3 text-xs text-muted-foreground">
-                              {new Date(log.runAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(log.runAt).toLocaleString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </td>
                             <td className="p-3" onClick={e => e.stopPropagation()}>
                               {log.status === 'pending_approval' && (
@@ -753,7 +753,7 @@ Always reply in the same language the user used.`,
               {unreadCount > 0 && (
                 <div className="flex justify-end">
                   <Button size="sm" variant="outline" onClick={markAllRead} className="text-xs">
-                    <Check className="h-3.5 w-3.5 mr-1" /> Mark all as read
+                    <Check className="h-3.5 w-3.5 mr-1" /> Marcar todas como lidas
                   </Button>
                 </div>
               )}
@@ -761,7 +761,7 @@ Always reply in the same language the user used.`,
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-20 gap-2 text-muted-foreground">
                     <Bell className="h-10 w-10 text-violet-300" />
-                    <p className="text-sm">No notifications yet</p>
+                    <p className="text-sm">Ainda sem notificações</p>
                   </CardContent>
                 </Card>
               ) : notifications.map(n => {
@@ -806,14 +806,14 @@ Always reply in the same language the user used.`,
       {/* Create Task Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Create Claude Co-Work Task</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Criar Task Claude Co-Work</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Task Name *</label>
-              <Input placeholder="e.g. Daily Lead Intelligence" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome da Task *</label>
+              <Input placeholder="ex: Inteligência Diária de Leads" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Task Type *</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo de Task *</label>
               <Select value={form.taskType} onValueChange={v => setForm(f => ({ ...f, taskType: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -834,16 +834,16 @@ Always reply in the same language the user used.`,
             </div>
             {form.taskType === 'custom' && (
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Custom Prompt *</label>
-                <Textarea placeholder="Describe what Claude should do..." value={form.customPrompt} onChange={e => setForm(f => ({ ...f, customPrompt: e.target.value }))} rows={4} />
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prompt Personalizado *</label>
+                <Textarea placeholder="Descreve o que o Claude deve fazer..." value={form.customPrompt} onChange={e => setForm(f => ({ ...f, customPrompt: e.target.value }))} rows={4} />
               </div>
             )}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</label>
-              <Textarea placeholder="Optional description..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Descrição</label>
+              <Textarea placeholder="Descrição opcional..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Schedule *</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Agendamento *</label>
               <Select value={form.schedule} onValueChange={v => setForm(f => ({ ...f, schedule: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -852,35 +852,35 @@ Always reply in the same language the user used.`,
               </Select>
             </div>
             <div className="space-y-3 pt-2 border-t">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Settings</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Configurações</p>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Requires Approval</p>
-                  <p className="text-xs text-muted-foreground">Claude waits for your OK before publishing content</p>
+                  <p className="text-sm font-medium">Requer Aprovação</p>
+                  <p className="text-xs text-muted-foreground">Claude aguarda o teu OK antes de publicar conteúdo</p>
                 </div>
                 <Switch checked={form.requiresApproval} onCheckedChange={v => setForm(f => ({ ...f, requiresApproval: v }))} />
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium flex items-center gap-2"><Mail className="h-4 w-4 text-blue-500" /> Email notification</p>
+                <p className="text-sm font-medium flex items-center gap-2"><Mail className="h-4 w-4 text-blue-500" /> Notificação por Email</p>
                 <Switch checked={form.notifyEmail} onCheckedChange={v => setForm(f => ({ ...f, notifyEmail: v }))} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4 text-green-500" /> SMS notification</p>
-                  <p className="text-xs text-muted-foreground">Requires Twilio — good for critical alerts only</p>
+                  <p className="text-sm font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4 text-green-500" /> Notificação SMS</p>
+                  <p className="text-xs text-muted-foreground">Requer Twilio — indicado apenas para alertas críticos</p>
                 </div>
                 <Switch checked={form.notifySms} onCheckedChange={v => setForm(f => ({ ...f, notifySms: v }))} />
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium flex items-center gap-2"><Bell className="h-4 w-4 text-violet-500" /> In-app notification</p>
+                <p className="text-sm font-medium flex items-center gap-2"><Bell className="h-4 w-4 text-violet-500" /> Notificação no App</p>
                 <Switch checked={form.notifyInApp} onCheckedChange={v => setForm(f => ({ ...f, notifyInApp: v }))} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
             <Button onClick={createTask} disabled={!form.name || !form.taskType} className="bg-violet-600 hover:bg-violet-700 text-white">
-              Create Task
+              Criar Task
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -892,41 +892,41 @@ Always reply in the same language the user used.`,
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-violet-500" />
-              {selectedLog?.task?.name} — Execution Result
+              {selectedLog?.task?.name} — Resultado da Execução
             </DialogTitle>
           </DialogHeader>
           {selectedLog && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
                 {(() => { const s = STATUS_STYLE[selectedLog.status]; const SIcon = s?.icon || CheckCircle; return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${s?.color}`}><SIcon className="h-3 w-3" />{s?.label}</span>; })()}
-                <span>Model: {selectedLog.model || '—'}</span>
+                <span>Modelo: {selectedLog.model || '—'}</span>
                 <span>{new Date(selectedLog.runAt).toLocaleString('en-GB')}</span>
               </div>
               {selectedLog.summary && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                  <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Summary</p>
+                  <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Resumo</p>
                   <p className="text-sm">{selectedLog.summary}</p>
                 </div>
               )}
               {selectedLog.output && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground uppercase">Full Output</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Saída Completa</p>
                   <pre className="text-xs whitespace-pre-wrap bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">{selectedLog.output}</pre>
                 </div>
               )}
               {selectedLog.errorMsg && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
-                  <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Error</p>
+                  <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Erro</p>
                   <p className="text-sm text-red-600">{selectedLog.errorMsg}</p>
                 </div>
               )}
               {selectedLog.status === 'pending_approval' && (
                 <div className="flex gap-3 pt-2">
                   <Button className="flex-1" variant="outline" onClick={() => approveLog(selectedLog.id, 'reject')} disabled={approving === selectedLog.id}>
-                    <X className="h-4 w-4 mr-2" /> Reject
+                    <X className="h-4 w-4 mr-2" /> Rejeitar
                   </Button>
                   <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => approveLog(selectedLog.id, 'approve')} disabled={approving === selectedLog.id}>
-                    {approving === selectedLog.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />} Approve & Publish
+                    {approving === selectedLog.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />} Aprovar e Publicar
                   </Button>
                 </div>
               )}
