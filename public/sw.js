@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clarityco-v10';
+const CACHE_NAME = 'clarityco-v11';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Mic, MicOff, Send, Sparkles, FileText, Users, Mail, BarChart3,
@@ -49,7 +48,6 @@ const QUICK_COMMANDS = [
 
 export default function MarketingClient() {
   const { data: session } = useSession();
-  const router = useRouter();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<ChatMessage[]>([{
@@ -154,10 +152,10 @@ export default function MarketingClient() {
     } catch { /* sessionStorage unavailable */ }
     setMessages(prev => prev.slice(0, -1).concat({
       role: 'assistant',
-      content: 'âœ… **Artigo gerado com sucesso!**\n\n**Título (EN):** ' + data.titleEn + '\n**Título (PT):** ' + data.titlePt + '\n\n**Keywords:** ' + data.keywords?.join(', ') + '\n\nO que deseja fazer?',
+      content: '✅ **Artigo gerado com sucesso!**\n\n**Título (EN):** ' + data.titleEn + '\n**Título (PT):** ' + data.titlePt + '\n\n**Keywords:** ' + data.keywords?.join(', ') + '\n\nO que deseja fazer?',
       actions: [
         { label: '📝 Revisar e editar', href: '/admin/marketing/blog/new?from=chat' },
-        { label: '�� Publicar agora', onClick: () => saveBlogPost(data, 'published') },
+        { label: '🚀 Publicar agora', onClick: () => saveBlogPost(data, 'published') },
         { label: '💾 Salvar rascunho', onClick: () => saveBlogPost(data, 'draft') },
       ],
     }));
@@ -172,7 +170,7 @@ export default function MarketingClient() {
     if (!res.ok) throw new Error(data.error);
     setMessages(prev => prev.slice(0, -1).concat({
       role: 'assistant',
-      content: 'âœ… **Conteúdo Instagram gerado!**\n\n**Caption (EN):**\n' + data.captionEn + '\n\n**Caption (PT):**\n' + data.captionPt,
+      content: '✅ **Conteúdo Instagram gerado!**\n\n**Caption (EN):**\n' + data.captionEn + '\n\n**Caption (PT):**\n' + data.captionPt,
       actions: [
         { label: '🎨 Criar arte com IA', href: '/admin/marketing/creatives/new' },
         { label: '📱 Ver Creative Studio', href: '/admin/marketing/creatives' },
@@ -189,7 +187,7 @@ export default function MarketingClient() {
     if (!res.ok) throw new Error(data.error);
     setMessages(prev => prev.slice(0, -1).concat({
       role: 'assistant',
-      content: 'âœ… **Campanha de email gerada!**\n\n**Assunto (EN):** ' + data.subjectEn + '\n**Assunto (PT):** ' + data.subjectPt,
+      content: '✅ **Campanha de email gerada!**\n\n**Assunto (EN):** ' + data.subjectEn + '\n**Assunto (PT):** ' + data.subjectPt,
       actions: [{ label: '📧 Editar e enviar', href: '/admin/marketing/campaigns/new' }],
     }));
   }
