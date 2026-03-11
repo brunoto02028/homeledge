@@ -352,8 +352,8 @@ export default function MarketingClient() {
                     <div className='text-sm whitespace-pre-wrap leading-relaxed'
                       dangerouslySetInnerHTML={{
                         __html: msg.content
-                          .replace(/\*\*(.+?)\*\*/g, '<strong></strong>')
-                          .replace(/\[(.+?)\]\((.+?)\)/g, '<a href= class=underline text-primary hover:opacity-80></a>')
+                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="underline text-primary hover:opacity-80">$1</a>')
                           .replace(/\n/g, '<br>'),
                       }}
                     />
