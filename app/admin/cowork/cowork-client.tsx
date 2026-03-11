@@ -399,7 +399,7 @@ Always reply in the same language the user used.`,
 
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x">
             {/* Chat messages */}
-            <div className="flex flex-col h-72">
+            <div className="flex flex-col" style={{minHeight: '320px', maxHeight: '420px'}}>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
                 {chatMsgs.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -443,7 +443,7 @@ Always reply in the same language the user used.`,
             </div>
 
             {/* Form preview — pre-filled by Claude */}
-            <div className="p-4 bg-card space-y-3 overflow-y-auto max-h-72">
+            <div className="p-4 bg-card space-y-3 overflow-y-auto" style={{maxHeight: '420px'}}>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                 <CheckCircle className="h-3.5 w-3.5 text-green-500" /> Plano da Task (podes editar)
               </p>
