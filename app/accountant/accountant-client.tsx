@@ -14,7 +14,8 @@ import { toast } from 'sonner';
 import {
   Users, UserPlus, Mail, Building2, User, FileText, Receipt, CreditCard,
   Eye, Trash2, Loader2, RefreshCw, Shield, Clock, CheckCircle2, XCircle,
-  TrendingUp, TrendingDown, BarChart3, ArrowLeft, Briefcase,
+  TrendingUp, TrendingDown, BarChart3, ArrowLeft, Briefcase, UserCheck,
+  Phone, Hash, MapPin, Banknote, CalendarDays, Edit2, PoundSterling,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from '@/lib/i18n';
@@ -40,7 +41,33 @@ interface ClientRelationship {
     createdAt: string;
   } | null;
   entityCount: number;
+  // Walk-in / offline fields
+  isOffline: boolean;
+  offlineFullName: string | null;
+  offlinePhone: string | null;
+  offlineNino: string | null;
+  offlineUtr: string | null;
+  offlineDob: string | null;
+  offlineAddress: string | null;
+  offlineService: string | null;
+  offlineTaxYear: string | null;
+  offlineFee: number | null;
+  offlineFeePaid: boolean;
 }
+
+const OFFLINE_SERVICES = [
+  'Self Assessment (HMRC)',
+  'Company Formation',
+  'Contabilidade & Impostos',
+  'Payroll',
+  'VAT Return',
+  'Corporation Tax',
+  'Citizenship / Immigration',
+  'Consultoria Pontual',
+  'Outro',
+];
+
+const TAX_YEARS = ['2024/25', '2023/24', '2022/23', '2021/22', '2020/21'];
 
 interface ClientData {
   clientId: string;
@@ -67,8 +94,15 @@ export function AccountantDashboard() {
   const [clients, setClients] = useState<ClientRelationship[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
+  const [showWalkIn, setShowWalkIn] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', label: '', notes: '' });
+  const [walkInForm, setWalkInForm] = useState({
+    offlineFullName: '', offlinePhone: '', offlineNino: '', offlineUtr: '',
+    offlineDob: '', offlineAddress: '', offlineService: '', offlineTaxYear: '',
+    offlineFee: '', notes: '',
+  });
   const [inviting, setInviting] = useState(false);
+  const [savingWalkIn, setSavingWalkIn] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientRelationship | null>(null);
   const [clientData, setClientData] = useState<ClientData | null>(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -85,6 +119,40 @@ export function AccountantDashboard() {
   }, []);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
+
+  const handleWalkIn = async () => {
+    if (!walkInForm.offlineFullName) return;
+    setSavingWalkIn(true);
+    try {
+      const res = await fetch('/api/accountant/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOffline: true, ...walkInForm }),
+      });
+      if (res.ok) {
+        toast.success('Cliente pontual adicionado');
+        setShowWalkIn(false);
+        setWalkInForm({ offlineFullName: '', offlinePhone: '', offlineNino: '', offlineUtr: '', offlineDob: '', offlineAddress: '', offlineService: '', offlineTaxYear: '', offlineFee: '', notes: '' });
+        fetchClients();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Erro ao adicionar cliente');
+      }
+    } catch { toast.error('Erro ao guardar'); }
+    setSavingWalkIn(false);
+  };
+
+  const handleToggleFeePaid = async (client: ClientRelationship) => {
+    try {
+      await fetch(`/api/accountant/clients/${client.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offlineFeePaid: !client.offlineFeePaid }),
+      });
+      toast.success(client.offlineFeePaid ? 'Marcado como não pago' : 'Marcado como pago');
+      fetchClients();
+    } catch { toast.error('Erro ao atualizar'); }
+  };
 
   const handleInvite = async () => {
     if (!inviteForm.email) return;
@@ -150,6 +218,7 @@ export function AccountantDashboard() {
       case 'active': return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"><CheckCircle2 className="h-3 w-3 mr-1" /> Active</Badge>;
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
       case 'revoked': return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"><XCircle className="h-3 w-3 mr-1" /> Revoked</Badge>;
+      case 'offline': return <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"><UserCheck className="h-3 w-3 mr-1" /> Pontual</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -417,6 +486,7 @@ export function AccountantDashboard() {
   const activeClients = clients.filter(c => c.status === 'active');
   const pendingClients = clients.filter(c => c.status === 'pending');
   const revokedClients = clients.filter(c => c.status === 'revoked');
+  const offlineClients = clients.filter(c => c.status === 'offline');
 
   return (
     <div className="space-y-6">
@@ -426,10 +496,78 @@ export function AccountantDashboard() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><Briefcase className="h-6 w-6" /> Accountant Dashboard</h1>
           <p className="text-sm text-muted-foreground">Manage your clients and view their financial data</p>
         </div>
-        <Dialog open={showInvite} onOpenChange={setShowInvite}>
-          <DialogTrigger asChild>
-            <Button><UserPlus className="h-4 w-4 mr-2" /> Add Client</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          {/* Walk-in client dialog */}
+          <Dialog open={showWalkIn} onOpenChange={setShowWalkIn}>
+            <DialogTrigger asChild>
+              <Button variant="outline"><UserCheck className="h-4 w-4 mr-2" /> Cliente Pontual</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5 text-purple-500" /> Novo Cliente Pontual</DialogTitle>
+                <p className="text-sm text-muted-foreground">Cliente sem conta no sistema — preenche os dados recolhidos por telefone ou presencialmente.</p>
+              </DialogHeader>
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label>Nome Completo *</Label>
+                    <Input placeholder="João Silva" value={walkInForm.offlineFullName} onChange={e => setWalkInForm(p => ({ ...p, offlineFullName: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label><Phone className="h-3 w-3 inline mr-1" />Telefone</Label>
+                    <Input placeholder="+44 7000 000000" value={walkInForm.offlinePhone} onChange={e => setWalkInForm(p => ({ ...p, offlinePhone: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label><CalendarDays className="h-3 w-3 inline mr-1" />Data Nasc.</Label>
+                    <Input type="date" value={walkInForm.offlineDob} onChange={e => setWalkInForm(p => ({ ...p, offlineDob: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label><Hash className="h-3 w-3 inline mr-1" />NI Number</Label>
+                    <Input placeholder="AB123456C" value={walkInForm.offlineNino} onChange={e => setWalkInForm(p => ({ ...p, offlineNino: e.target.value }))} className="font-mono" />
+                  </div>
+                  <div>
+                    <Label><Hash className="h-3 w-3 inline mr-1" />UTR</Label>
+                    <Input placeholder="1234567890" value={walkInForm.offlineUtr} onChange={e => setWalkInForm(p => ({ ...p, offlineUtr: e.target.value }))} className="font-mono" />
+                  </div>
+                  <div className="col-span-2">
+                    <Label><MapPin className="h-3 w-3 inline mr-1" />Endereço</Label>
+                    <Input placeholder="123 High Street, London, E1 6RF" value={walkInForm.offlineAddress} onChange={e => setWalkInForm(p => ({ ...p, offlineAddress: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Serviço</Label>
+                    <select value={walkInForm.offlineService} onChange={e => setWalkInForm(p => ({ ...p, offlineService: e.target.value }))} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="">Selecionar...</option>
+                      {OFFLINE_SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Ano Fiscal</Label>
+                    <select value={walkInForm.offlineTaxYear} onChange={e => setWalkInForm(p => ({ ...p, offlineTaxYear: e.target.value }))} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="">Selecionar...</option>
+                      {TAX_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Label><PoundSterling className="h-3 w-3 inline mr-1" />Honorários (£)</Label>
+                    <Input type="number" placeholder="150.00" value={walkInForm.offlineFee} onChange={e => setWalkInForm(p => ({ ...p, offlineFee: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Notas internas</Label>
+                    <Textarea placeholder="Observações, docs em falta, prazos..." value={walkInForm.notes} onChange={e => setWalkInForm(p => ({ ...p, notes: e.target.value }))} rows={2} />
+                  </div>
+                </div>
+                <Button onClick={handleWalkIn} disabled={savingWalkIn || !walkInForm.offlineFullName} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                  {savingWalkIn ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserCheck className="h-4 w-4 mr-2" />}
+                  Guardar Cliente Pontual
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showInvite} onOpenChange={setShowInvite}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="h-4 w-4 mr-2" /> Add Client</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Invite a Client</DialogTitle>
@@ -467,27 +605,34 @@ export function AccountantDashboard() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-green-600">{activeClients.length}</div>
-            <p className="text-sm text-muted-foreground">Active Clients</p>
+            <p className="text-sm text-muted-foreground">Activos</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-yellow-600">{pendingClients.length}</div>
-            <p className="text-sm text-muted-foreground">Pending</p>
+            <p className="text-sm text-muted-foreground">Pendentes</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold text-purple-600">{offlineClients.length}</div>
+            <p className="text-sm text-muted-foreground">Pontuais</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold">{clients.length}</div>
-            <p className="text-sm text-muted-foreground">Total Clients</p>
+            <p className="text-sm text-muted-foreground">Total</p>
           </CardContent>
         </Card>
       </div>
@@ -507,26 +652,54 @@ export function AccountantDashboard() {
       ) : (
         <div className="space-y-3">
           {clients.map((client) => (
-            <Card key={client.id} className={client.status === 'revoked' ? 'opacity-60' : ''}>
+            <Card key={client.id} className={client.status === 'revoked' ? 'opacity-60' : client.isOffline ? 'border-purple-200 dark:border-purple-800/50' : ''}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-primary" />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                      client.isOffline ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-primary/10'
+                    }`}>
+                      {client.isOffline
+                        ? <UserCheck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        : <User className="h-5 w-5 text-primary" />}
                     </div>
                     <div className="min-w-0">
                       <div className="font-medium truncate">
-                        {client.label || client.clientUser?.fullName || client.clientEmail}
+                        {client.isOffline ? client.offlineFullName : (client.label || client.clientUser?.fullName || client.clientEmail)}
                       </div>
                       <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                        <span>{client.clientEmail}</span>
-                        {client.entityCount > 0 && <span>· {client.entityCount} entities</span>}
-                        {client.lastAccessedAt && <span>· Last viewed {format(new Date(client.lastAccessedAt), 'dd MMM')}</span>}
+                        {client.isOffline ? (
+                          <>
+                            {client.offlineService && <span className="font-medium text-purple-600 dark:text-purple-400">{client.offlineService}</span>}
+                            {client.offlineTaxYear && <span>· {client.offlineTaxYear}</span>}
+                            {client.offlinePhone && <span>· <Phone className="h-2.5 w-2.5 inline" /> {client.offlinePhone}</span>}
+                            {client.offlineNino && <span>· NI: {client.offlineNino}</span>}
+                            {client.offlineFee != null && (
+                              <span className={`font-medium ${ client.offlineFeePaid ? 'text-green-600' : 'text-amber-600' }`}>
+                                · £{client.offlineFee.toFixed(2)} {client.offlineFeePaid ? '✓ Pago' : '⏳ Pendente'}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span>{client.clientEmail}</span>
+                            {client.entityCount > 0 && <span>· {client.entityCount} entities</span>}
+                            {client.lastAccessedAt && <span>· Last viewed {format(new Date(client.lastAccessedAt), 'dd MMM')}</span>}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {statusBadge(client.status)}
+                    {client.isOffline && client.offlineFee != null && (
+                      <Button size="sm" variant="outline"
+                        className={client.offlineFeePaid ? 'border-green-400 text-green-700' : 'border-amber-400 text-amber-700'}
+                        onClick={() => handleToggleFeePaid(client)}>
+                        <Banknote className="h-3.5 w-3.5 mr-1" />
+                        {client.offlineFeePaid ? 'Pago' : 'Marcar Pago'}
+                      </Button>
+                    )}
                     {client.status === 'active' && client.clientId && (
                       <Button size="sm" variant="outline" onClick={() => viewClientData(client)}>
                         <Eye className="h-4 w-4 mr-1" /> View Data
@@ -543,7 +716,14 @@ export function AccountantDashboard() {
                   </div>
                 </div>
                 {client.notes && (
-                  <p className="text-xs text-muted-foreground mt-2 pl-13">{client.notes}</p>
+                  <p className="text-xs text-muted-foreground mt-2 italic border-t pt-2">{client.notes}</p>
+                )}
+                {client.isOffline && (client.offlineUtr || client.offlineDob || client.offlineAddress) && (
+                  <div className="mt-2 pt-2 border-t grid grid-cols-2 gap-x-4 gap-y-1">
+                    {client.offlineUtr && <span className="text-xs text-muted-foreground"><Hash className="h-2.5 w-2.5 inline mr-0.5" />UTR: <span className="font-mono font-medium">{client.offlineUtr}</span></span>}
+                    {client.offlineDob && <span className="text-xs text-muted-foreground"><CalendarDays className="h-2.5 w-2.5 inline mr-0.5" />DOB: {client.offlineDob}</span>}
+                    {client.offlineAddress && <span className="text-xs text-muted-foreground col-span-2"><MapPin className="h-2.5 w-2.5 inline mr-0.5" />{client.offlineAddress}</span>}
+                  </div>
                 )}
               </CardContent>
             </Card>

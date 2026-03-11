@@ -34,6 +34,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updateData.status = 'active';
       updateData.revokedAt = null;
     }
+    // Offline / walk-in client fields
+    if (data.offlineFeePaid !== undefined) updateData.offlineFeePaid = data.offlineFeePaid;
+    if (data.offlineFee !== undefined) updateData.offlineFee = data.offlineFee;
+    if (data.offlineService !== undefined) updateData.offlineService = data.offlineService;
+    if (data.offlineTaxYear !== undefined) updateData.offlineTaxYear = data.offlineTaxYear;
+    if (data.offlinePhone !== undefined) updateData.offlinePhone = data.offlinePhone;
+    if (data.offlineNino !== undefined) updateData.offlineNino = data.offlineNino;
+    if (data.offlineUtr !== undefined) updateData.offlineUtr = data.offlineUtr;
+    if (data.offlineAddress !== undefined) updateData.offlineAddress = data.offlineAddress;
+    if (data.offlineFullName !== undefined) updateData.offlineFullName = data.offlineFullName;
 
     const updated = await (prisma as any).accountantClient.update({
       where: { id },

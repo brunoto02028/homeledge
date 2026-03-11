@@ -1230,8 +1230,8 @@ model AccountantClient {
   id              String   @id @default(cuid())
   accountantId    String   @map("accountant_id")
   clientId        String?  @map("client_id")       // null until client accepts
-  clientEmail     String   @map("client_email")
-  status          String   @default("pending")      // pending | active | revoked
+  clientEmail     String   @map("client_email")    // placeholder email for offline clients
+  status          String   @default("pending")      // pending | active | revoked | offline
   permissions     String[] @default(["view_reports", "view_statements", "view_invoices", "view_bills", "view_entities", "view_categories", "view_documents"])
   householdId      String?  @map("household_id")
   businessId       String?  @map("business_id")
@@ -1243,6 +1243,18 @@ model AccountantClient {
   revokedAt       DateTime? @map("revoked_at")
   lastAccessedAt  DateTime? @map("last_accessed_at")
   notes           String?
+  // Walk-in / offline client fields (no Clarity & Co account needed)
+  isOffline       Boolean  @default(false) @map("is_offline")
+  offlineFullName String?  @map("offline_full_name")
+  offlinePhone    String?  @map("offline_phone")
+  offlineNino     String?  @map("offline_nino")     // National Insurance Number
+  offlineUtr      String?  @map("offline_utr")      // Unique Taxpayer Reference
+  offlineDob      String?  @map("offline_dob")      // Date of birth (string for flexibility)
+  offlineAddress  String?  @map("offline_address")
+  offlineService  String?  @map("offline_service")  // e.g. "Self Assessment", "Company Formation"
+  offlineTaxYear  String?  @map("offline_tax_year") // e.g. "2023/24"
+  offlineFee      Float?   @map("offline_fee")
+  offlineFeePaid  Boolean  @default(false) @map("offline_fee_paid")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -1253,6 +1265,7 @@ model AccountantClient {
   @@index([businessId])
   @@index([inviteToken])
   @@index([status])
+  @@index([isOffline])
   @@map("accountant_clients")
 }
 
