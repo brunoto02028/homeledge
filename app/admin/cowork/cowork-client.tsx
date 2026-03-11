@@ -1,29 +1,30 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Brain, Play, Plus, Trash2, ToggleLeft, ToggleRight, Bell, BellOff,
+  Brain, Play, Plus, Trash2, ToggleLeft, ToggleRight, Bell,
   Clock, CheckCircle, XCircle, AlertCircle, Loader2, ChevronDown, ChevronUp,
-  Sparkles, Mail, MessageSquare, Zap, RefreshCw, Eye, Check, X, Settings,
+  Sparkles, Mail, MessageSquare, Zap, Eye, Check, X,
   Calendar, BarChart2, FileText, Users, Radio, ShieldAlert, Lightbulb,
+  Mic, MicOff, Send, Bot, Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 
-const TASK_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; desc: string }> = {
-  lead_scoring:        { label: 'Lead Scoring',        icon: Users,       color: 'text-blue-600',   desc: 'Score and analyse all leads with Claude Haiku' },
-  marketing_report:    { label: 'Marketing Report',    icon: BarChart2,   color: 'text-violet-600', desc: 'Full marketing performance analysis and recommendations' },
-  post_generation:     { label: 'Post Generation',     icon: Radio,       color: 'text-pink-600',   desc: 'Generate social media posts for approval' },
-  system_monitor:      { label: 'System Monitor',      icon: ShieldAlert, color: 'text-red-600',    desc: 'Health check — detect issues, anomalies, and alerts' },
-  digest:              { label: 'Weekly Digest',       icon: FileText,    color: 'text-amber-600',  desc: 'Summary of everything: leads, posts, tasks, metrics' },
-  campaign_suggestions:{ label: 'Campaign Ideas',      icon: Lightbulb,   color: 'text-yellow-600', desc: 'AI-suggested marketing campaigns based on current data' },
-  error_monitor:       { label: 'Error Monitor',       icon: AlertCircle, color: 'text-orange-600', desc: 'Review task failures and system errors' },
-  custom:              { label: 'Custom Task',          icon: Sparkles,    color: 'text-gray-600',   desc: 'Define your own task with a custom prompt' },
+const BUILTIN_TASK_TYPES: Record<string, { label: string; icon: any; color: string; desc: string }> = {
+  lead_scoring:         { label: 'Lead Scoring',        icon: Users,       color: 'text-blue-600',   desc: 'Score and analyse all leads with Claude Haiku' },
+  marketing_report:     { label: 'Marketing Report',    icon: BarChart2,   color: 'text-violet-600', desc: 'Full marketing performance analysis and recommendations' },
+  post_generation:      { label: 'Post Generation',     icon: Radio,       color: 'text-pink-600',   desc: 'Generate social media posts for approval' },
+  system_monitor:       { label: 'System Monitor',      icon: ShieldAlert, color: 'text-red-600',    desc: 'Health check — detect issues, anomalies, and alerts' },
+  digest:               { label: 'Weekly Digest',       icon: FileText,    color: 'text-amber-600',  desc: 'Summary of everything: leads, posts, tasks, metrics' },
+  campaign_suggestions: { label: 'Campaign Ideas',      icon: Lightbulb,   color: 'text-yellow-600', desc: 'AI-suggested marketing campaigns based on current data' },
+  error_monitor:        { label: 'Error Monitor',       icon: AlertCircle, color: 'text-orange-600', desc: 'Review task failures and system errors' },
+  custom:               { label: 'Custom Task',         icon: Sparkles,    color: 'text-gray-600',   desc: 'Define your own task with a custom prompt' },
 };
 
 const SCHEDULE_OPTIONS = [
@@ -34,6 +35,16 @@ const SCHEDULE_OPTIONS = [
   { value: '0 7 1 * *', label: 'Monthly (1st, 7am)' },
   { value: '*/30 * * * *', label: 'Every 30 minutes' },
 ];
+
+// Runtime task type registry (starts with builtins, can grow with custom types)
+let _customTypes: Record<string, { label: string; icon: any; color: string; desc: string }> = {};
+function getTaskTypeConfig() {
+  return { ...BUILTIN_TASK_TYPES, ..._customTypes };
+}
+// Alias for backward compat in JSX below
+function TASK_TYPE_CONFIG_FN(key: string) {
+  return getTaskTypeConfig()[key] || BUILTIN_TASK_TYPES.custom;
+}
 
 const STATUS_STYLE: Record<string, { color: string; icon: any; label: string }> = {
   running:          { color: 'text-blue-600 bg-blue-50',    icon: Loader2,     label: 'Running' },
@@ -65,6 +76,9 @@ interface Notification {
 
 type Tab = 'tasks' | 'logs' | 'notifications';
 
+// ── Chat message type for Claude confirmation panel ──────────────────────────
+interface ChatMsg { role: 'user' | 'claude'; content: string; loading?: boolean; }
+
 export default function CoWorkClient() {
   const [tab, setTab] = useState<Tab>('tasks');
   const [tasks, setTasks] = useState<ClaudeTask[]>([]);
@@ -81,11 +95,46 @@ export default function CoWorkClient() {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [approving, setApproving] = useState<string | null>(null);
 
+  // ── Voice input ────────────────────────────────────────────────────────────
+  const [listening, setListening] = useState(false);
+  const [voiceInput, setVoiceInput] = useState('');
+  const [interpretingVoice, setInterpretingVoice] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // ── Claude confirmation chat ────────────────────────────────────────────────
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([
+    { role: 'claude', content: '👋 Olá! Descreve por voz ou texto o que queres que eu faça. Vou interpretar, confirmar o plano e criar a task automaticamente.' },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [showChatPanel, setShowChatPanel] = useState(false);
+
+  // ── Dynamic custom task types (persisted in localStorage) ──────────────────
+  const [customTypesList, setCustomTypesList] = useState<{ key: string; label: string; desc: string }[]>([]);
+  const [showAddType, setShowAddType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newTypeDesc, setNewTypeDesc] = useState('');
+
   const [form, setForm] = useState({
     name: '', description: '', taskType: 'lead_scoring', schedule: 'manual',
     requiresApproval: false, notifyEmail: true, notifySms: false, notifyInApp: true,
     customPrompt: '',
   });
+
+  // Load custom types from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('cowork-custom-types') || '[]');
+      setCustomTypesList(stored);
+      stored.forEach((t: any) => {
+        _customTypes[t.key] = { label: t.label, icon: Sparkles, color: 'text-violet-500', desc: t.desc };
+      });
+    } catch { /* ignore */ }
+  }, []);
+
+  // Scroll chat to bottom
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs]);
 
   useEffect(() => { fetchAll(); }, [tab]);
 
@@ -205,6 +254,106 @@ export default function CoWorkClient() {
     fetchNotifications();
   }
 
+  // ── Voice input ────────────────────────────────────────────────────────────
+  function startListening() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { alert('Voice not supported. Use Chrome or Edge.'); return; }
+    const r = new SR();
+    r.lang = 'pt-BR'; r.continuous = false; r.interimResults = false;
+    r.onresult = (e: any) => {
+      const text = e.results[0][0].transcript;
+      setVoiceInput(text);
+      setChatInput(text);
+      setListening(false);
+    };
+    r.onerror = () => setListening(false);
+    r.onend = () => setListening(false);
+    recognitionRef.current = r;
+    r.start();
+    setListening(true);
+  }
+  function stopListening() { recognitionRef.current?.stop(); setListening(false); }
+
+  // ── Claude confirmation chat ────────────────────────────────────────────────
+  async function sendChatMessage(text?: string) {
+    const msg = (text || chatInput).trim();
+    if (!msg) return;
+    setChatInput('');
+    setVoiceInput('');
+    setChatMsgs(prev => [...prev, { role: 'user', content: msg }, { role: 'claude', content: '', loading: true }]);
+    setChatLoading(true);
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: msg }],
+          systemOverride: `You are the Claude Co-Work task assistant. The user wants to create or configure an autonomous task.
+Analyse their request and reply in a friendly, concise way (2-4 sentences max) confirming you understood.
+Then propose: task name, task type (one of: lead_scoring, marketing_report, post_generation, system_monitor, digest, campaign_suggestions, error_monitor, custom, or a NEW custom type if none fit), schedule (manual/daily 9am/weekly Monday/monthly), and whether approval is needed.
+Format your reply ending with a JSON block like:
+\`\`\`json
+{"name":"...","taskType":"...","schedule":"...","requiresApproval":false,"description":"...","isNew":false}
+\`\`\`
+If isNew is true, also include "newTypeLabel" and "newTypeDesc" fields.
+Always reply in the same language the user used.`,
+        }),
+      });
+      const data = await res.json();
+      const reply: string = data.content || data.message || 'Entendido! Podes confirmar os detalhes abaixo.';
+
+      // Extract JSON plan from reply
+      const jsonMatch = reply.match(/```json\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        try {
+          const plan = JSON.parse(jsonMatch[1]);
+          // Auto-register new type if needed
+          if (plan.isNew && plan.taskType && plan.newTypeLabel) {
+            const newKey = plan.taskType.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            _customTypes[newKey] = { label: plan.newTypeLabel, icon: Sparkles, color: 'text-violet-500', desc: plan.newTypeDesc || '' };
+            const stored = JSON.parse(localStorage.getItem('cowork-custom-types') || '[]');
+            stored.push({ key: newKey, label: plan.newTypeLabel, desc: plan.newTypeDesc || '' });
+            localStorage.setItem('cowork-custom-types', JSON.stringify(stored));
+            setCustomTypesList(stored);
+            plan.taskType = newKey;
+          }
+          // Pre-fill the form
+          setForm(f => ({
+            ...f,
+            name: plan.name || f.name,
+            taskType: plan.taskType || f.taskType,
+            schedule: plan.schedule || f.schedule,
+            requiresApproval: plan.requiresApproval ?? f.requiresApproval,
+            description: plan.description || f.description,
+          }));
+        } catch { /* JSON parse failed, ignore */ }
+      }
+
+      // Show reply without the json block
+      const cleanReply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+      setChatMsgs(prev => prev.slice(0, -1).concat({
+        role: 'claude',
+        content: cleanReply + '\n\n✅ *Preenchi o formulário com o plano. Revisa e clica em **Criar Task** quando estiveres pronto.*',
+      }));
+    } catch {
+      setChatMsgs(prev => prev.slice(0, -1).concat({ role: 'claude', content: '❌ Erro ao contactar Claude. Tenta novamente.' }));
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  // ── Add new custom task type ────────────────────────────────────────────────
+  function addCustomType() {
+    if (!newTypeName.trim()) return;
+    const key = newTypeName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    _customTypes[key] = { label: newTypeName, icon: Sparkles, color: 'text-violet-500', desc: newTypeDesc };
+    const updated = [...customTypesList, { key, label: newTypeName, desc: newTypeDesc }];
+    setCustomTypesList(updated);
+    localStorage.setItem('cowork-custom-types', JSON.stringify(updated));
+    setForm(f => ({ ...f, taskType: key }));
+    setNewTypeName(''); setNewTypeDesc(''); setShowAddType(false);
+  }
+
   const pendingApprovals = logs.filter(l => l.status === 'pending_approval');
 
   return (
@@ -221,15 +370,131 @@ export default function CoWorkClient() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => { setShowChatPanel(p => !p); setShowCreateDialog(false); }} variant="outline" size="sm" className={showChatPanel ? 'border-violet-500 text-violet-600' : ''}>
+            <Bot className="h-4 w-4 mr-2" /> Chat with Claude
+          </Button>
           <Button onClick={getSuggestions} variant="outline" size="sm" disabled={loadingSuggestions}>
             {loadingSuggestions ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-            Ask Claude to Suggest Tasks
+            Suggest Tasks
           </Button>
-          <Button onClick={() => setShowCreateDialog(true)} className="bg-violet-600 hover:bg-violet-700 text-white" size="sm">
+          <Button onClick={() => { setShowCreateDialog(true); setShowChatPanel(false); }} className="bg-violet-600 hover:bg-violet-700 text-white" size="sm">
             <Plus className="h-4 w-4 mr-2" /> New Task
           </Button>
         </div>
       </div>
+
+      {/* ── Claude Chat + Create Panel ─────────────────────────────────────────── */}
+      {showChatPanel && (
+        <div className="border border-violet-200 dark:border-violet-800 rounded-2xl overflow-hidden shadow-lg">
+          <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-white">
+              <Bot className="h-5 w-5" />
+              <span className="font-semibold text-sm">Claude Co-Work Assistant</span>
+              <span className="text-xs opacity-70">· Descreve por voz ou texto o que queres que eu faça</span>
+            </div>
+            <Button size="sm" variant="ghost" className="h-7 text-white hover:bg-white/20" onClick={() => setShowChatPanel(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x">
+            {/* Chat messages */}
+            <div className="flex flex-col h-72">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
+                {chatMsgs.map((m, i) => (
+                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-sm rounded-2xl px-3 py-2 text-sm ${
+                      m.role === 'user'
+                        ? 'bg-violet-600 text-white rounded-tr-sm'
+                        : 'bg-card border rounded-tl-sm'
+                    }`}>
+                      {m.loading
+                        ? <span className="flex items-center gap-1.5 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> A pensar...</span>
+                        : <span className="whitespace-pre-wrap leading-relaxed">{m.content}</span>
+                      }
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              {/* Voice + text input */}
+              <div className="border-t p-3 bg-card flex gap-2">
+                <button
+                  onClick={listening ? stopListening : startListening}
+                  className={`shrink-0 h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                    listening ? 'bg-red-500 text-white animate-pulse' : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  }`}
+                  title={listening ? 'Parar' : 'Falar'}
+                >
+                  {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+                <Input
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+                  placeholder={listening ? '🎙️ Ouvindo...' : 'Ex: quero monitorar erros de código todo dia às 9h...'}
+                  className="flex-1 text-sm"
+                  disabled={chatLoading}
+                />
+                <Button size="sm" onClick={() => sendChatMessage()} disabled={!chatInput.trim() || chatLoading} className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white h-9 w-9 p-0">
+                  {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Form preview — pre-filled by Claude */}
+            <div className="p-4 bg-card space-y-3 overflow-y-auto max-h-72">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5 text-green-500" /> Plano da Task (editável)
+              </p>
+              <div className="space-y-2">
+                <Input placeholder="Nome da task" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="text-sm" />
+                <div className="flex gap-2">
+                  <Select value={form.taskType} onValueChange={v => setForm(f => ({ ...f, taskType: v }))}>
+                    <SelectTrigger className="text-sm flex-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(getTaskTypeConfig()).map(([k, c]) => (
+                        <SelectItem key={k} value={k}><span className="text-sm">{c.label}</span></SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button onClick={() => setShowAddType(p => !p)} className="shrink-0 h-9 w-9 rounded-md border flex items-center justify-center hover:bg-muted transition-colors" title="Criar novo tipo">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {showAddType && (
+                  <div className="border rounded-lg p-2 space-y-1.5 bg-muted/30">
+                    <p className="text-xs font-medium text-muted-foreground">Novo tipo personalizado</p>
+                    <Input placeholder="Nome do tipo (ex: HMRC Monitor)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} className="text-xs h-7" />
+                    <Input placeholder="Descrição breve" value={newTypeDesc} onChange={e => setNewTypeDesc(e.target.value)} className="text-xs h-7" />
+                    <Button size="sm" onClick={addCustomType} disabled={!newTypeName.trim()} className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white w-full">Criar tipo</Button>
+                  </div>
+                )}
+                <Select value={form.schedule} onValueChange={v => setForm(f => ({ ...f, schedule: v }))}>
+                  <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>{SCHEDULE_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                </Select>
+                <Textarea placeholder="Descrição / contexto adicional" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="text-sm" />
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Requer aprovação</span>
+                  <Switch checked={form.requiresApproval} onCheckedChange={v => setForm(f => ({ ...f, requiresApproval: v }))} />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1 text-muted-foreground"><Mail className="h-3.5 w-3.5 text-blue-500" /> Email</span>
+                  <Switch checked={form.notifyEmail} onCheckedChange={v => setForm(f => ({ ...f, notifyEmail: v }))} />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1 text-muted-foreground"><Bell className="h-3.5 w-3.5 text-violet-500" /> In-app</span>
+                  <Switch checked={form.notifyInApp} onCheckedChange={v => setForm(f => ({ ...f, notifyInApp: v }))} />
+                </div>
+              </div>
+              <Button onClick={async () => { await createTask(); setShowChatPanel(false); setChatMsgs([{ role: 'claude', content: '✅ Task criada! Podes pedir-me outra, sugerir mais tasks, ou fechar este painel.' }]); }} disabled={!form.name} className="w-full bg-violet-600 hover:bg-violet-700 text-white">
+                <CheckCircle className="h-4 w-4 mr-2" /> Criar Task
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Claude Suggestions Banner */}
       {suggestions.length > 0 && (
@@ -242,7 +507,7 @@ export default function CoWorkClient() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {suggestions.map((s, i) => {
-              const cfg = TASK_TYPE_CONFIG[s.taskType] || TASK_TYPE_CONFIG.custom;
+              const cfg = TASK_TYPE_CONFIG_FN(s.taskType);
               const Icon = cfg.icon;
               return (
                 <div key={i} className="bg-white dark:bg-gray-900 rounded-lg border p-3 flex items-start justify-between gap-3">
@@ -343,7 +608,7 @@ export default function CoWorkClient() {
                   </CardContent>
                 </Card>
               ) : tasks.map(task => {
-                const cfg = TASK_TYPE_CONFIG[task.taskType] || TASK_TYPE_CONFIG.custom;
+                const cfg = TASK_TYPE_CONFIG_FN(task.taskType);
                 const Icon = cfg.icon;
                 const lastLog = task.logs?.[0];
                 const isExpanded = expandedTask === task.id;
@@ -552,7 +817,7 @@ export default function CoWorkClient() {
               <Select value={form.taskType} onValueChange={v => setForm(f => ({ ...f, taskType: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(TASK_TYPE_CONFIG).map(([key, cfg]) => {
+                  {Object.entries(getTaskTypeConfig()).map(([key, cfg]) => {
                     const Icon = cfg.icon;
                     return (
                       <SelectItem key={key} value={key}>
@@ -565,7 +830,7 @@ export default function CoWorkClient() {
                   })}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">{TASK_TYPE_CONFIG[form.taskType]?.desc}</p>
+              <p className="text-xs text-muted-foreground">{TASK_TYPE_CONFIG_FN(form.taskType)?.desc}</p>
             </div>
             {form.taskType === 'custom' && (
               <div className="space-y-1.5">
