@@ -53,7 +53,8 @@
     "marketingAI": "Marketing AI",
     "socialScheduler": "Social Scheduler",
     "leadIntelligence": "Lead Intelligence",
-    "cowork": "Claude Co-Work"
+    "cowork": "Claude Co-Work",
+    "designStudio": "Design Studio"
   },
   "common": {
     "save": "Save",

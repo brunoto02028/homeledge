@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useId } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Sparkles, ClipboardList, Megaphone, FilePen, Zap, BrainCircuit, BotMessageSquare } from "lucide-react"
+import { LayoutDashboard, Receipt, ListTodo, FileText, Tag, BarChart3, Building2, FileSpreadsheet, CalendarDays, Camera, Shield, KeyRound, TrendingUp, Landmark, Users, CalendarClock, Settings, Home, GraduationCap, Calculator, Languages, CreditCard, Cable, FolderOpen, Link2, Briefcase, Lock, Brain, GripVertical, ArrowDownAZ, Globe, ShoppingBag, BookOpen, Mail, Radio, Sparkles, ClipboardList, Megaphone, FilePen, Zap, BrainCircuit, BotMessageSquare, Palette } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { ROUTE_PERMISSION_MAP, hasPermission, ADMIN_ONLY_MODULES, type PermissionKey } from "@/lib/permissions"
@@ -51,6 +51,7 @@ const adminItems = [
   { href: "/admin/marketing", labelKey: "nav.marketing", icon: Megaphone },
   { href: "/admin/marketing/ai", labelKey: "nav.marketingAI", icon: BrainCircuit },
   { href: "/admin/marketing/scheduler", labelKey: "nav.socialScheduler", icon: Radio },
+  { href: "/admin/marketing/design-studio", labelKey: "nav.designStudio", icon: Palette },
   { href: "/admin/cms", labelKey: "nav.cms", icon: Languages },
   { href: "/admin/users", labelKey: "nav.users", icon: Shield },
   { href: "/admin/plans", labelKey: "nav.plans", icon: CreditCard },
