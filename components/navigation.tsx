@@ -49,6 +49,8 @@ const navItems = [
 
 const adminItems = [
   { href: "/admin/marketing", labelKey: "nav.marketing", icon: Megaphone },
+  { href: "/admin/marketing/ai", labelKey: "nav.marketingAI", icon: BrainCircuit },
+  { href: "/admin/marketing/scheduler", labelKey: "nav.socialScheduler", icon: Radio },
   { href: "/admin/cms", labelKey: "nav.cms", icon: Languages },
   { href: "/admin/users", labelKey: "nav.users", icon: Shield },
   { href: "/admin/plans", labelKey: "nav.plans", icon: CreditCard },
