@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUserId } from '@/lib/auth';
+import { auditLog } from '@/lib/audit-log';
 
 // GET - List all clients for the logged-in accountant
 export async function GET() {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only accountants can invite clients' }, { status: 403 });
     }
 
-    const { email, label, notes, permissions } = await request.json();
+    const { email, label, notes, permissions, essentialOverrides, householdId, businessId } = await request.json();
     if (!email) {
       return NextResponse.json({ error: 'Client email is required' }, { status: 400 });
     }
@@ -78,19 +79,16 @@ export async function POST(request: Request) {
         label: label || null,
         notes: notes || null,
         permissions: permissions || ["view_reports", "view_statements", "view_invoices", "view_bills", "view_entities", "view_categories", "view_documents"],
+        essentialOverrides: Array.isArray(essentialOverrides) ? essentialOverrides : [],
+        householdId: householdId || null,
+        businessId: businessId || null,
         acceptedAt: clientUser ? new Date() : null,
       },
     });
 
     // Log event
-    await prisma.event.create({
-      data: {
-        userId,
-        eventType: 'accountant.client_invited',
-        entityType: 'accountant_client',
-        entityId: client.id,
-        payload: { clientEmail: email, label },
-      },
+    await auditLog(userId, 'accountant.client_invited', 'accountant_client', client.id, {
+      metadata: { clientEmail: email, label, householdId: householdId || null, businessId: businessId || null },
     });
 
     return NextResponse.json(client, { status: 201 });

@@ -23,6 +23,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (data.label !== undefined) updateData.label = data.label;
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.permissions !== undefined) updateData.permissions = data.permissions;
+    if (data.essentialOverrides !== undefined) updateData.essentialOverrides = data.essentialOverrides;
+    if (data.householdId !== undefined) updateData.householdId = data.householdId;
+    if (data.businessId !== undefined) updateData.businessId = data.businessId;
     if (data.status === 'revoked') {
       updateData.status = 'revoked';
       updateData.revokedAt = new Date();

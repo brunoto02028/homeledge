@@ -1233,6 +1233,9 @@ model AccountantClient {
   clientEmail     String   @map("client_email")
   status          String   @default("pending")      // pending | active | revoked
   permissions     String[] @default(["view_reports", "view_statements", "view_invoices", "view_bills", "view_entities", "view_categories", "view_documents"])
+  householdId      String?  @map("household_id")
+  businessId       String?  @map("business_id")
+  essentialOverrides String[] @default([]) @map("essential_overrides")
   label           String?                            // e.g. "John Smith - Sole Trader"
   inviteToken     String   @unique @default(cuid()) @map("invite_token")
   invitedAt       DateTime @default(now()) @map("invited_at")
@@ -1246,9 +1249,52 @@ model AccountantClient {
   @@unique([accountantId, clientEmail])
   @@index([accountantId])
   @@index([clientId])
+  @@index([householdId])
+  @@index([businessId])
   @@index([inviteToken])
   @@index([status])
   @@map("accountant_clients")
+}
+
+enum ClientItemVisibility {
+  shared
+  private
+}
+
+model ClientItemAccess {
+  id          String             @id @default(cuid())
+  clientId    String             @map("client_id")
+  entityType  String             @map("entity_type")
+  entityId    String             @map("entity_id")
+  visibility  ClientItemVisibility @default(shared)
+  setByUserId String?            @map("set_by_user_id")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  @@unique([clientId, entityType, entityId])
+  @@index([clientId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([visibility])
+  @@map("client_item_access")
+}
+
+model EmergencyAccessGrant {
+  id           String   @id @default(cuid())
+  accountantId String   @map("accountant_id")
+  clientId     String   @map("client_id")
+  reason       String
+  scope        Json?    // { modules: string[], entityTypes?: string[], entityIds?: string[] }
+  expiresAt    DateTime @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([accountantId])
+  @@index([clientId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("emergency_access_grants")
 }
 
 model SavingsGoal {
