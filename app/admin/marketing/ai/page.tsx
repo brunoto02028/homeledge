@@ -1,1 +1,5 @@
-export { default } from './marketing-ai-client';
+import { redirect } from 'next/navigation';
+
+export default function MarketingAIPage() {
+  redirect('/admin/marketing?tab=composer');
+}
