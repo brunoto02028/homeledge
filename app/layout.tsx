@@ -70,6 +70,26 @@ export default function RootLayout({
       <head>
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js"></script>
         <style>{`[data-hydration-error] { display: none !important; }`}</style>
+        {/* Force-unregister stale service workers and clear old caches */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var SW_VERSION = 'v12';
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(reg) {
+                  reg.update();
+                });
+              });
+            }
+            if ('caches' in window) {
+              caches.keys().then(function(keys) {
+                keys.forEach(function(k) {
+                  if (k !== 'clarityco-' + SW_VERSION) caches.delete(k);
+                });
+              });
+            }
+          })();
+        `}} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
