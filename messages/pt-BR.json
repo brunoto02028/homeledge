@@ -54,7 +54,8 @@
     "socialScheduler": "Agendador Social",
     "leadIntelligence": "Inteligência de Leads",
     "cowork": "Claude Co-Work",
-    "designStudio": "Design Studio"
+    "designStudio": "Design Studio",
+    "oiscPrep": "Prep Exame OISC"
   },
   "common": {
     "save": "Salvar",

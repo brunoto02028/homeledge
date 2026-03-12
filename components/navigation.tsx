@@ -62,6 +62,7 @@ const adminItems = [
   { href: "/admin/automation", labelKey: "nav.automation", icon: Zap },
   { href: "/admin/marketing/leads", labelKey: "nav.leadIntelligence", icon: Sparkles },
   { href: "/admin/cowork", labelKey: "nav.cowork", icon: BotMessageSquare },
+  { href: "/admin/oisc-prep", labelKey: "nav.oiscPrep", icon: GraduationCap },
   { href: "/pdf-editor", labelKey: "nav.pdfEditor", icon: FilePen },
 ]
 
